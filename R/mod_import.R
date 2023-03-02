@@ -31,7 +31,6 @@ mod_import_server <- function(id){
       #nb_ds <- n_datasets(input$filename)
       files <- renderTable(input$filename)
     })
-
   })
 }
 
