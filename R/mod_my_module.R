@@ -1,4 +1,4 @@
-#' import UI Function
+#' my_module UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -7,46 +7,43 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_import_ui <- function(id){
-  h1("Hello")
+mod_my_module_ui <- function(id){
   ns <- NS(id)
   tagList(
+    h1("Hello, this is my first {golem}"),
+
     fileInput(inputId = ns("filename"),
               accept = ".fcs",
               label = "Select FCS file"),
 
-    #actionButton(inputId = ns("validate"),
-                 #label = "Submit"),
-
     tableOutput(ns("files")),
+
+    textOutput(ns("text")),
 
     textOutput(ns("datasets"))
   )
 }
 
-#' import Server Functions
+#' my_module Server Functions
 #'
 #' @noRd
-mod_import_server <- function(id){
+mod_my_module_server <- function(id){
   options(shiny.maxRequestSize = 60 * 1024^2)
-  moduleServer(id, function(input, output, session){
+  moduleServer( id, function(input, output, session){
     ns <- session$ns
-    datasets <- n_datasets(input$filename$name)
 
-    #observeEvent(input$filename, {
-      output$datasets <- renderText({"Hello"})
-      output$files <- renderTable({input$filename})
-    #}
-    })
+    output$files <- renderTable({input$filename})
+
+    datasets <- reactive({n_datasets(input$filename$datapath)})
+
+    output$text <- renderText({"Hello Aurélien"})
+
+    output$datasets <- renderText({datasets()})
+  })
 }
 
 
 
-#' Count number of datasets in a FCS file
-#'
-#' @param filename FCS filename,
-#'
-#' @import flowCore
 n_datasets <- function(filename) {
   # Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
   con <- file(filename, open = "rb")
@@ -76,8 +73,13 @@ n_datasets <- function(filename) {
   length(txt.list)
 }
 
+
+
+
+
+
 ## To be copied in the UI
-# mod_import_ui("import_1")
+# mod_my_module_ui("my_module_1")
 
 ## To be copied in the server
-# mod_import_server("import_1")
+# mod_my_module_server("my_module_1")

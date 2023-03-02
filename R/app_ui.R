@@ -4,14 +4,13 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
-app_ui <- function(request) {
+app_ui <- function() {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # Your application UI logic
     fluidPage(
-      h1("flowFate"),
-      mod_import_ui("import_1")
+      mod_my_module_ui("my_module_1")
     )
   )
 }

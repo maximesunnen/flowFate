@@ -5,6 +5,6 @@
 #' @import shiny
 #' @noRd
 app_server <- function(input, output, session) {
-	mod_import_server("import_1")
   # Your application server logic
+  mod_my_module_server(id = "my_module_1")
 }
