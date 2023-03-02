@@ -34,15 +34,15 @@ mod_my_module_server <- function(id){
 
     output$files <- renderTable({input$filename})
 
+#datasets is not a reactive expression
     datasets <- reactive({n_datasets(input$filename$datapath)})
 
     output$text <- renderText({"Hello Aurélien"})
 
+#we can call the reactive expression created above using datasets()
     output$datasets <- renderText({datasets()})
   })
 }
-
-
 
 n_datasets <- function(filename) {
   # Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
