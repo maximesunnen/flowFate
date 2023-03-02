@@ -2,19 +2,24 @@ Package: flowFate
 Title: Shiny App for Flow Cytometry Data
 Version: 0.0.0.9000
 Authors@R: c(
-     person("Maxime", "Sünnen", email = "AUTHOR@MAIL.COM", role = c("cre", "aut")),
-     person("Aurélien", "Ginolhac", email = "ginolhac@gmail,com", role = c("aut"))
-   )
-Description: Shiny app for the analysis of flow cytometry data using the flowCore and flowWorkspace framework.
+    person("Maxime", "Sünnen", , "maximesunnen@gmail.com", role = c("cre", "aut")),
+    person("Aurélien", "Ginolhac", , "ginolhac@gmail.com", role = "aut")
+  )
+Description: Shiny app for the analysis of flow cytometry data using the
+    flowCore and flowWorkspace framework.
 License: MIT + file LICENSE
+URL: https://github.com/maximesunnen/flowFate
+BugReports: https://github.com/maximesunnen/flowFate/issues
 Depends: 
     R (>= 4.1.0)
 Imports: 
     config (>= 0.3.1),
+    flowCore,
     golem (>= 0.3.5),
     shiny (>= 1.7.4)
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
-URL: https://github.com/maximesunnen/flowFate
-BugReports: https://github.com/maximesunnen/flowFate/issues

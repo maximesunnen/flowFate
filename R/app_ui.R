@@ -10,7 +10,8 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     fluidPage(
-      h1("flowFate")
+      h1("flowFate"),
+      mod_import_ui("import_1")
     )
   )
 }
