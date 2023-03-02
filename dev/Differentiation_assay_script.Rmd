@@ -1,0 +1,542 @@
+---
+title: "Differentiation Assay Script"
+author: "Maxime"
+date: "2023-02-17"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Notes before reading this document
+- for {golem}: Inside your Vignettes folder: call usethis::use_vignette() to create the skeleton for a Vignette, which will then be used as package documentation. Use this .Rmd document as the package vignette.
+
+- one analysis is not yet described/implemented in this document: binning GFP-positive cells. I want to show a specific example in order to clarify the idea. I don't think this is a lot of work, as the general idea is similar to what I do here.
+
+- the parameters for my ggcyto plot can be set once with **settings <- ggcyto::ggcyto_par_set()** so that size of the codebase is reduced. 
+
+- in the section on filtering out autoflurescence: I don't think we need to average the intensities from two negative controls (I think doing this will make the code significantly more difficult).
+
+- I think it's best to split this .Rmd file into multiple ones, one for each part of the end application (https://engineering-shiny.org/building-ispum-app.html) (import, curation, gating... these will essentially also be the "modules" of the app, if I understood the module concept from {golem} correctly)
+
+- Aurélien: thoughts about "Rmd first" philosophy (end of page https://engineering-shiny.org/building-ispum-app.html)
+
+
+## Loading dependencies
+Visualization and analysis of flow cytometry data requires some R packages. The code below ensures that all the necessary packages and dependencies are installed and loaded. 
+
+**Aurélien:** the install.packages("pacman") leads to a popup window saying "One or more of the packages to be updated are currently loaded. Restarting R prior to install is highly recommended.". I have to "cancel" this for the code to run properly)
+```{r, eval = FALSE, message=FALSE}
+install.packages("pacman", repos = "http://cran.us.r-project.org")
+library(pacman)
+
+pacman::p_load(tidyverse, flowCore, ggcyto, knitr, openCyto, gtools, patchwork)
+```
+
+```{r, include = FALSE}
+library(flowCore)
+library(ggcyto)
+library(openCyto)
+library(gtools)
+library(patchwork)
+library(purrr)
+library(stringr)
+library(dplyr)
+```
+
+
+## Preliminary steps
+
+### Output folder
+During our analysis, we will generate many different plots and tables. We therefore first need to create a folder that will contain all our output. We will name this folder "data.output". The code below checks if such a folder already exists in our current working directory and if not, creates it. In case it already exists, you will see the message "FALSE"appearing in your console. 
+
+``` {r}
+if (!fs::dir_exists("data_output")) fs::dir_create("data_output")
+```
+
+### FCS file folder
+FCS files exported from your FACS machine commonly contain multiple datasets. Each dataset contains data from the analysis of a single well (i.e if you analyze a 96-well plate, your exported FCS file contains 96 datasets). The flowCore package we use here provides two data structures that provide a means for analyzing our data in R:
+
+* flowFrame: stores information about single FACS runs (i.e single dataset)
+* flowSet: stores information from multiple FACS runs (i.e multiple datasets)
+
+Since our FACS machine exports a single FCS file with multiple datasets, we first need to create individual FCS files from each dataset that will later be read into a *flowSet*. The individual FCS files are saved to a folder named "fcs.files". The code below creates such a folder if not yet present in our current working directory. 
+
+```{r files folder}
+if (!fs::dir_exists("fcs_input")) fs::dir_create("fcs_input")
+```
+
+### FCS file name
+We now need to tell R the name of the FCS file exported from our FACS machine. In our case, this is a single file containing multiple datasets. The code below lists files from current working directory with an ".fcs" extension and assigns their name to a variable called *filename*. 
+
+Two important considerations:
+
+1. You can always check the current working directory by typing getwd() in the console and pressing "Enter".  
+
+2. Make sure that your current working directory only contains **a single** FCS file. Otherwise, the code below will assign a vector of multiple filenames to the *filename* variable, and subsequent lines of code will procude an error.  works if a **single** FCS file is present in the current working directory.
+
+```{r }
+filename <- fs::dir_ls(glob = "*.fcs")
+filename
+```
+
+### Number of datasets in our FCS file
+To determine the number of necessary iterations necessary to create FCS files from  datasets, we need to know how many datasets our initial FCS file contains. The code block below finds the number of datasets in our initial FCS file and assigns it to the variable *n.datasets*. 
+
+```{r}
+
+n_datasets <- function(filename, ...) {
+	# Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
+	con <- file(filename, open = "rb")
+	#flowCore:::findOffsets(con = con, keyword = "$NEXTDATA", emptyValue = FALSE)
+	
+	offsets <- flowCore:::readFCSheader(con)
+	offsets <- matrix(offsets, nrow = 1, dimnames = list(NULL, names(offsets)))
+	txt <- flowCore:::readFCStext(con, offsets[1, ],emptyValue = FALSE, ...)
+	
+	addOff <- 0
+	
+	if ("$NEXTDATA" %in% names(txt)) {
+		nd <- as.numeric(txt[["$NEXTDATA"]])
+	} else
+		nd <- 0
+	
+	txt.list <- list(txt)
+	i <- 1
+	while (nd != 0) {
+		i <- i + 1
+		addOff <- addOff + nd
+		offsets <- rbind(offsets, flowCore:::readFCSheader(con, addOff))
+		this.txt <- flowCore:::readFCStext(con, offsets[nrow(offsets),], emptyValue = FALSE, ...)
+		nd <- as.numeric(this.txt[["$NEXTDATA"]])
+		txt.list[[i]] <- this.txt
+	}
+	length(txt.list)
+}
+nb_ds <- n_datasets("2023-02-06_at_07-14-51pm cmpd test ANALYSED.fcs")
+nb_ds
+```
+
+After running this code block, the number of datasets will be printed to the console. You should always check if this number corresponds to the number of analyzed wells and you should not proceed if these two numbers do not match.  
+
+### Reading datasets as individual FCS files into R
+We will now read each individual dataset of our initial FCS file and convert it to an individual FCS file saved into our fcs.files folder. After running this code block, you can check if this folder indeed contains our FCS files.
+
+```{r}
+# define the path of the folder our FCS files should populate
+# must be fcs_input
+
+# initialize a vector for the well identifiers (extracted from key-value pairs)
+# Never grow a vector !!
+#well_id <- c()
+
+walk(seq_len(nb_ds), \(x) {
+	fr <- read.FCS(filename,
+								 dataset = x,
+								 transformation = FALSE,
+								 truncate_max_range = FALSE,
+								 alter.names = TRUE,
+								 emptyValue = FALSE)
+	#well_id[x] <- fr[x]@description$`$WELLID`
+	message(paste("Write file #", x, "well", fr@description$`$WELLID`))
+	# write the individual flowframe objects to individual FCS files
+	write.FCS(fr, fs::path("fcs_input", glue::glue("dataset_{fr@description$`$WELLID`}.fcs")))
+}) 
+
+```
+
+We now read these individual FCS files into a **flowSet**, flowCore data structure that will allow us to perform our analysis. 
+
+```{r}
+fs <- read.flowSet(fs::dir_ls("fcs_input", glob = "*.fcs"),
+									 truncate_max_range = FALSE,
+									 alter.names = TRUE,
+									 transformation = FALSE)
+```
+
+You can click on the fs variable in the R environment to inspect the flowSet we've created. A flowSet consists of different flowFrames, each flowFrame collecting data from a single sample analyzed on your FACS machine. In case we need it later, we add the well id to the phenotypic data (pData) of our flowset using the code below.
+
+```{r}
+pData(fs)$well <- str_extract(pData(fs)$name, "[A-Z]\\d{2}")
+```
+
+FACS machines typically have predefined channel names that are not always identical to the fluorophores you're analyzing. Even worse, channel names are not consistent across FACS machines from different manufacturers. We therefore greatly facilitate our analysis by changing these channel names to the fluorophores we're analyzing. By running *colnames(fs)* in the command line you get a list of your FACS machine's channel names. 
+
+On the left side of the code below, you write (between "") the name of the channel you want to change. On the right side, you write (between "") the name you want to change it to. In the first line, we change the channel name *GRN.B.HLin* to *GFP*. Delete the lines that are not necessary. Skip this code block if you don't want to perform any changes to your channel names.
+```{r}
+colnames(fs)[colnames(fs) == "GRN.B.HLin"]  <- "GFP"
+colnames(fs)[colnames(fs) == "FSC.HLin"]    <- "FSC"
+colnames(fs)[colnames(fs) == "SSC.HLin"]    <- "SSC"
+colnames(fs)[colnames(fs) == "RED.R.HLin"]  <- "APC"
+```
+
+## Compensation
+
+## Gating set
+Gating is an essential part during the analysis of flow cytometry data. The flowWorkSpace package provides a data structure called **GatingSet** that facilitates interaction with gated data. We therefore transform our flowSet to a gatingSet using the code below.
+
+```{r}
+gs <- GatingSet(fs)
+```
+
+## Gating your data
+### Gating intact cells
+Preparing cells for FACS analysis (fixation, permeabilization, etc.) can lead to cell death and therefore debris in our sample that that should be excluded from our analysis. Since intact cells have a different morphology and size compared to debris, we can distinguish them in a SSC vs FSC plot. 
+
+```{r, out.width="100%"}
+ggcyto(gs[[1:3]], aes(x = SSC, y = FSC), subset = "root") +
+  geom_hex(bins = 150)+
+  ggcyto_par_set(limits = "instrument") +
+  theme(complete = TRUE,
+        axis.text.x = element_text(angle = 45, size = 10)) +
+  theme_bw()
+```
+
+In SSC vs FSC plots, dead cells and debris cluster in the bottom left corner because of their morphology. However, some variation across samples can be observed regarding the shape and size of this cluster. To properly define a gate excluding this region we think it's best to add a debris control (staurosporin treatment, concentration to be determined) to your samples.
+
+Below we define a polygonal gate that to excludes most of the cells clustering in the lower left corner in the previous plot. We summarize the x- and y-coordinates of polygon corner a 2-column matrix. The column names of the matrix have to be set to SSC and FSC. The filterId argument of the polygonGate() function can be used to name the gate. Later, this will allows us to refer to the gate using this name.
+
+```{r}
+#defining the polygon gate matrix
+pgn.cut <- matrix(c(0, 25000, 99000, 99000,0,
+										12500, 0, 0, 99000, 99000),
+									ncol = 2,
+									nrow = 5)
+#setting the correct column names
+colnames(pgn.cut) <- c("SSC","FSC")
+
+#creating the gate using polygonGate()
+non.debris.gate <- polygonGate(filterId = "NonDebris", .gate = pgn.cut)
+```
+
+Before adding the gate to our gatingSet object we should visualize it.
+
+```{r, out.width = "100%"}
+ggcyto(gs[[1:3]], aes(x = SSC, y = FSC), subset = "root") +
+  geom_hex(bins = 200) +
+  geom_gate(non.debris.gate) +
+  ggcyto_par_set(limits = "instrument") +
+  geom_stats(type = c("percent", "count"), location = "gate", adjust = c(0.15,0.85))+
+  theme(complete = TRUE,
+        axis.text.x = element_text(angle = 45)) +
+  theme_bw()
+```
+We can now add the gate to our gatingSet object. The recompute() function performs the actual filtering operation on our data. In addition, we plot the gating tree.
+
+```{r}
+# add the gate to the GatingSet
+gs_pop_add(gs, non.debris.gate, parent = "root")
+
+# recompute the GatingSet
+recompute(gs)
+
+# plot the GatingSet to verify the underlying hierarchy
+plot(gs)
+```
+
+If we want, we can plot our first gate for our entire gatingSet. Note that this operation can take some time depending on the size of your gatingSet.
+
+```{r, out.width="100%"}
+ggcyto(gs[[5:15]], aes(x = SSC, y = FSC), subset = "root") +
+  geom_hex(bins = 200) +
+  geom_gate(non.debris.gate) +
+  ggcyto_par_set(limits = "instrument") +
+  geom_stats() +
+  theme(complete = TRUE,
+        axis.text.x = element_text(angle = 45))
+```
+
+Gating "splits" your initial population of cells into two (or more) subpopulations: one that meets your gating criteria and one that does not. You can extract some statistics from your (sub)population of interest. To save space, we only show the first lines of data. The entire table will be exported as a csv file to our data.output folder. 
+
+```{r}
+non_debris_stats <- gs_pop_get_count_fast(gs, statistic = c("count")) |>
+	as_tibble() |> 
+  mutate(Freq = Count / ParentCount) |>
+  select(name, Parent, ParentCount, Population, Count, Freq)
+non_debris_stats
+```
+
+### Gating GFP-positive cells
+We want to focus our analysis on cells successfully transfected with GFP-tagged KRAS. Random noise as well as autofluorescence from untransfected cells inevitably leads to some degree of "background" signal in the GFP channel. We can determine the threshold for background signals using our unstained and MyoHC control. Let's plot the GFP intensitiy distribution for these two samples.
+
+```{r, out.width="100%"}
+ggcyto(gs[[c(1,3)]], aes(x = GFP), subset = "NonDebris") +
+  geom_density(fill = "palegreen") +
+  ggcyto_par_set(limits = "instrument") +
+  scale_x_flowjo_biexp() +
+  theme_bw()
+```
+
+Although the differences are small, these two distributions are not identical, indicating that background intenities are fluctuating across samples and a threshold intensity for GFP-positive cells should therefore consider both distributions. 
+Conceptually, we apply the quantile_gate() function that determines a cutpoint by the events quantile. In our case, we set the *probs* argument to 0.99 to find a cutpoint that encompasses 99% of the data. Applying this function to both negative GFP controls and averaging the result, we obtain a cutpoint for our final gate. 
+
+**!!! This code will be simplified once we agree on the precise order of controls that should be used for each differentiation assay !!!**
+
+```{r}
+#extract the data from the NonDebris population
+nonDebris.data <- gs_pop_get_data(gs[[c(1,3)]], "NonDebris")
+
+# change the object class to flowSet
+## necessary to apply the quantileGate function from flowWorkspace,
+nonDebris.data <- cytoset_to_flowSet(nonDebris.data)
+
+# apply the quantileGate on both negative controls and assign result to gfp.test.gate
+gfp.test.gate <- fsApply(nonDebris.data, 
+                         function(fr) openCyto:::.quantileGate(fr, 
+                                                               channels = "GFP",
+                                                               probs = 0.99))
+
+a <- names(gfp.test.gate[1])
+b <- names(gfp.test.gate[2])
+df <- data.frame(min = c(gfp.test.gate[[a]]@min,
+                         gfp.test.gate[[b]]@min),
+# note: we do not need the "max" column technically, it will always be Inf
+                 max = c(gfp.test.gate[[a]]@max,
+                       gfp.test.gate[[b]]@max))
+```
+
+We can create the final GFP gate by averaging the cutpoints determined above. You can type mean(df$min) into the console to get this mean value.
+
+```{r}
+gfp.gate <- rectangleGate("GFP" = c(mean(df$min), Inf), 
+                          filterId = "GFP+")
+```
+
+We then plot our result as a visual control.
+
+```{r, out.width="100%"}
+ggcyto(gs[[5:15]], aes(x = GFP), subset = "NonDebris") +
+  geom_density(fill = "palegreen") +
+  geom_gate(gfp.gate) +
+  ggcyto_par_set(limits = "instrument") +
+  scale_x_flowjo_biexp() +
+  theme_bw()
+```
+We then add the gate to our gatingSet object. The recompute() function performs the actual filtering operation on our data. In addition, we plot the gating tree.
+We then add gatingSet object, plot the gating tree and recompute the gatingSet. When adding the gate to the gatingSet, we need to specify the parent population (NonDebris in this case). 
+
+```{r}
+# add the gate to the GatingSet
+gs_pop_add(gs,gfp.gate, parent = "NonDebris")
+
+# plot the GatingSet to verify the underlying hierarchy
+plot(gs)
+
+#recompute the Gating Set
+recompute(gs)
+```
+
+We can again retrieve population statistics (to save space, only the head of the data is displayed).
+
+```{r}
+gfp.positive.stats <- data.frame(gs_pop_get_count_fast(gs, 
+                                                       statistic="count")) %>%
+  mutate("Freq" = Count/ParentCount) %>% 
+  select(1,3,5,2,4,6)
+
+print(head(gfp.positive.stats))
+```
+
+### Identify and select MYHC-positive cells
+The same procedure is applied to gate for myosin-positive cells. 
+
+We first check the intensity distribution in the APC channel.  
+**Note:** we have to plot the intensity distribution of the "NonDebris" population and **not** the "GFP+" population. The latter contains, for our GFP-negative controls, only very few cells for which plotting intensity distributions does not make sense.
+
+MYHC-negative controls are on the left and in the middle.
+
+```{r, out.width="100%"}
+ggcyto(gs[[c(1,2)]],aes(x = APC), subset="NonDebris")+
+  geom_density(fill="pink")+
+  ggcyto_par_set(limits = "instrument")+
+  scale_x_flowjo_biexp()+
+  theme_bw()
+```
+
+We retrieve data from the NonDebris population, create a flowSet from a cytoSet and apply a quantile gate to obtain a threshold value that excludes 99% of the cells. 
+
+```{r}
+nonDebris.data <- gs_pop_get_data(gs[[1:3]], "NonDebris")
+nonDebris.data <- cytoset_to_flowSet(nonDebris.data)
+
+myo.test.gate <- fsApply(nonDebris.data, function(fr) openCyto:::.quantileGate(fr, channels = "APC", probs = 0.99))
+
+c <- names(myo.test.gate[1])
+d <- names(myo.test.gate[2])
+df <- data.frame(min = c(myo.test.gate[[c]]@min,
+                         myo.test.gate[[d]]@min),
+                 max = c(myo.test.gate[[c]]@max,
+                         myo.test.gate[[d]]@max))
+```
+
+We then average both threshold intensities to create the final gate.
+
+```{r}
+myo.gate <- rectangleGate("APC" = c(mean(df$min), Inf), 
+                          filterId = "MYO+")
+```
+
+We check the gate in a plot...
+
+```{r, out.width="100%"}
+ggcyto(gs[[c(1,2)]],aes(x = APC), subset="NonDebris")+
+  geom_density(fill="pink")+
+  geom_gate(myo.gate)+
+  ggcyto_par_set(limits = "instrument")+
+  scale_x_flowjo_biexp()+
+  theme_bw()
+```
+
+...and add the gate to the gatingSet, plot the gating tree and recompute the gatingSet. When adding the gate to the gatingSet, we need to specify the parent population, in this case the GFP-positive ("GFP+") population.
+
+```{r}
+#add gate to GFP+ population
+gs_pop_add(gs,myo.gate, parent = "GFP+")
+
+#plot the GatingSet
+plot(gs)
+
+#recompute
+recompute(gs)
+```
+
+We retrieve population statistics as before.
+
+```{r}
+myo.positive.stats <- data.frame(gs_pop_get_count_fast(gs, 
+                                                       statistic = "count")) %>%
+  mutate("Freq" = Count/ParentCount) %>% 
+  select(1,3,5,2,4,6)
+
+print(head(myo.positive.stats))
+```
+
+### Gating MYHC-positive **sub**populations
+Let's plot the APC distribution of the myosin-positive population for some samples.
+
+```{r, out.width="100%"}
+ggcyto(gs[[5:15]], aes(x = APC), subset = "MYO+") +
+  geom_density(fill = "pink") +
+  ggcyto_par_set(limits = "instrument") +
+  scale_x_flowjo_biexp()+
+  theme_bw()
+```
+
+Two distinct peaks can be identified in these density plots, indicating the presence of distinct subpopulations in our myosin-positive population: a population of cells with low myosin expression and a population of cells with high myosin expression. Cells with higher myosin expression are in a more advanced state of differentiation than cells with lower myosin expression. 
+
+We can also visualize the presence of these two subpopulations in a 2D scatter plot (GFP vs APC).
+
+```{r, out.width="100%"}
+ggcyto(gs[[5:15]], aes(x = GFP, y = APC), subset = "MYO+") +
+  geom_point(size = 0.01, alpha = 0.5) +
+  ggcyto_par_set(limits = "instrument") +
+  scale_x_flowjo_biexp() +
+  scale_y_flowjo_biexp() +
+  theme(axis.text.x = element_text(angle = 45))+
+  theme_bw()
+```
+
+There's no single cutpoint intensity that accurately splits our myosin-positive populations into their two subpopulations for each sample. We need some data-driven gating function that can indetify this cutpoint on a per-sample basis. The gate_flowclust_1d() function from the openCyto package can be used for this purpose.
+
+
+**Note 1:** Add some description of the algorithm behind this function: how it works, rationale, why this can be used here.
+**Note 2:** How to get rid of this annoying warning message? (Aurélien)
+
+The code below extracts the data from our myosin-positive population and transforms the generated cytoSet to a flowSet. It then applies the gate_flowclust_1d() function to all the samples and saves the respective cutpoint it determined.
+
+```{r message=FALSE}
+myo.gate.data <- gs_pop_get_data(gs, "MYO+")
+myo.gate.data <- cytoset_to_flowSet(myo.gate.data)
+
+myosin.flowclust.gate <- fsApply(myo.gate.data, function(fr) 
+  gate_flowclust_1d(fr,params = "APC", K=2, cutpoint_method = "min_density", filterId = "MYO-high"))
+```
+
+The created gate(s) can be visualized again in a density or 2d scatter plot. 
+
+**Note:** Again, annoying warning message, hidden with warning=FALSE. (Aurélien)
+```{r, warning=FALSE, out.width="100%"}
+ggcyto(gs[[5:15]], aes(x = APC), subset = "MYO+")+
+  geom_density(fill = "pink")+
+  geom_gate(myosin.flowclust.gate)+
+  scale_x_flowjo_biexp()+
+  theme_bw()
+```
+
+```{r, warning=FALSE, out.width="100%"}
+ggcyto(gs[[5:15]], aes(x = GFP, y = APC), subset = "MYO+")+
+  geom_point(size = 0.05, alpha = 0.5)+
+  geom_gate(myosin.flowclust.gate)+
+  scale_x_flowjo_biexp()+
+  scale_y_flowjo_biexp()+
+  theme(axis.text.x = element_text(angle = 45))+
+  theme_bw()
+```
+
+We add the gate to the gatingSet, plot the gating tree and recompute the gatingSet.
+```{r}
+# add the gate to the GatingSet
+gs_pop_add(gs, myosin.flowclust.gate, parent = "MYO+")
+
+# plot the GatingSet to verify the underlying hierarchy
+plot(gs)
+
+#recompute the Gating Set
+recompute(gs)
+```
+
+Let's visualize the final gate with the corresponding population statistics.
+
+```{r, warning=FALSE, out.width="100%"}
+ggcyto(gs[[5:15]], aes(x = GFP, y = APC), subset = "MYO+") +
+  geom_point(size = 0.05, alpha = 0.5) +
+  geom_gate(myosin.flowclust.gate) +
+  scale_x_flowjo_biexp() +
+  scale_y_flowjo_biexp() +
+  ggcyto_par_set(limits = "instrument") +
+  geom_stats()+
+  theme(axis.text.x = element_text(angle = 45))+
+  theme_bw()
+```
+
+We finally retrieve the population statistics.
+
+```{r}
+# get stats of the gated population
+myo.positive.count <- data.frame(gs_pop_get_count_fast(gs, statistic = c("count")))
+myo.positive.stats <- myo.positive.count %>% mutate("Freq" = Count/ParentCount) %>% select(1,3,5,2,4,6)
+view(head(myo.positive.stats))
+```
+
+We can filter the data to only contain the count and percentage of myosin-high cells in our myosin-positive population.
+
+```{r, out.width="75%"}
+myo.positive.stats.filtered <- myo.positive.stats %>% 
+  dplyr::filter(Population == "/NonDebris/GFP+/MYO+/MYO-high")
+
+wells <- str_extract(myo.positive.stats.filtered$name, "[A-Z][0-9]+")
+
+myo.positive.stats.filtered <- myo.positive.stats.filtered %>% 
+  mutate(well = wells)
+
+print(myo.positive.stats.filtered)
+```
+
+If we want, we can plot these results.
+
+```{r, out.width="100%"}
+#plot results with geom_col()
+ggplot(myo.positive.stats.filtered, aes(x = well, y = Freq))+ 
+  geom_col()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, 
+                                   face = "bold", 
+                                   size = 14, 
+                                   vjust = 0.7),
+        axis.ticks = element_blank())+
+  ylab(label = "MYO-high cells (% of MYO+ cells)")+
+  xlab(label = "")+
+  scale_y_continuous(expand=c(0,0), limits = c(0,max(myo.positive.stats.filtered$Freq)+0.1))
+```
