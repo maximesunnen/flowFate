@@ -1,9 +1,14 @@
 Package: flowFate
-Title: shiny app for the analysis of flow cytometry data
+Title: Shiny App for Flow Cytometry Data
 Version: 0.0.0.9000
-Authors@R: person('Maxime', 'Sünnen', email = 'AUTHOR@MAIL.COM', role = c('cre', 'aut'))
+Authors@R: c(
+     person("Maxime", "Sünnen", email = "AUTHOR@MAIL.COM", role = c("cre", "aut")),
+     person("Aurélien", "Ginolhac", email = "ginolhac@gmail,com", role = c("aut"))
+   )
 Description: Shiny app for the analysis of flow cytometry data using the flowCore and flowWorkspace framework.
 License: MIT + file LICENSE
+Depends: 
+    R (>= 4.1.0)
 Imports: 
     config (>= 0.3.1),
     golem (>= 0.3.5),
