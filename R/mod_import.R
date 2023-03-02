@@ -24,8 +24,8 @@ mod_import_ui <- function(id){
 #'
 #' @noRd
 mod_import_server <- function(id){
+  options(shiny.maxRequestSize = 60 * 1024^2)
   moduleServer(id, function(input, output, session){
-    options(shiny.maxRequestSize = 60 * 1024^2)
     ns <- session$ns
     observeEvent(input$filename, {
       #nb_ds <- n_datasets(input$filename)
