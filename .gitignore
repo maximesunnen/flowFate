@@ -1,1 +1,5 @@
 .Rproj.user
+/.Rprofile
+/*.Rproj
+/renv/
+/dev/*/
