@@ -18,8 +18,6 @@ mod_my_module_ui <- function(id){
     actionButton(ns("Submit"), "Submit"),
     tableOutput(ns("files")),
 
-    textOutput(ns("text")),
-
     textOutput(ns("datasets"))
   )
 }
@@ -32,15 +30,19 @@ mod_my_module_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
-    output$files <- renderTable({input$filename})
+    #output$files <- renderTable({input$filename})
 
-#datasets is not a reactive expression
+#datasets is now a reactive expression
     datasets <- reactive({n_datasets(input$filename$datapath)})
 
-    output$text <- renderText({"Hello Aurélien"})
+
 
 #we can call the reactive expression created above using datasets()
-    observeEvent(input$filename, {output$datasets <- renderText({datasets()})})
+    observeEvent(input$Submit,
+                 {output$datasets <- renderText({
+                   glue::glue("Your FCS file contains {datasets()} datasets.")})
+                   output$files <- renderTable({input$filename})})
+
   })
 }
 
