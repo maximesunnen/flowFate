@@ -15,7 +15,7 @@ mod_my_module_ui <- function(id){
     fileInput(inputId = ns("filename"),
               accept = ".fcs",
               label = "Select FCS file"),
-
+    actionButton(ns("Submit"), "Submit"),
     tableOutput(ns("files")),
 
     textOutput(ns("text")),
@@ -40,9 +40,11 @@ mod_my_module_server <- function(id){
     output$text <- renderText({"Hello Aurélien"})
 
 #we can call the reactive expression created above using datasets()
-    output$datasets <- renderText({datasets()})
+    observeEvent(input$filename, {output$datasets <- renderText({datasets()})})
   })
 }
+
+
 
 n_datasets <- function(filename) {
   # Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
