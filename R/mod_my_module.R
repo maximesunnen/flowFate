@@ -9,21 +9,25 @@
 #' @importFrom shiny NS tagList
 mod_my_module_ui <- function(id){
   ns <- NS(id)
+  sidebarLayout(
+    sidebarPanel(
   tagList(
-    h1("Hello, this is my first {golem}"),
-
     fileInput(inputId = ns("filename"),
               accept = ".fcs",
               label = "Select FCS file"),
     actionButton(ns("Submit"), "Submit"),
+
+
+  )),
+  mainPanel(
+    h1("Hello, this is my first {golem}"),
     tableOutput(ns("files")),
-
     textOutput(ns("datasets")),
-
-    h3("Here are your datasets!"),
-
+    uiOutput(ns("your_datasets")),
     tableOutput(ns("individual_FCS"))
-  )
+
+  ))
+
 }
 
 #' my_module Server Functions
@@ -58,21 +62,22 @@ mod_my_module_server <- function(id){
                      # write the individual flowframe objects to individual FCS files
                      write.FCS(fr, fs::path("fcs_input", glue::glue("dataset_{fr@description$`$WELLID`}.fcs")))
                    })
-
+                   output$your_datasets <- renderUI({h2("Here are your datasets!")})
                    output$individual_FCS <- renderTable({fs::dir_ls("fcs_input",
                                                                     glob = "*.fcs")})
+
+
+                   })
+
+
 
                    fs <- read.flowSet(fs::dir_ls("fcs_input", glob = "*.fcs"),
                                       truncate_max_range = FALSE,
                                       alter.names = TRUE,
                                       transformation = FALSE)
-
-
-
                    })
+  }
 
-  })
-}
 
 library(purrr)
 
