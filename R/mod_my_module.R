@@ -18,7 +18,11 @@ mod_my_module_ui <- function(id){
     actionButton(ns("Submit"), "Submit"),
     tableOutput(ns("files")),
 
-    textOutput(ns("datasets"))
+    textOutput(ns("datasets")),
+
+    h3("Here are your datasets!"),
+
+    tableOutput(ns("individual_FCS"))
   )
 }
 
@@ -41,12 +45,36 @@ mod_my_module_server <- function(id){
     observeEvent(input$Submit,
                  {output$datasets <- renderText({
                    glue::glue("Your FCS file contains {datasets()} datasets.")})
-                   output$files <- renderTable({input$filename})})
+                   output$files <- renderTable({input$filename})
+
+                   walk(seq_len(datasets()), \(x) {
+                     fr <- read.FCS(input$filename$datapath,
+                                    dataset = x,
+                                    transformation = FALSE,
+                                    truncate_max_range = FALSE,
+                                    alter.names = TRUE,
+                                    emptyValue = FALSE)
+                     #message(paste("Write file #", x, "well", fr@description$`$WELLID`))
+                     # write the individual flowframe objects to individual FCS files
+                     write.FCS(fr, fs::path("fcs_input", glue::glue("dataset_{fr@description$`$WELLID`}.fcs")))
+                   })
+
+                   output$individual_FCS <- renderTable({fs::dir_ls("fcs_input",
+                                                                    glob = "*.fcs")})
+
+                   fs <- read.flowSet(fs::dir_ls("fcs_input", glob = "*.fcs"),
+                                      truncate_max_range = FALSE,
+                                      alter.names = TRUE,
+                                      transformation = FALSE)
+
+
+
+                   })
 
   })
 }
 
-
+library(purrr)
 
 n_datasets <- function(filename) {
   # Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
