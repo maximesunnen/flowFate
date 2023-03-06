@@ -2,6 +2,7 @@
 
 export(run_app)
 import(flowCore)
+import(fs)
 import(shiny)
 importFrom(golem,activate_js)
 importFrom(golem,add_resource_path)

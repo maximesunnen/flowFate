@@ -38,43 +38,32 @@ mod_import_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
-    #output$files <- renderTable({input$filename})
-
-    #datasets is now a reactive expression
-    datasets <- reactive({n_datasets(input$filename$datapath)})
+    # datasets is now a reactive expression
+    nb_ds <- reactive({n_datasets(input$filename$datapath)})
 
 
 
     #we can call the reactive expression created above using datasets()
-    observeEvent(input$Submit,
-                 {output$datasets <- renderText({
-                   glue::glue("Your FCS file contains {datasets()} datasets.")})
-                 output$files <- renderTable({input$filename})
+    observeEvent(input$Submit, {
+      output$datasets <- renderText({
+        glue::glue("Your FCS file contains {nb_ds()} datasets.")})
+      output$files <- renderTable({input$filename})
+      # FIXME should be reiniatialized when a new FCS file is loaded
+      individual_fcs <- split_1_fcs(nb_ds(), input$filename$datapath)
 
-                 # walk(seq_len(datasets()), \(x) {
-                 #   fr <- read.FCS(input$filename$datapath,
-                 #                  dataset = x,
-                 #                  transformation = FALSE,
-                 #                  truncate_max_range = FALSE,
-                 #                  alter.names = TRUE,
-                 #                  emptyValue = FALSE)
-                 #   #message(paste("Write file #", x, "well", fr@description$`$WELLID`))
-                 #   # write the individual flowframe objects to individual FCS files
-                 #   write.FCS(fr, fs::path("fcs_input", glue::glue("dataset_{fr@description$`$WELLID`}.fcs")))
-                 # })
-                 # output$your_datasets <- renderUI({h2("Here are your datasets!")})
-                 # output$individual_FCS <- renderTable({fs::dir_ls("fcs_input",
-                 #                                                  glob = "*.fcs")})
+      output$your_datasets <- renderUI({h2("Here are your datasets!")})
+      output$individual_FCS <- renderTable({fs::dir_ls(individual_fcs,
+                                                       glob = "*.fcs")})
+      fs <- flowCore::read.flowSet(fs::dir_ls(individual_fcs, glob = "*.fcs"),
+                          truncate_max_range = FALSE,
+                          alter.names = TRUE,
+                          transformation = FALSE)
 
-
-                 })
+    })
 
 
 
-    # fs <- read.flowSet(fs::dir_ls("fcs_input", glob = "*.fcs"),
-    #                    truncate_max_range = FALSE,
-    #                    alter.names = TRUE,
-    #                    transformation = FALSE)
+
   })
 }
 
@@ -86,9 +75,8 @@ mod_import_server <- function(id){
 #'
 #' @noRd
 #'
-#' @importFrom purrr walk
 #' @import flowCore
-
+#' @return integer
 n_datasets <- function(filename) {
   # Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
   con <- file(filename, open = "rb")
@@ -114,8 +102,37 @@ n_datasets <- function(filename) {
     nd <- as.numeric(this.txt[["$NEXTDATA"]])
     txt.list[[i]] <- this.txt
   }
-  message("found", length(txt.list), "nb datasets")
+  close(con)
+  #message("found", length(txt.list), "nb datasets")
   length(txt.list)
+}
+
+#' @description Split multiple FCS datasets into individual fcs files
+#'
+#' @param dataset a flowCore dataset
+#'
+#' @noRd
+#'
+#' @importFrom purrr walk
+#' @import flowCore
+#' @import fs
+#' @return folder path of individual fcs
+#'
+split_1_fcs <- function(nb, input_file) {
+
+  if (!dir_exists(path(path_dir(input_file), "fcs_input"))) dir_create(path(path_dir(input_file), "fcs_input"))
+  walk(seq_len(nb), \(x) {
+    fr <- read.FCS(input_file,
+                   dataset = x,
+                   transformation = FALSE,
+                   truncate_max_range = FALSE,
+                   alter.names = TRUE,
+                   emptyValue = FALSE)
+    #message(paste("Write file #", x, "well", fr@description$`$WELLID`))
+    # write the individual flowframe objects to individual FCS files
+    write.FCS(fr, path(path_dir(input_file), "fcs_input", glue::glue("dataset_{fr@description$`$WELLID`}.fcs")))
+  })
+  path(path_dir(input_file), "fcs_input")
 }
 
 ## To be copied in the UI
