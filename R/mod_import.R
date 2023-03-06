@@ -1,4 +1,4 @@
-#' import UI Function
+#' my_module UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -8,45 +8,87 @@
 #'
 #' @importFrom shiny NS tagList
 mod_import_ui <- function(id){
-  h1("Hello")
   ns <- NS(id)
-  tagList(
-    fileInput(inputId = ns("filename"),
-              accept = ".fcs",
-              label = "Select FCS file"),
+  sidebarLayout(
+    sidebarPanel(
+      tagList(
+        fileInput(inputId = ns("filename"),
+                  accept = ".fcs",
+                  label = "Select FCS file"),
+        actionButton(ns("Submit"), "Submit"),
 
-    #actionButton(inputId = ns("validate"),
-                 #label = "Submit"),
 
-    tableOutput(ns("files")),
+      )),
+    mainPanel(
+      h1("Hello, this is my first {golem}"),
+      tableOutput(ns("files")),
+      textOutput(ns("datasets")),
+      uiOutput(ns("your_datasets")),
+      tableOutput(ns("individual_FCS"))
 
-    textOutput(ns("datasets"))
-  )
+    ))
+
 }
 
-#' import Server Functions
+#' my_module Server Functions
 #'
 #' @noRd
 mod_import_server <- function(id){
   options(shiny.maxRequestSize = 60 * 1024^2)
-  moduleServer(id, function(input, output, session){
+  moduleServer( id, function(input, output, session){
     ns <- session$ns
-    datasets <- n_datasets(input$filename$name)
 
-    #observeEvent(input$filename, {
-      output$datasets <- renderText({"Hello"})
-      output$files <- renderTable({input$filename})
-    #}
-    })
+    #output$files <- renderTable({input$filename})
+
+    #datasets is now a reactive expression
+    datasets <- reactive({n_datasets(input$filename$datapath)})
+
+
+
+    #we can call the reactive expression created above using datasets()
+    observeEvent(input$Submit,
+                 {output$datasets <- renderText({
+                   glue::glue("Your FCS file contains {datasets()} datasets.")})
+                 output$files <- renderTable({input$filename})
+
+                 # walk(seq_len(datasets()), \(x) {
+                 #   fr <- read.FCS(input$filename$datapath,
+                 #                  dataset = x,
+                 #                  transformation = FALSE,
+                 #                  truncate_max_range = FALSE,
+                 #                  alter.names = TRUE,
+                 #                  emptyValue = FALSE)
+                 #   #message(paste("Write file #", x, "well", fr@description$`$WELLID`))
+                 #   # write the individual flowframe objects to individual FCS files
+                 #   write.FCS(fr, fs::path("fcs_input", glue::glue("dataset_{fr@description$`$WELLID`}.fcs")))
+                 # })
+                 # output$your_datasets <- renderUI({h2("Here are your datasets!")})
+                 # output$individual_FCS <- renderTable({fs::dir_ls("fcs_input",
+                 #                                                  glob = "*.fcs")})
+
+
+                 })
+
+
+
+    # fs <- read.flowSet(fs::dir_ls("fcs_input", glob = "*.fcs"),
+    #                    truncate_max_range = FALSE,
+    #                    alter.names = TRUE,
+    #                    transformation = FALSE)
+  })
 }
 
 
 
-#' Count number of datasets in a FCS file
+#' @description Count how many datasets are in a FCS file
 #'
-#' @param filename FCS filename,
+#' @param filename
 #'
+#' @noRd
+#'
+#' @importFrom purrr walk
 #' @import flowCore
+
 n_datasets <- function(filename) {
   # Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
   con <- file(filename, open = "rb")
@@ -77,7 +119,7 @@ n_datasets <- function(filename) {
 }
 
 ## To be copied in the UI
-# mod_import_ui("import_1")
+# mod_my_module_ui("my_module_1")
 
 ## To be copied in the server
-# mod_import_server("import_1")
+# mod_my_module_server("my_module_1")
