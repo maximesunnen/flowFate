@@ -38,32 +38,23 @@ mod_import_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
-    # datasets is now a reactive expression
-    nb_ds <- reactive({n_datasets(input$filename$datapath)})
-
-
-
     #we can call the reactive expression created above using datasets()
     observeEvent(input$Submit, {
+      # datasets is now a reactive expression FIXME should wait for Submit action
+      nb_ds <- reactive({n_datasets(input$filename$datapath)})
       output$datasets <- renderText({
         glue::glue("Your FCS file contains {nb_ds()} datasets.")})
       output$files <- renderTable({input$filename})
-      # FIXME should be reiniatialized when a new FCS file is loaded
       individual_fcs <- split_1_fcs(nb_ds(), input$filename$datapath)
-
-      output$your_datasets <- renderUI({h2("Here are your datasets!")})
-      output$individual_FCS <- renderTable({fs::dir_ls(individual_fcs,
-                                                       glob = "*.fcs")})
       fs <- flowCore::read.flowSet(fs::dir_ls(individual_fcs, glob = "*.fcs"),
                           truncate_max_range = FALSE,
                           alter.names = TRUE,
                           transformation = FALSE)
-
+      pData(fs)$well <- stringr::str_extract(pData(fs)$name, "[A-Z]\\d{2}")
+      output$your_datasets <- renderUI({h2("Here are your datasets!")})
+      output$individual_FCS <- renderTable({pData(fs)})
+      gs <- flowWorkspace::GatingSet(fs)
     })
-
-
-
-
   })
 }
 

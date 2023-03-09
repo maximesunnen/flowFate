@@ -9,6 +9,14 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(flowCore)
+library(ggcyto)
+library(openCyto)
+library(gtools)
+library(patchwork)
+library(purrr)
+library(stringr)
+library(dplyr)
 ```
 ## Notes before reading this document
 - for {golem}: Inside your Vignettes folder: call usethis::use_vignette() to create the skeleton for a Vignette, which will then be used as package documentation. Use this .Rmd document as the package vignette.
@@ -35,16 +43,6 @@ library(pacman)
 pacman::p_load(tidyverse, flowCore, ggcyto, knitr, openCyto, gtools, patchwork)
 ```
 
-```{r, include = FALSE}
-library(flowCore)
-library(ggcyto)
-library(openCyto)
-library(gtools)
-library(patchwork)
-library(purrr)
-library(stringr)
-library(dplyr)
-```
 
 
 ## Preliminary steps
@@ -148,6 +146,7 @@ fs <- read.flowSet(fs::dir_ls("fcs_input", glob = "*.fcs"),
 									 truncate_max_range = FALSE,
 									 alter.names = TRUE,
 									 transformation = FALSE)
+fs
 ```
 
 You can click on the fs variable in the R environment to inspect the flowSet we've created. A flowSet consists of different flowFrames, each flowFrame collecting data from a single sample analyzed on your FACS machine. In case we need it later, we add the well id to the phenotypic data (pData) of our flowset using the code below.
@@ -157,15 +156,6 @@ pData(fs)$well <- str_extract(pData(fs)$name, "[A-Z]\\d{2}")
 pData(fs)
 ```
 
-FACS machines typically have predefined channel names that are not always identical to the fluorophores you're analyzing. Even worse, channel names are not consistent across FACS machines from different manufacturers. We therefore greatly facilitate our analysis by changing these channel names to the fluorophores we're analyzing. By running *colnames(fs)* in the command line you get a list of your FACS machine's channel names. 
-
-On the left side of the code below, you write (between "") the name of the channel you want to change. On the right side, you write (between "") the name you want to change it to. In the first line, we change the channel name *GRN.B.HLin* to *GFP*. Delete the lines that are not necessary. Skip this code block if you don't want to perform any changes to your channel names.
-```{r}
-colnames(fs)[colnames(fs) == "GRN.B.HLin"]  <- "GFP"
-colnames(fs)[colnames(fs) == "FSC.HLin"]    <- "FSC"
-colnames(fs)[colnames(fs) == "SSC.HLin"]    <- "SSC"
-colnames(fs)[colnames(fs) == "RED.R.HLin"]  <- "APC"
-```
 
 ## Compensation
 
