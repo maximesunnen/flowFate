@@ -37,18 +37,21 @@ mod_curate_server <- function(id,r){
             setProgress(message = 'Plotting in progress',
                         detail = 'Plotting your data...',
                         value = 3)
-          output$debris_plot <- renderPlot({
-                ggcyto(r$gs, aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
-                  geom_hex(bins = 150) +
-                  theme_bw()
-                })
+
           setProgress(message = 'Plotting in progress',
                       detail = 'Displaying your data...',
                       value = 10)
 
           output$Curation_header <- renderUI({h2("Curation")})
+          output$debris_plot <- renderPlot({
 
+            ggcyto(r$gs, aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+              geom_hex(bins = 150) +
+              theme_bw()
+          })
           })}) %>% bindEvent(r$Submit, ignoreInit = TRUE)
+
+
         })
   }
 
