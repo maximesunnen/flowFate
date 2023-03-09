@@ -79,6 +79,7 @@ mod_import_server <- function(id, r){
         gs <- GatingSet(fs)
         r$nb_ds <- nb_ds
         r$Submit <- input$Submit
+        r$gs <- gs
       })
     })
   })

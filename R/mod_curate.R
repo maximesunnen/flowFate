@@ -7,13 +7,17 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
+#' @import ggcyto
+#' @import ggplot2
+
 mod_curate_ui <- function(id){
   ns <- NS(id)
   sidebarLayout(
     sidebarPanel(),
     mainPanel(
       h2("Curation"),
-      textOutput(ns("cur_ds"))
+      textOutput(ns("cur_ds")),
+      plotOutput(ns("debris_plot"))
     ))
 }
 
@@ -25,6 +29,12 @@ mod_curate_server <- function(id,r){
     ns <- session$ns
     observeEvent(r$Submit, {output$cur_ds <- renderText({
       glue::glue("Cur contains {r$nb_ds()} datasets.")})})
+    output$debris_plot <- renderPlot({
+      ggcyto(r$gs, aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+        geom_hex(bins = 150) +
+        theme_bw()
+    })
+
   })
 }
 
