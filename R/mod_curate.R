@@ -15,7 +15,7 @@ mod_curate_ui <- function(id){
   sidebarLayout(
     sidebarPanel(),
     mainPanel(
-      h2("Curation"),
+      uiOutput(ns("Curation_header")),
       textOutput(ns("cur_ds")),
       plotOutput(ns("debris_plot"))
     ))
@@ -27,14 +27,20 @@ mod_curate_ui <- function(id){
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    observeEvent(r$Submit, {output$cur_ds <- renderText({
-      glue::glue("Cur contains {r$nb_ds()} datasets.")})})
-    output$debris_plot <- renderPlot({
-      ggcyto(r$gs, aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
-        geom_hex(bins = 150) +
-        theme_bw()
-    })
+    observeEvent(r$Submit, {
 
+      output$cur_ds <- renderText({
+      glue::glue("Cur contains {r$nb_ds()} datasets.")
+        })
+
+      output$debris_plot <- renderPlot({
+        ggcyto(r$gs, aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+          geom_hex(bins = 150) +
+          theme_bw()
+        })
+
+      output$Curation_header <- renderUI({h2("Curation")})
+    })
   })
 }
 
