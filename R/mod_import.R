@@ -47,24 +47,39 @@ mod_import_server <- function(id, r){
 
     #we can call the reactive expression created above using datasets()
     observeEvent(input$Submit, {
-      # datasets is now a reactive expression FIXME should wait for Submit action
-      nb_ds <- reactive({n_datasets(input$filename$datapath)})
-      output$datasets <- renderText({
-        glue::glue("Your FCS file contains {nb_ds()} datasets.")})
-      output$files <- renderTable({input$filename})
-      individual_fcs <- split_1_fcs(nb_ds(), input$filename$datapath)
-      fs <- read.flowSet(fs::dir_ls(individual_fcs, glob = "*.fcs"),
-                         truncate_max_range = FALSE,
-                         alter.names = TRUE,
-                         transformation = FALSE)
-      pData(fs)$well <- str_extract(pData(fs)$name, "[A-Z]\\d{2}")
-      output$your_datasets <- renderUI({h2("Here are your datasets!")})
-      output$individual_FCS <- renderDT({pData(fs)},
-                                        rownames = FALSE,
-                                        class = "cell-border stripe")
-      gs <- GatingSet(fs)
-      r$nb_ds <- nb_ds
-      r$Submit <- input$Submit
+      withProgress(min = 1, max = 10, expr = {
+
+        setProgress(message = 'Calculation in progress',
+                    detail = 'loading data...',
+                    value = 3)
+        # datasets is now a reactive expression FIXME should wait for Submit action
+        nb_ds <- reactive({n_datasets(input$filename$datapath)})
+        setProgress(message = 'Calculation in progress',
+                    detail = 'counting datasets',
+                    value = 5)
+        output$datasets <- renderText({
+          glue::glue("Your FCS file contains {nb_ds()} datasets.")})
+        output$files <- renderTable({input$filename})
+        individual_fcs <- split_1_fcs(nb_ds(), input$filename$datapath)
+        setProgress(message = 'Calculation in progress',
+                    detail = 'splitting dataset...',
+                    value = 7)
+        fs <- read.flowSet(fs::dir_ls(individual_fcs, glob = "*.fcs"),
+                           truncate_max_range = FALSE,
+                           alter.names = TRUE,
+                           transformation = FALSE)
+        setProgress(message = 'Calculation in progress',
+                    detail = 'reading individual data...',
+                    value = 10)
+        pData(fs)$well <- str_extract(pData(fs)$name, "[A-Z]\\d{2}")
+        output$your_datasets <- renderUI({h2("Here are your datasets!")})
+        output$individual_FCS <- renderDT({pData(fs)},
+                                          rownames = FALSE,
+                                          class = "cell-border stripe")
+        gs <- GatingSet(fs)
+        r$nb_ds <- nb_ds
+        r$Submit <- input$Submit
+      })
     })
   })
 }
