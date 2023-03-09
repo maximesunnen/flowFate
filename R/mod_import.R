@@ -33,7 +33,7 @@ mod_import_ui <- function(id){
 #' my_module Server Functions
 #'
 #' @noRd
-mod_import_server <- function(id){
+mod_import_server <- function(id, r){
   options(shiny.maxRequestSize = 60 * 1024^2)
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -54,6 +54,8 @@ mod_import_server <- function(id){
       output$your_datasets <- renderUI({h2("Here are your datasets!")})
       output$individual_FCS <- renderTable({pData(fs)})
       gs <- flowWorkspace::GatingSet(fs)
+      r$nb_ds <- nb_ds
+      r$Submit <- input$Submit
     })
   })
 }

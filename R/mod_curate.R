@@ -20,11 +20,11 @@ mod_curate_ui <- function(id){
 #' curate Server Functions
 #'
 #' @noRd
-mod_curate_server <- function(id){
+mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    output$cur_ds <- renderText({
-      glue::glue("Cur ontains {nb_ds()} datasets.")})
+    observeEvent(r$Submit, {output$cur_ds <- renderText({
+      glue::glue("Cur contains {r$nb_ds()} datasets.")})})
   })
 }
 
