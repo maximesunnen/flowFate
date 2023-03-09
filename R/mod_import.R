@@ -7,6 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
+#' @importFrom DT DTOutput
 mod_import_ui <- function(id){
   ns <- NS(id)
   sidebarLayout(
@@ -24,7 +25,7 @@ mod_import_ui <- function(id){
       tableOutput(ns("files")),
       textOutput(ns("datasets")),
       uiOutput(ns("your_datasets")),
-      tableOutput(ns("individual_FCS"))
+      DTOutput(ns("individual_FCS"))
 
     ))
 
@@ -33,6 +34,12 @@ mod_import_ui <- function(id){
 #' my_module Server Functions
 #'
 #' @noRd
+#'
+#' @importFrom DT renderDT
+#' @importFrom flowCore read.flowSet
+#' @importFrom flowWorkspace GatingSet
+#' @importFrom stringr str_extract
+#' @importFrom tibble as_tibble
 mod_import_server <- function(id, r){
   options(shiny.maxRequestSize = 60 * 1024^2)
   moduleServer( id, function(input, output, session){
@@ -46,14 +53,16 @@ mod_import_server <- function(id, r){
         glue::glue("Your FCS file contains {nb_ds()} datasets.")})
       output$files <- renderTable({input$filename})
       individual_fcs <- split_1_fcs(nb_ds(), input$filename$datapath)
-      fs <- flowCore::read.flowSet(fs::dir_ls(individual_fcs, glob = "*.fcs"),
-                          truncate_max_range = FALSE,
-                          alter.names = TRUE,
-                          transformation = FALSE)
-      pData(fs)$well <- stringr::str_extract(pData(fs)$name, "[A-Z]\\d{2}")
+      fs <- read.flowSet(fs::dir_ls(individual_fcs, glob = "*.fcs"),
+                         truncate_max_range = FALSE,
+                         alter.names = TRUE,
+                         transformation = FALSE)
+      pData(fs)$well <- str_extract(pData(fs)$name, "[A-Z]\\d{2}")
       output$your_datasets <- renderUI({h2("Here are your datasets!")})
-      output$individual_FCS <- renderTable({pData(fs)})
-      gs <- flowWorkspace::GatingSet(fs)
+      output$individual_FCS <- renderDT({pData(fs)},
+                                        rownames = FALSE,
+                                        class = "cell-border stripe")
+      gs <- GatingSet(fs)
       r$nb_ds <- nb_ds
       r$Submit <- input$Submit
     })
@@ -68,7 +77,6 @@ mod_import_server <- function(id, r){
 #'
 #' @noRd
 #'
-#' @import flowCore
 #' @return integer
 n_datasets <- function(filename) {
   # Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
