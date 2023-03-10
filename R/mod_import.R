@@ -10,7 +10,8 @@
 #' @importFrom DT DTOutput
 mod_import_ui <- function(id){
   ns <- NS(id)
-  sidebarLayout(
+    tabPanel(title = "Import",
+    sidebarLayout(
     sidebarPanel(
       tagList(
         fileInput(inputId = ns("filename"),
@@ -21,13 +22,14 @@ mod_import_ui <- function(id){
 
       )),
     mainPanel(
-      h1("Hello, this is my first {golem}"),
+      h1("Welcome to flowFate."),
       tableOutput(ns("files")),
       textOutput(ns("datasets")),
       uiOutput(ns("your_datasets")),
-      DTOutput(ns("individual_FCS"))
+      DTOutput(ns("individual_FCS")),
+      plotOutput(ns("debris_plot"))
 
-    ))
+    )))
 
 }
 
@@ -70,7 +72,7 @@ mod_import_server <- function(id, r){
                   detail = 'reading individual data...',
                   value = 10)
       pData(fs)$well <- str_extract(pData(fs)$name, "[A-Z]\\d{2}")
-      output$your_datasets <- renderUI({h2("Here are your datasets!")})
+      output$your_datasets <- renderUI({h3("Here are your datasets!")})
       output$individual_FCS <- renderDT({pData(fs)},
                                         rownames = FALSE,
                                         class = "cell-border stripe")
@@ -80,7 +82,15 @@ mod_import_server <- function(id, r){
       r$gs <- gs
       })}) %>% bindEvent(input$Submit, ignoreInit = TRUE)
     
-    #s <- reactive(input$individual_FCS_rows_selected)
+    output$debris_plot <- renderPlot({
+      if (length(r$s()) > 0) {
+        ggcyto(r$gs[[r$s()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+          geom_hex(bins = 150) +
+          theme_bw()
+      }
+    })
+  
+  #technically not necessary since i changed the plot to the first page/module  
     r$s <- reactive(input$individual_FCS_rows_selected)
 
   })
