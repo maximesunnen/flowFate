@@ -23,6 +23,7 @@ mod_import_ui <- function(id){
       )),
     mainPanel(
       h1("Welcome to flowFate."),
+      p("You can import your FCS file by clicking on the ", strong("BROWSE"), "button on the left. Confirm your selection by clicking on the ", strong("SUBMIT"), "button. A table listing the datasets contained in your uploaded FCS file will appear. Selecting one or mutliple rows will show the SSC vs FSC plot of the selected dataset. You can always browse for a new FCS file, but you have to confirm your new selection by clicking on the ", strong("SUBMIT"), "button again."),
       tableOutput(ns("files")),
       textOutput(ns("datasets")),
       uiOutput(ns("your_datasets")),
@@ -46,7 +47,6 @@ mod_import_server <- function(id, r){
   options(shiny.maxRequestSize = 60 * 1024^2)
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-
     observe({
       withProgress(min = 1, max = 10, expr = {
         setProgress(message = 'Calculation in progress',
@@ -78,7 +78,7 @@ mod_import_server <- function(id, r){
                                         class = "cell-border stripe")
       gs <- GatingSet(fs)
       r$nb_ds <- nb_ds
-      r$Submit <- input$Submit
+      
       r$gs <- gs
       })}) %>% bindEvent(input$Submit, ignoreInit = TRUE)
     
@@ -92,6 +92,7 @@ mod_import_server <- function(id, r){
   
   #technically not necessary since i changed the plot to the first page/module  
     r$s <- reactive(input$individual_FCS_rows_selected)
+    r$Submit <- reactive(input$Submit)
 
   })
 }

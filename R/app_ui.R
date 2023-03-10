@@ -10,12 +10,6 @@ app_ui <- function() {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # Your application UI logic
-    # navbarPage(title = "FlowFate",
-    #            tabPanel(title = "Import", 
-    #                     mod_import_ui("import_1")),
-    #            tabPanel(title = "Curate",
-    #                     mod_curate_ui("curate_1")),
-    #                     inverse = TRUE)
     fluidPage(theme = bslib::bs_theme(bootswatch = "united"),
       navbarPage(title = "FlowFate",
       mod_import_ui("import_1"),

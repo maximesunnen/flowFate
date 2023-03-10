@@ -15,13 +15,21 @@ mod_curate_ui <- function(id){
   ns <- NS(id)
     tabPanel(title = "Curate",
              sidebarLayout(
-    sidebarPanel(),
+      sidebarPanel(
+        uiOutput(ns("KRAS_selection")),
+        uiOutput(ns("MYHC_channel"))
+        ),
+      
     mainPanel(
-      uiOutput(ns("Curation_header")),
+      
+      h1("How curation works."),
+      
+      p("By curation we understand two essential steps. First, we want to focus our analysis on intact cells and not debris. We therefore need to set a gate that excludes cellular debris, which normally clusters in the lower left corner in a SSC vs FSC plot. Second, we have to define intensity thresholds in our fluorescent channels below which we cannot distinguish between a real signal and autofluorescence/background noise. We will define both the non-debris gate and the threshold using our controls."),
+      actionButton("Curate", "Start curation"),
+      plotOutput("ssc_fsc"),
       textOutput(ns("cur_ds")),
       textOutput(ns("test"))
-    )))
-}
+    )))}
 
 #' curate Server Functions
 #'
@@ -30,24 +38,15 @@ mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
-        observe({
-          output$cur_ds <- renderText({
-          glue::glue("Cur contains {r$nb_ds} datasets.")
-            })
-          withProgress(min = 1, max = 10, expr = {
-            setProgress(message = 'Plotting in progress',
-                        detail = 'Plotting your data...',
-                        value = 3)
-
-          setProgress(message = 'Plotting in progress',
-                      detail = 'Displaying your data...',
-                      value = 10)
-
-          output$Curation_header <- renderUI({h2("Curation")})
-          
-          })}) %>% bindEvent(r$Submit, ignoreInit = TRUE)
-        
-        output$test <- renderText({glue::glue("You selected dataset number {r$s()}")})
+    output$KRAS_selection <- renderUI({
+      selectInput("kras_channel", "KRas channel", choices = colnames(r$gs))
+    })
+    
+    output$MYHC_channel <- renderUI({
+      selectInput("myhc_channel", "Myosin channel", choices = colnames(r$gs))
+    })
+    
+    output$test <- renderText({glue::glue("You selected dataset number {r$s()}")})
         })
   }
 
