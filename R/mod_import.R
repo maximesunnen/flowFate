@@ -79,6 +79,9 @@ mod_import_server <- function(id, r){
       r$Submit <- input$Submit
       r$gs <- gs
       })}) %>% bindEvent(input$Submit, ignoreInit = TRUE)
+    
+    #s <- reactive(input$individual_FCS_rows_selected)
+    r$s <- reactive(input$individual_FCS_rows_selected)
 
   })
 }

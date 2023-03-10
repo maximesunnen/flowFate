@@ -18,7 +18,8 @@ mod_curate_ui <- function(id){
     mainPanel(
       uiOutput(ns("Curation_header")),
       textOutput(ns("cur_ds")),
-      plotOutput(ns("debris_plot"))
+      plotOutput(ns("debris_plot")),
+      textOutput(ns("test"))
     ))
 }
 
@@ -43,15 +44,19 @@ mod_curate_server <- function(id,r){
                       value = 10)
 
           output$Curation_header <- renderUI({h2("Curation")})
-          output$debris_plot <- renderPlot({
-
-            ggcyto(r$gs, aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+          
+          
+          })}) %>% bindEvent(r$Submit, ignoreInit = TRUE)
+        
+        output$debris_plot <- renderPlot({
+          if (length(r$s()) > 0) {
+            ggcyto(r$gs[[r$s()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
               geom_hex(bins = 150) +
               theme_bw()
-          })
-          })}) %>% bindEvent(r$Submit, ignoreInit = TRUE)
-
-
+          }
+        })
+        
+        output$test <- renderText({glue::glue("You selected dataset number {r$s()}")})
         })
   }
 
