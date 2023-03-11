@@ -55,36 +55,38 @@ mod_curate_server <- function(id,r){
     
     # All selections from sidebar (control datasets and channels) -------------
     output$KRAS_selection <- renderUI({
+      req(r$gs)
       selectInput("kras_channel", 
                   "KRas channel", 
                   choices = colnames(r$gs))
     })
     
     output$MYHC_channel <- renderUI({
+      req(r$gs)
       selectInput("myhc_channel",
                   "Myosin channel", 
                   choices = colnames(r$gs))
     })
     
     output$negative_control <- renderUI({
+      req(r$fs)
       selectInput("negative_dataset", 
                   "Negative control", 
-                  choices = dplyr::case_when(is_null(r$fs)~"",
-                                             !is_null(r$fs)~ rownames(pData(r$fs))))
+                  choices = rownames(pData(r$fs)))
     })
-    
+
     output$KRAS_control <- renderUI({
-      selectInput("kras_dataset", 
-                  "Positive control (KRAS)", 
-                  choices = dplyr::case_when(is_null(r$fs)~"",
-                                             !is_null(r$fs)~ rownames(pData(r$fs))))
+      req(r$fs)
+      selectInput("kras_dataset",
+                  "Positive control (KRAS)",
+                  choices = rownames(pData(r$fs)))
     })
 
     output$MYHC_control <- renderUI({
-      selectInput("myhc_dataset", 
-                  "Positive control (MYHC)", 
-                  choices = dplyr::case_when(is_null(r$fs)~"",
-                                             !is_null(r$fs)~ rownames(pData(r$fs))))
+      req(r$fs)
+      selectInput("myhc_dataset",
+                  "Positive control (MYHC)",
+                  choices = rownames(pData(r$fs)))
     })
 
     # SSC vs FSC plot of control samples --------------------------------------
@@ -93,8 +95,9 @@ mod_curate_server <- function(id,r){
                                   input$kras_dataset, 
                                   input$myhc_dataset))
     
+    
     output$controls_ssc_fsc <- renderPlot({
-      ggcyto(r$gs[[control_indices]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+      ggcyto(r$gs[[1]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
         geom_hex(bins = 150) +
         theme_bw()
     })
