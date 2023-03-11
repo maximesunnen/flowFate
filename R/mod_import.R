@@ -10,25 +10,44 @@
 #' @importFrom DT DTOutput
 mod_import_ui <- function(id){
   ns <- NS(id)
-    tabPanel(title = "Import",
-    sidebarLayout(
-    sidebarPanel(
-      tagList(
-        fileInput(inputId = ns("filename"),
-                  accept = ".fcs",
-                  label = "Select FCS file"),
-        actionButton(ns("Submit"), "Submit"),
+  
 
+  # Defining a tabPanel layout ----------------------------------------------
+  tabPanel(title = "Import",
+           # Defining a sidebarlayout in the import tab ------------------------------
+           sidebarLayout(
+             sidebarPanel(
+               tagList(
+                 # File input container in the sidebar ------------------------------------
+                 fileInput(inputId = ns("filename"),
+                           accept = ".fcs",
+                           label = "Select FCS file"),
 
-      )),
-    mainPanel(
-      h1("Welcome to flowFate."),
-      p("You can import your FCS file by clicking on the ", strong("BROWSE"), "button on the left. Confirm your selection by clicking on the ", strong("SUBMIT"), "button. A table listing the datasets contained in your uploaded FCS file will appear. Selecting one or mutliple rows will show the SSC vs FSC plot of the selected dataset. You can always browse for a new FCS file, but you have to confirm your new selection by clicking on the ", strong("SUBMIT"), "button again."),
-      tableOutput(ns("files")),
-      textOutput(ns("datasets")),
-      uiOutput(ns("your_datasets")),
-      DTOutput(ns("individual_FCS")),
-      plotOutput(ns("debris_plot"))
+                 # Submit button to start the import --------------------------------------
+                 actionButton(ns("Submit"), "Submit"))),
+             
+             mainPanel(
+               h1("Welcome to flowFate."),
+               import_text,
+
+               # Table showing the imported file -----------------------------------------
+               tableOutput(ns("files")),
+               
+               # Text indicating the number of datasets ----------------------------------
+
+               textOutput(ns("datasets")),
+
+               # Header over ind. FCS but printed only after submit ----------------------
+               
+               uiOutput(ns("your_datasets")),
+
+               # Table showing individual FCS (interactive because DT) -------------------
+               
+               DTOutput(ns("individual_FCS")),
+
+               # Plot the dataset selected in the DT table above -------------------------
+               
+               plotOutput(ns("overview_SSC_FSC"))
 
     )))
 
@@ -82,7 +101,7 @@ mod_import_server <- function(id, r){
       r$gs <- gs
       })}) %>% bindEvent(input$Submit, ignoreInit = TRUE)
     
-    output$debris_plot <- renderPlot({
+    output$overview_SSC_FSC <- renderPlot({
       if (length(r$s()) > 0) {
         ggcyto(r$gs[[r$s()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
           geom_hex(bins = 150) +
@@ -163,6 +182,11 @@ split_1_fcs <- function(nb, input_file) {
   })
   path(path_dir(input_file), "fcs_input")
 }
+
+#' @importFrom crayon red
+#' @importFrom glue glue_col
+
+import_text <- glue::glue_col({"You can import your FCS file by clicking on the {red Browse} button on the left. Confirm your selection by clicking on the {red Submit} button. A table listing the datasets contained in your uploaded FCS file will appear. Selecting one or mutliple rows will show the SSC vs FSC plot of the selected dataset. You can always browse for a new FCS file, but you have to confirm your new selection by clicking on the {red Submit} button again."})
 
 ## To be copied in the UI
 # mod_my_module_ui("my_module_1")
