@@ -39,7 +39,7 @@ mod_curate_ui <- function(id){
                actionButton("Curate", "Start curation"),
                
                # plot SSC vs FSC for control samples -------------------------------------
-               plotOutput("controls_ssc_fsc"),
+               plotOutput(ns("controls_ssc_fsc")),
                
                textOutput(ns("cur_ds")),
                textOutput(ns("test"))
@@ -56,53 +56,56 @@ mod_curate_server <- function(id,r){
     # All selections from sidebar (control datasets and channels) -------------
     output$KRAS_selection <- renderUI({
       req(r$gs)
-      selectInput("kras_channel", 
+      selectInput(ns("kras_channel"), 
                   "KRas channel", 
-                  choices = colnames(r$gs))
+                  choices = c("",colnames(r$gs)))
     })
     
     output$MYHC_channel <- renderUI({
       req(r$gs)
-      selectInput("myhc_channel",
+      selectInput(ns("myhc_channel"),
                   "Myosin channel", 
-                  choices = colnames(r$gs))
+                  choices = c("",colnames(r$gs)))
     })
     
     output$negative_control <- renderUI({
       req(r$fs)
-      selectInput("negative_dataset", 
+      selectInput(ns("negative_dataset"), 
                   "Negative control", 
-                  choices = rownames(pData(r$fs)))
+                  choices = c("",rownames(pData(r$fs))))
     })
 
     output$KRAS_control <- renderUI({
       req(r$fs)
-      selectInput("kras_dataset",
+      selectInput(ns("kras_dataset"),
                   "Positive control (KRAS)",
-                  choices = rownames(pData(r$fs)))
+                  choices = c("",rownames(pData(r$fs))))
     })
 
     output$MYHC_control <- renderUI({
       req(r$fs)
-      selectInput("myhc_dataset",
+      selectInput(ns("myhc_dataset"),
                   "Positive control (MYHC)",
-                  choices = rownames(pData(r$fs)))
+                  choices = c("",rownames(pData(r$fs))))
     })
 
     # SSC vs FSC plot of control samples --------------------------------------
     ## get indices of the datasets selected
-    control_indices <- reactive(c(input$negative_dataset, 
-                                  input$kras_dataset, 
-                                  input$myhc_dataset))
-    
+    control_indices <- reactive(c(input$myhc_dataset, 
+                                  input$kras_dataset,
+                                  input$negative_dataset))
     
     output$controls_ssc_fsc <- renderPlot({
-      ggcyto(r$gs[[1]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+      req(r$gs)
+      req(input$myhc_dataset, input$kras_dataset, input$negative_dataset)
+      #if(!is_null(r$control_indices)){
+      ggcyto(r$gs[[control_indices()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
         geom_hex(bins = 150) +
         theme_bw()
+        #}
     })
       
-    output$test <- renderText({glue::glue("You selected dataset number {r$s()}")})
+    #output$test <- renderText({glue::glue("You selected dataset number {control_indices()}")})
         })
 }
 

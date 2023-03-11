@@ -130,20 +130,21 @@ mod_import_server <- function(id, r){
         r$fs <- fs
         
       })}) %>% bindEvent(input$Submit, ignoreInit = TRUE)
-
-
+    
+    r$s <- reactive(input$individual_FCS_rows_selected)
+    
     # overview SSC vs FSC plot to inspect data --------------------------------
     
     output$overview_SSC_FSC <- renderPlot({
-      if (!is_null(r$s())) {
-        ggcyto(r$gs[[r$s()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
-          geom_hex(bins = 150) +
-          theme_bw()
-      }
+      if(!is_null(r$s())){
+      ggcyto(r$gs[[r$s()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+        geom_hex(bins = 150) +
+        theme_bw()}
     })
+    
+    
   
   #technically not necessary since i changed the plot to the first page/module  
-    r$s <- reactive(input$individual_FCS_rows_selected)
     r$Submit <- reactive(input$Submit)
 
   })
