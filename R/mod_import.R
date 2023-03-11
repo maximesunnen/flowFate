@@ -127,6 +127,7 @@ mod_import_server <- function(id, r){
         # stratégie du petit R: variables to be shared across modules ---------------------
         r$nb_ds <- nb_ds
         r$gs <- gs
+        r$fs <- fs
         
       })}) %>% bindEvent(input$Submit, ignoreInit = TRUE)
 
