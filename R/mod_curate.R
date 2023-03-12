@@ -36,10 +36,11 @@ mod_curate_ui <- function(id){
                curate_text,
                
                # Action button to start curation
-               actionButton("Curate", "Start curation"),
+               actionButton(ns("Curate"), "Start curation"),
                
                # plot SSC vs FSC for control samples -------------------------------------
-               plotOutput(ns("controls_ssc_fsc")),
+               #plotOutput(ns("controls_ssc_fsc")),
+               plotOutput(ns("non_debris_gate")),
                
                textOutput(ns("cur_ds")),
                textOutput(ns("test"))
@@ -95,24 +96,37 @@ mod_curate_server <- function(id,r){
                                   input$kras_dataset,
                                   input$negative_dataset))
     
-    output$controls_ssc_fsc <- renderPlot({
+    # output$controls_ssc_fsc <- renderPlot({
+    #   req(r$gs)
+    #   req(input$myhc_dataset, input$kras_dataset, input$negative_dataset)
+    #   ggcyto(r$gs[[control_indices()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+    #     geom_hex(bins = 150) +
+    #     theme_bw()
+    # })
+    observe({
+    output$non_debris_gate <- renderPlot({
       req(r$gs)
       req(input$myhc_dataset, input$kras_dataset, input$negative_dataset)
-      #if(!is_null(r$control_indices)){
+      gate <- exclude_debris()
       ggcyto(r$gs[[control_indices()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
         geom_hex(bins = 150) +
-        theme_bw()
-        #}
+        theme_bw() +
+        geom_gate(gate) +
+        geom_stats()
     })
-      
-    #output$test <- renderText({glue::glue("You selected dataset number {control_indices()}")})
+    }) %>% bindEvent(input$Curate, ignoreInit = TRUE)
         })
 }
 
-
-
-
 curate_text <- glue("By curation we understand two essential steps. First, we want to focus our analysis on intact cells and not debris. We therefore need to set a gate that excludes cellular debris, which normally clusters in the lower left corner in a SSC vs FSC plot. Second, we have to define intensity thresholds in our fluorescent channels below which we cannot distinguish between a real signal and autofluorescence/background noise. We will define both the non-debris gate and the threshold using our controls.")
+
+exclude_debris <- function() {
+  pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
+                    ncol = 2,
+                    nrow = 5)
+  colnames(pgn_cut) <- c("SSC.HLin","FSC.HLin")
+  polygonGate(filterId = "NonDebris", .gate = pgn_cut)
+}
 
 ## To be copied in the UI
 # mod_curate_ui("curate_1")
