@@ -22,11 +22,8 @@ mod_curate_ui <- function(id){
              sidebarPanel(
 
                # Input selections for used channels and control samples ------------------
-               uiOutput(ns("KRAS_selection")),
-               uiOutput(ns("MYHC_channel")),
-               uiOutput(ns("negative_control")),
-               uiOutput(ns("KRAS_control")),
-               uiOutput(ns("MYHC_control"))
+               uiOutput(ns("channel_selection")),
+               uiOutput(ns("control_selection")),
              ),
              
              mainPanel(
@@ -55,78 +52,89 @@ mod_curate_server <- function(id,r){
     ns <- session$ns
     
     # All selections from sidebar (control datasets and channels) -------------
-    output$KRAS_selection <- renderUI({
+    output$channel_selection <- renderUI({
       req(r$gs)
+      tagList(
+      selectInput(ns("fsc_channel"),
+                  "Forward Scatter",
+                  choices = c("", colnames(r$gs)),
+                  selected = colnames(r$gs)[1]),
+      
+      selectInput(ns("ssc_channel"),
+                  "Side Scatter",
+                  choices = c("", colnames(r$gs)),
+                  selected = colnames(r$gs)[2]),
+      
       selectInput(ns("kras_channel"), 
                   "KRas channel", 
-                  choices = c("",colnames(r$gs)))
-    })
-    
-    output$MYHC_channel <- renderUI({
-      req(r$gs)
+                  choices = c("",colnames(r$gs)),
+                  selected = colnames(r$gs)[3]),
+      
       selectInput(ns("myhc_channel"),
                   "Myosin channel", 
-                  choices = c("",colnames(r$gs)))
+                  choices = c("",colnames(r$gs)),
+                  selected = colnames(r$gs)[6])
+      )
     })
     
-    output$negative_control <- renderUI({
-      req(r$fs)
-      selectInput(ns("negative_dataset"), 
+    output$control_selection <- renderUI({
+      req(r$gs)
+      tagList(
+      selectInput(ns("negative_control"), 
                   "Negative control", 
-                  choices = c("",rownames(pData(r$fs))))
-    })
-
-    output$KRAS_control <- renderUI({
-      req(r$fs)
-      selectInput(ns("kras_dataset"),
+                  choices = c("", rownames(pData(r$fs))),
+                  selected = rownames(pData(r$fs))[1]),
+      
+      selectInput(ns("kras_control"),
                   "Positive control (KRAS)",
-                  choices = c("",rownames(pData(r$fs))))
-    })
+                  choices = c("", rownames(pData(r$fs))),
+                  selected = rownames(pData(r$fs))[2]),
 
-    output$MYHC_control <- renderUI({
-      req(r$fs)
-      selectInput(ns("myhc_dataset"),
+      selectInput(ns("myhc_control"),
                   "Positive control (MYHC)",
-                  choices = c("",rownames(pData(r$fs))))
+                  choices = c("", rownames(pData(r$fs))),
+                  selected = rownames(pData(r$fs))[3])
+      )
     })
 
     # SSC vs FSC plot of control samples --------------------------------------
-    ## get indices of the datasets selected
-    control_indices <- reactive(c(input$myhc_dataset, 
-                                  input$kras_dataset,
-                                  input$negative_dataset))
+    ## get indices (is it really indices???) of the datasets selected
+    control_indices <- reactive(c(input$kras_control,
+                                  input$myhc_control, 
+                                  input$negative_control))
     
-    # output$controls_ssc_fsc <- renderPlot({
-    #   req(r$gs)
-    #   req(input$myhc_dataset, input$kras_dataset, input$negative_dataset)
-    #   ggcyto(r$gs[[control_indices()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
-    #     geom_hex(bins = 150) +
-    #     theme_bw()
-    # })
-    observe({
-    output$non_debris_gate <- renderPlot({
-      req(r$gs)
-      req(input$myhc_dataset, input$kras_dataset, input$negative_dataset)
-      gate <- exclude_debris()
-      ggcyto(r$gs[[control_indices()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
-        geom_hex(bins = 150) +
-        theme_bw() +
-        geom_gate(gate) +
-        geom_stats()
-    })
-    }) %>% bindEvent(input$Curate, ignoreInit = TRUE)
-        })
+    ssc <- reactive(input$ssc_channel)
+    fsc <- reactive(input$fsc_channel)
+
+
+observe({
+  gate <- exclude_debris()
+  output$non_debris_gate <- renderPlot({
+    ggcyto(r$gs[[control_indices()]],
+           aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
+           subset = "root") +
+      geom_hex(bins = 150) +
+      theme_bw() +
+      geom_gate(gate) +
+      geom_stats()
+  })
+}) %>% bindEvent(input$Curate, ignoreInit = TRUE)
+  })
 }
 
 curate_text <- glue("By curation we understand two essential steps. First, we want to focus our analysis on intact cells and not debris. We therefore need to set a gate that excludes cellular debris, which normally clusters in the lower left corner in a SSC vs FSC plot. Second, we have to define intensity thresholds in our fluorescent channels below which we cannot distinguish between a real signal and autofluorescence/background noise. We will define both the non-debris gate and the threshold using our controls.")
 
-exclude_debris <- function() {
+# here we should also be able to provide an input$ssc to not explicitly name "SSC.HLin" because these might be called differently for another user
+
+
+
+exclude_debris <- reactive({
   pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
                     ncol = 2,
                     nrow = 5)
-  colnames(pgn_cut) <- c("SSC.HLin","FSC.HLin")
+  colnames(pgn_cut) <- c("SSC.HLin", "FSC.HLin")
   polygonGate(filterId = "NonDebris", .gate = pgn_cut)
-}
+})
 
 ## To be copied in the UI
 # mod_curate_ui("curate_1")
