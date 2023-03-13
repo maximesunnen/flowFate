@@ -54,7 +54,8 @@ mod_curate_ui <- function(id){
 #' @noRd
 #' @importFrom purrr is_null
 #' @import ggplot2
-#' @importFrom ggcyto ggcyto geom_gate
+#' @importFrom ggcyto ggcyto geom_gate geom_stats
+#' @importFrom magrittr %>%
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -134,7 +135,6 @@ observe({
 
 
 # here we should also be able to provide an input$ssc to not explicitly name "SSC.HLin" because these might be called differently for another user
-
 
 
 exclude_debris <- reactive({
