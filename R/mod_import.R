@@ -28,7 +28,14 @@ mod_import_ui <- function(id){
 
              mainPanel(
                h1("Welcome to flowFate."),
-               import_text,
+               HTML("You can import your FCS file by clicking on the <b>Browse</b>
+                    button on the left. Confirm your selection by clicking on
+                    the <b>Submit</b> button. A table listing the datasets contained
+                    in your uploaded FCS file will appear.
+                    Selecting one or mutliple rows will show the SSC vs FSC plot
+                    of the selected dataset. You can always browse for a new FCS file,
+                    but you have to confirm your new selection by clicking
+                    on the <b>Submit</b> button again."),
 
                # Table showing the imported file -----------------------------------------
                tableOutput(ns("files")),
@@ -213,11 +220,6 @@ split_1_fcs <- function(nb, input_file) {
   })
   path(path_dir(input_file), "fcs_input")
 }
-
-#' @importFrom crayon red
-#' @importFrom glue glue_col
-
-import_text <- glue::glue_col({"You can import your FCS file by clicking on the {red Browse} button on the left. Confirm your selection by clicking on the {red Submit} button. A table listing the datasets contained in your uploaded FCS file will appear. Selecting one or mutliple rows will show the SSC vs FSC plot of the selected dataset. You can always browse for a new FCS file, but you have to confirm your new selection by clicking on the {red Submit} button again."})
 
 ## To be copied in the UI
 # mod_my_module_ui("my_module_1")
