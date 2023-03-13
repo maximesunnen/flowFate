@@ -128,10 +128,10 @@ mod_import_server <- function(id, r){
         r$nb_ds <- nb_ds
         r$gs <- gs
         r$fs <- fs
-    r$s <- reactive(input$individual_FCS_rows_selected)
 
       })}) |> bindEvent(input$Submit, ignoreInit = TRUE)
 
+    r$s <- reactive(input$individual_FCS_rows_selected)
 
     # overview SSC vs FSC plot to inspect data --------------------------------
 

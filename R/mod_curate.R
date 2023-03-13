@@ -7,16 +7,13 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-#' @import ggcyto
-#' @import ggplot2
-#' @import magrittr
 
 mod_curate_ui <- function(id){
   ns <- NS(id)
-  
+
   # Defining a tabPanel layout ----------------------------------------------
   tabPanel(title = "Curate",
-           
+
            # Defining a sidebarLayout in the Curate tab ------------------------------
            sidebarLayout(
              sidebarPanel(
@@ -28,20 +25,20 @@ mod_curate_ui <- function(id){
                uiOutput(ns("KRAS_control")),
                uiOutput(ns("MYHC_control"))
              ),
-             
+
              mainPanel(
 
                # header and text description of curation ---------------------------------
                h1("How curation works."),
                curate_text,
-               
+
                # Action button to start curation
                actionButton(ns("Curate"), "Start curation"),
-               
+
                # plot SSC vs FSC for control samples -------------------------------------
                #plotOutput(ns("controls_ssc_fsc")),
                plotOutput(ns("non_debris_gate")),
-               
+
                textOutput(ns("cur_ds")),
                textOutput(ns("test"))
              )))}
@@ -50,29 +47,31 @@ mod_curate_ui <- function(id){
 #'
 #' @noRd
 #' @importFrom purrr is_null
+#' @import ggplot2
+#' @importFrom ggcyto ggcyto geom_gate
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
+
     # All selections from sidebar (control datasets and channels) -------------
     output$KRAS_selection <- renderUI({
       req(r$gs)
-      selectInput(ns("kras_channel"), 
-                  "KRas channel", 
+      selectInput(ns("kras_channel"),
+                  "KRas channel",
                   choices = c("",colnames(r$gs)))
     })
-    
+
     output$MYHC_channel <- renderUI({
       req(r$gs)
       selectInput(ns("myhc_channel"),
-                  "Myosin channel", 
+                  "Myosin channel",
                   choices = c("",colnames(r$gs)))
     })
-    
+
     output$negative_control <- renderUI({
       req(r$fs)
-      selectInput(ns("negative_dataset"), 
-                  "Negative control", 
+      selectInput(ns("negative_dataset"),
+                  "Negative control",
                   choices = c("",rownames(pData(r$fs))))
     })
 
@@ -92,10 +91,10 @@ mod_curate_server <- function(id,r){
 
     # SSC vs FSC plot of control samples --------------------------------------
     ## get indices of the datasets selected
-    control_indices <- reactive(c(input$myhc_dataset, 
+    control_indices <- reactive(c(input$myhc_dataset,
                                   input$kras_dataset,
                                   input$negative_dataset))
-    
+
     # output$controls_ssc_fsc <- renderPlot({
     #   req(r$gs)
     #   req(input$myhc_dataset, input$kras_dataset, input$negative_dataset)
@@ -114,11 +113,20 @@ mod_curate_server <- function(id,r){
         geom_gate(gate) +
         geom_stats()
     })
-    }) %>% bindEvent(input$Curate, ignoreInit = TRUE)
+    }) |> bindEvent(input$Curate, ignoreInit = TRUE)
         })
 }
 
-curate_text <- glue("By curation we understand two essential steps. First, we want to focus our analysis on intact cells and not debris. We therefore need to set a gate that excludes cellular debris, which normally clusters in the lower left corner in a SSC vs FSC plot. Second, we have to define intensity thresholds in our fluorescent channels below which we cannot distinguish between a real signal and autofluorescence/background noise. We will define both the non-debris gate and the threshold using our controls.")
+curate_text <- glue::glue("By curation we understand two essential steps.
+                    First, we want to focus our analysis on intact
+                    cells and not debris. We therefore need to set
+                    a gate that excludes cellular debris,
+                    which normally clusters in the lower left corner
+                    in a SSC vs FSC plot. Second, we have to define
+                    intensity thresholds in our fluorescent channels
+                    below which we cannot distinguish between a real signal
+                    and autofluorescence/background noise. We will define
+                    both the non-debris gate and the threshold using our controls.")
 
 exclude_debris <- function() {
   pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
