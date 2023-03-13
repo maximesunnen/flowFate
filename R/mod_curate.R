@@ -132,10 +132,7 @@ observe({
   })
 }
 
-
-
-# here we should also be able to provide an input$ssc to not explicitly name "SSC.HLin" because these might be called differently for another user
-
+# here we should also be able to provide an input$ssc or ssc() to not explicitly name "SSC.HLin" because these might be called differently for another user. somehow this is not working: if I add c(ssc(), fsc()) it says "error in ssc: could not find function "ssc""
 
 exclude_debris <- reactive({
   pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
