@@ -55,7 +55,6 @@ mod_curate_ui <- function(id){
 #' @importFrom purrr is_null
 #' @import ggplot2
 #' @importFrom ggcyto ggcyto geom_gate geom_stats
-#' @importFrom magrittr %>%
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -109,13 +108,17 @@ mod_curate_server <- function(id,r){
 
     # SSC vs FSC plot of control samples --------------------------------------
     ## get indices (is it really indices???) of the datasets selected
-    control_indices <- reactive(c(input$kras_control,
-                                  input$myhc_control, 
-                                  input$negative_control))
+    control_indices <- eventReactive(input$Curate, c(input$kras_control, input$myhc_control, input$negative_control))
+    ssc <- eventReactive(input$Curate, {input$ssc_channel})
+    fsc <- eventReactive(input$Curate, {input$fsc_channel})
     
-    ssc <- reactive(input$ssc_channel)
-    fsc <- reactive(input$fsc_channel)
-
+    exclude_debris <- reactive({
+      pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
+                        ncol = 2,
+                        nrow = 5)
+      colnames(pgn_cut) <- c(ssc(), fsc())
+      polygonGate(filterId = "NonDebris", .gate = pgn_cut)
+    })
 
 observe({
   gate <- exclude_debris()
@@ -128,19 +131,16 @@ observe({
       geom_gate(gate) +
       geom_stats()
   })
-}) %>% bindEvent(input$Curate, ignoreInit = TRUE)
+}) |> bindEvent(input$Curate, ignoreInit = TRUE)
+
+
   })
 }
 
 # here we should also be able to provide an input$ssc or ssc() to not explicitly name "SSC.HLin" because these might be called differently for another user. somehow this is not working: if I add c(ssc(), fsc()) it says "error in ssc: could not find function "ssc""
 
-exclude_debris <- reactive({
-  pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
-                    ncol = 2,
-                    nrow = 5)
-  colnames(pgn_cut) <- c("SSC.HLin", "FSC.HLin")
-  polygonGate(filterId = "NonDebris", .gate = pgn_cut)
-})
+
+
 
 ## To be copied in the UI
 # mod_curate_ui("curate_1")
