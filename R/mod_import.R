@@ -10,7 +10,7 @@
 #' @importFrom DT DTOutput
 mod_import_ui <- function(id){
   ns <- NS(id)
-  
+
 
   # Defining a tabPanel layout ----------------------------------------------
   tabPanel(title = "Import",
@@ -25,14 +25,14 @@ mod_import_ui <- function(id){
 
                  # Submit button to start the import --------------------------------------
                  actionButton(ns("Submit"), "Submit"))),
-             
+
              mainPanel(
                h1("Welcome to flowFate."),
                import_text,
 
                # Table showing the imported file -----------------------------------------
                tableOutput(ns("files")),
-               
+
                # Text indicating the number of datasets ----------------------------------
                textOutput(ns("datasets")),
 
@@ -59,28 +59,28 @@ mod_import_ui <- function(id){
 #' @importFrom stringr str_extract
 #' @importFrom tibble as_tibble
 #' @importFrom glue glue
-#' 
+#'
 mod_import_server <- function(id, r){
 
 # increasing the maximum upload size  -------------------------------------
   options(shiny.maxRequestSize = 60 * 1024^2)
-  
+
   moduleServer(id, function(input, output, session){
     ns <- session$ns
-    
+
 # defining a reactive observer with observe() ----------------------------
     observe({
 
 # setting progress bars to indicate computation ---------------------------
       withProgress(min = 1, max = 10, expr = {
-        
+
         setProgress(message = 'Calculation in progress',
                     detail = 'loading data...',
                     value = 3)
 
         # computing the number of datasets ----------------------------------------
         nb_ds <- n_datasets(input$filename$datapath)
-        
+
         setProgress(message = 'Calculation in progress',
                     detail = 'counting datasets',
                     value = 5)
@@ -88,34 +88,34 @@ mod_import_server <- function(id, r){
         # printing text indicating the number of datasets -------------------------
         output$datasets <- renderText({
           glue("Your FCS file contains {nb_ds} datasets.")})
-        
+
         # render the table showing the uploaded file ------------------------------
         output$files <- renderTable({input$filename})
-        
+
         # split the uploaded FCS file ---------------------------------------------
         individual_fcs <- split_1_fcs(nb_ds, input$filename$datapath)
-        
+
         setProgress(message = 'Calculation in progress',
                     detail = 'splitting dataset...',
                     value = 7)
-        
+
         # read the individual datasets into a flowSet -----------------------------
         fs <- read.flowSet(fs::dir_ls(individual_fcs, glob = "*.fcs"),
                            truncate_max_range = FALSE,
                            alter.names = TRUE,
                            transformation = FALSE)
-      
+
         setProgress(message = 'Calculation in progress',
                     detail = 'reading individual data...',
                     value = 10)
-        
+
 
         # add a well column to pData of flowSet -----------------------------------
         pData(fs)$well <- str_extract(pData(fs)$name, "[A-Z]\\d{2}")
 
         # render header of individual datasets only printed upon Submit -----------
         output$your_datasets <- renderUI({h3("Here are your datasets!")})
-        
+
         # render DT with individual datasets, interactive -------------------------
         output$individual_FCS <- renderDT({pData(fs)},
                                           rownames = FALSE,
@@ -128,25 +128,22 @@ mod_import_server <- function(id, r){
         r$nb_ds <- nb_ds
         r$gs <- gs
         r$fs <- fs
-        
-      })}) %>% bindEvent(input$Submit, ignoreInit = TRUE)
-    
     r$s <- reactive(input$individual_FCS_rows_selected)
-    
-    # overview SSC vs FSC plot to inspect data --------------------------------
-    
-    output$overview_SSC_FSC <- renderPlot({
-      if(!is_null(r$s())){
-      ggcyto(r$gs[[r$s()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
-        geom_hex(bins = 150) +
-        theme_bw()}
-    })
-    
-    
-  
-  #technically not necessary since i changed the plot to the first page/module  
-    r$Submit <- reactive(input$Submit)
 
+      })}) |> bindEvent(input$Submit, ignoreInit = TRUE)
+
+
+    # overview SSC vs FSC plot to inspect data --------------------------------
+
+    output$overview_SSC_FSC <- renderPlot({
+      if (!is_null(r$s())) {
+        ggcyto(r$gs[[r$s()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+          geom_hex(bins = 150) +
+          theme_bw()
+      }
+    })
+    #technically not necessary since i changed the plot to the first page/module
+    r$Submit <- reactive(input$Submit)
   })
 }
 
