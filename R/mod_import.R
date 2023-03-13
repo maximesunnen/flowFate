@@ -28,10 +28,9 @@ mod_import_ui <- function(id){
 
              mainPanel(
                h1("Welcome to flowFate."),
-               HTML("You can import your FCS file by clicking on the
-                    <span class='btn btn-default btn-file'>Browse</span>
+               HTML("You can import your FCS file by clicking on the <b>Browse</b>
                     button on the left. Confirm your selection by clicking on
-                    the <span class='btn btn-default btn-file'>Submit</span> button. A table listing the datasets contained
+                    the <b>Submit</b> button. A table listing the datasets contained
                     in your uploaded FCS file will appear.
                     Selecting one or mutliple rows will show the SSC vs FSC plot
                     of the selected dataset. You can always browse for a new FCS file,
@@ -52,7 +51,6 @@ mod_import_ui <- function(id){
 
                # Plot the dataset selected in the DT table above -------------------------
                plotOutput(ns("overview_SSC_FSC"))
-
     )))
 
 }
