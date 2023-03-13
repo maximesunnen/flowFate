@@ -7,16 +7,13 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-#' @import ggcyto
-#' @import ggplot2
-#' @import magrittr
 
 mod_curate_ui <- function(id){
   ns <- NS(id)
-  
+
   # Defining a tabPanel layout ----------------------------------------------
   tabPanel(title = "Curate",
-           
+
            # Defining a sidebarLayout in the Curate tab ------------------------------
            sidebarLayout(
              sidebarPanel(
@@ -25,20 +22,29 @@ mod_curate_ui <- function(id){
                uiOutput(ns("channel_selection")),
                uiOutput(ns("control_selection")),
              ),
-             
+
              mainPanel(
 
                # header and text description of curation ---------------------------------
                h1("How curation works."),
-               curate_text,
-               
+               HTML("<p>By curation we understand two essential steps.
+                    First, we want to focus our analysis on intact
+                    cells and not debris. We therefore need to set
+                    a gate that excludes cellular debris,
+                    which normally clusters in the lower left corner
+                    in a SSC vs FSC plot. Second, we have to define
+                    intensity thresholds in our fluorescent channels
+                    below which we cannot distinguish between a real signal
+                    and autofluorescence/background noise. We will define
+                    both the non-debris gate and the threshold using our controls.</p>"),
+
                # Action button to start curation
                actionButton(ns("Curate"), "Start curation"),
-               
+
                # plot SSC vs FSC for control samples -------------------------------------
                #plotOutput(ns("controls_ssc_fsc")),
                plotOutput(ns("non_debris_gate")),
-               
+
                textOutput(ns("cur_ds")),
                textOutput(ns("test"))
              )))}
@@ -47,13 +53,16 @@ mod_curate_ui <- function(id){
 #'
 #' @noRd
 #' @importFrom purrr is_null
+#' @import ggplot2
+#' @importFrom ggcyto ggcyto geom_gate
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
+
     # All selections from sidebar (control datasets and channels) -------------
     output$channel_selection <- renderUI({
       req(r$gs)
+
       tagList(
       selectInput(ns("fsc_channel"),
                   "Forward Scatter",
@@ -122,7 +131,7 @@ observe({
   })
 }
 
-curate_text <- glue("By curation we understand two essential steps. First, we want to focus our analysis on intact cells and not debris. We therefore need to set a gate that excludes cellular debris, which normally clusters in the lower left corner in a SSC vs FSC plot. Second, we have to define intensity thresholds in our fluorescent channels below which we cannot distinguish between a real signal and autofluorescence/background noise. We will define both the non-debris gate and the threshold using our controls.")
+
 
 # here we should also be able to provide an input$ssc to not explicitly name "SSC.HLin" because these might be called differently for another user
 
