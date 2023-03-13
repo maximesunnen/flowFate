@@ -44,9 +44,8 @@ mod_curate_ui <- function(id){
                # plot SSC vs FSC for control samples -------------------------------------
                #plotOutput(ns("controls_ssc_fsc")),
                plotOutput(ns("non_debris_gate")),
-
-               textOutput(ns("cur_ds")),
-               textOutput(ns("test"))
+               
+               plotOutput(ns("gfp_gate"))
              )))}
 
 #' curate Server Functions
@@ -121,20 +120,31 @@ mod_curate_server <- function(id,r){
     })
 
 observe({
-  gate <- exclude_debris()
+  gate_non_debris <- exclude_debris()
   output$non_debris_gate <- renderPlot({
     ggcyto(r$gs[[control_indices()]],
            aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
            subset = "root") +
       geom_hex(bins = 150) +
       theme_bw() +
-      geom_gate(gate) +
+      geom_gate(gate_non_debris) +
       geom_stats()
   })
-}) |> bindEvent(input$Curate, ignoreInit = TRUE)
+  
+#   gate_gfp <- 
+#   output$gfp_gate <- renderPlot({
+#     ggcyto(r$gs[[control_indices()[c(1,2)]]],
+#            aes(x = .data[[ssc()[1]]]),
+#            subset = "root") +
+#       geom_density(fill = "forestgreen") +
+#       theme_bw() +
+#       geom_gate(gate_gfp) +
+#       geom_stats()
+# }) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
 
   })
+})
 }
 
 # here we should also be able to provide an input$ssc or ssc() to not explicitly name "SSC.HLin" because these might be called differently for another user. somehow this is not working: if I add c(ssc(), fsc()) it says "error in ssc: could not find function "ssc""
