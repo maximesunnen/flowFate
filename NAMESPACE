@@ -2,6 +2,7 @@
 
 export(run_app)
 import(flowCore)
+import(flowWorkspace)
 import(fs)
 import(ggplot2)
 import(shiny)
