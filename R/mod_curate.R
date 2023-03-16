@@ -44,7 +44,7 @@ mod_curate_ui <- function(id){
                # plot SSC vs FSC for control samples -------------------------------------
                #plotOutput(ns("controls_ssc_fsc")),
                plotOutput(ns("non_debris_gate")),
-               
+
                plotOutput(ns("gfp_gate"))
              )))}
 
@@ -70,32 +70,32 @@ mod_curate_server <- function(id,r){
                   "Forward Scatter",
                   choices = c("", colnames(r$gs)),
                   selected = colnames(r$gs)[1]),
-      
+
       selectInput(ns("ssc_channel"),
                   "Side Scatter",
                   choices = c("", colnames(r$gs)),
                   selected = colnames(r$gs)[2]),
-      
-      selectInput(ns("kras_channel"), 
-                  "KRas channel", 
+
+      selectInput(ns("kras_channel"),
+                  "KRas channel",
                   choices = c("",colnames(r$gs)),
                   selected = colnames(r$gs)[3]),
-      
+
       selectInput(ns("myhc_channel"),
-                  "Myosin channel", 
+                  "Myosin channel",
                   choices = c("",colnames(r$gs)),
                   selected = colnames(r$gs)[6])
       )
     })
-    
+
     output$control_selection <- renderUI({
       req(r$gs)
       tagList(
-      selectInput(ns("negative_control"), 
-                  "Negative control", 
+      selectInput(ns("negative_control"),
+                  "Negative control",
                   choices = c("", rownames(pData(r$fs))),
                   selected = rownames(pData(r$fs))[1]),
-      
+
       selectInput(ns("kras_control"),
                   "Positive control (KRAS)",
                   choices = c("", rownames(pData(r$fs))),
@@ -110,31 +110,40 @@ mod_curate_server <- function(id,r){
 
     # SSC vs FSC plot of control samples --------------------------------------
     ## get indices (is it really indices???) of the datasets selected
-    
+
     #compute all these reactive expressions only when input$Curate is activated: so only dependency on input$Curate, not on the changing of the selectInput. This also means that code depending on e.g. control_indices() will not update unless you click on curate [results are cached, and before input$Curate, this code would not know that the input has changed]
     ## question: is my understanding here correct? I think that with eventReactive you create a reactive dependency on the first argument (here input$Curate), so when this updates, the entire code is computed, regardless of the fact that input$kras_control etc changed or not?
-    
-    control_indices <- eventReactive(input$Curate, c(input$kras_control, 
-                                                     input$myhc_control, 
-                                                     input$negative_control))
-    
+    observeEvent(c(input$kras_control, input$myhc_control), {
+      if (input$kras_control == input$myhc_control) {
+        showModal(modalDialog(
+          title = "Important message",
+          "Control cannot be same blabla!"
+        ))
+      }
+    })
+    control_indices <- eventReactive(input$Curate, {
+      c(input$kras_control,
+        input$myhc_control,
+        input$negative_control)
+    })
+
     ssc <- eventReactive(input$Curate, {input$ssc_channel})
     fsc <- eventReactive(input$Curate, {input$fsc_channel})
-    
+
 
 # define the polygon gate matrix ------------------------------------------
   # can maybe be placed outside the server function
-    
+
     pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
                       ncol = 2,
                       nrow = 5)
-    
+
     # define a reactive expression which generates the gate, since it depends on ssc() and fsc() (which themselves depend on input$Curate), they don't trigger unless they have input.
     # However, I have no idea why this is not giving a sort of "don't know how to deal with object of type NULL" error....)
     # -->  now i know why: ssc() has an initial value, since i added "selected =... " argument to selectInput, so initially ssc() does exist and is not NULL!!! BUT only after "Curate"???)
     # ideally, pgn-cut should  be out of the reactive, since it does not depend on any reactive input(and it does not have to be recomputed every time ssc() changes!
     #  polygonGate however HAS to be inside, because it uses ssc() and fsc()
-    
+
     #very important question: when ssc() changes (because selectInput changed and input$Curate was activated, is polygonGate updated (i think yes)? or does pgn_cut have to be a reactive for this and used in polygonGate as .gate = pgn_cut()) (i think no)
     #exlude debris should not be in observe({}) since you can't use observers in other statements, they're made for their side effects!
 
@@ -143,13 +152,13 @@ mod_curate_server <- function(id,r){
       polygonGate(filterId = "NonDebris", .gate = pgn_cut)
     })
 
-    
+
   #control_incides() is under the control of input$Curate. It's funny that i don't get an error of the type: "Can't subset r$gs" because initially control_indices() does not exist. does this have to do with lazyness? render*_ functions only compute their content when it's necessary? when drawing the reactive graph it makes sense! ssc() cannot be computed, therefore exclude_debris() cannot be computed, and ultimately the renderPlot({}) is stuck at the first line and will not try to compute ggcyto (which would lead to an error?)
 
     ## is this good practice here to put other stuff than the actual plot inside renderPlot()?
-    
+
   # output$non_debris_gate <- renderPlot({
-  #   # gate_non_debris <- 
+  #   # gate_non_debris <-
   #   #exclude_debris()
   #   message("okay")
   #   # add gate to gs
@@ -162,11 +171,11 @@ mod_curate_server <- function(id,r){
   #          aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
   #          subset = "root") +
   #     geom_hex(bins = 150) +
-  #     theme_bw() 
+  #     theme_bw()
   #     geom_gate(exclude_debris())
   #     geom_stats()
   # })
-  # 
+  #
 
 observe({
   colnames(pgn_cut) <- c(ssc(), fsc())
