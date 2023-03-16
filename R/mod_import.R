@@ -66,7 +66,7 @@ mod_import_ui <- function(id){
 #' @importFrom tibble as_tibble
 #' @importFrom glue glue
 #'
-mod_import_server <- function(id, r){
+mod_import_server <- function(id, r = NULL){
 
 # increasing the maximum upload size  -------------------------------------
   options(shiny.maxRequestSize = 60 * 1024^2)
@@ -137,7 +137,10 @@ mod_import_server <- function(id, r){
 
       })}) |> bindEvent(input$Submit, ignoreInit = TRUE)
 
-    r$s <- reactive(input$individual_FCS_rows_selected)
+    r$s <- reactive({
+      req(input$individual_FCS_rows_selected)
+      input$individual_FCS_rows_selected
+      })
 
     # overview SSC vs FSC plot to inspect data --------------------------------
 
