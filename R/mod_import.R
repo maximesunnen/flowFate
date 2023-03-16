@@ -137,10 +137,7 @@ mod_import_server <- function(id, r = NULL){
 
       })}) |> bindEvent(input$Submit, ignoreInit = TRUE)
 
-    r$s <- reactive({
-      req(input$individual_FCS_rows_selected)
-      input$individual_FCS_rows_selected
-      })
+    r$s <- reactive(input$individual_FCS_rows_selected)
 
     # overview SSC vs FSC plot to inspect data --------------------------------
 
