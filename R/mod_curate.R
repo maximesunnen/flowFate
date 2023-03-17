@@ -7,9 +7,11 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
+#' @importFrom shinyWidgets useSweetAlert sendSweetAlert
 
 mod_curate_ui <- function(id){
   ns <- NS(id)
+  useSweetAlert()
 
   # Defining a tabPanel layout ----------------------------------------------
   tabPanel(title = "Curate",
@@ -48,6 +50,7 @@ mod_curate_ui <- function(id){
                plotOutput(ns("gfp_gate"))
              )))}
 
+
 #' curate Server Functions
 #'
 #' @noRd
@@ -60,18 +63,18 @@ mod_curate_ui <- function(id){
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-
-    # All selections from sidebar (control datasets and channels) -------------
+    
+    # All sidebar selections/inputs (control datasets and channels) -------------
     output$channel_selection <- renderUI({
       req(r$gs)
-
+      
       tagList(
-      selectInput(ns("fsc_channel"),
+      selectInput(ns("forward_scatter"),
                   "Forward Scatter",
                   choices = c("", colnames(r$gs)),
                   selected = colnames(r$gs)[1]),
 
-      selectInput(ns("ssc_channel"),
+      selectInput(ns("side_scatter"),
                   "Side Scatter",
                   choices = c("", colnames(r$gs)),
                   selected = colnames(r$gs)[2]),
@@ -91,110 +94,107 @@ mod_curate_server <- function(id,r){
     output$control_selection <- renderUI({
       req(r$gs)
       tagList(
-      selectInput(ns("negative_control"),
-                  "Negative control",
-                  choices = c("", rownames(pData(r$fs))),
-                  selected = rownames(pData(r$fs))[1]),
-
-      selectInput(ns("kras_control"),
-                  "Positive control (KRAS)",
-                  choices = c("", rownames(pData(r$fs))),
-                  selected = rownames(pData(r$fs))[2]),
-
-      selectInput(ns("myhc_control"),
-                  "Positive control (MYHC)",
-                  choices = c("", rownames(pData(r$fs))),
-                  selected = rownames(pData(r$fs))[3])
+        selectInput(ns("negative_control"),
+                    "Negative control",
+                    choices = c("", rownames(pData(r$fs))),
+                    selected = rownames(pData(r$fs))[1]),
+        
+        selectInput(ns("positive_control_kras"),
+                    "Positive control (KRAS)",
+                    choices = c("", rownames(pData(r$fs))),
+                    selected = rownames(pData(r$fs))[2]),
+        
+        selectInput(ns("positive_control_myhc"),
+                    "Positive control (MYHC)",
+                    choices = c("", rownames(pData(r$fs))),
+                    selected = rownames(pData(r$fs))[3])
       )
     })
+    
+    
+# add alerts when non-unique channels/control datasets --------------------    
+    
+    observeEvent(c(input$positive_control_kras, input$positive_control_myhc, input$negative_control), {
+      if (input$positive_control_kras %in% c(input$positive_control_myhc, input$negative_control) | input$positive_control_myhc == input$negative_control) {
+        sendSweetAlert(
+          session = session,
+          title = "Warning.",
+          text = "Control datasets have to be unique!",
+          type = "warning"
+        )
+      }})
+    
+    observeEvent(c(input$forward_scatter, input$side_scatter, input$kras_channel, input$myhc_channel), {
+      if (input$forward_scatter %in% c(input$side_scatter, input$kras_channel, input$myhc_channel) | input$side_scatter %in% c(input$kras_channel, input$myhc_channel) | input$kras_channel == input$myhc_channel) {
+        sendSweetAlert(
+          session = session,
+          title = "Warning.",
+          text = "Channel names have to be unique!",
+          type = "warning"
+        )
+      }})
+    
+    
+# SSC vs FSC plot of control samples --------------------------------------
+# We need a set of reactive expressions that capture the input from our selectInput widgets defined above. Since we do not want the app to perform computations every time the input changes - but rather when the user is "finished" defining his inputs - put these reactive expressions under the control of a new button "Curate" (accessed by input$Curate). Code depending on e.g. control_indices() should therefore also not update unless "Curate" is clicked (results are cached, and before input$Curate, this code would not know that the input has changed). 
 
-    # SSC vs FSC plot of control samples --------------------------------------
-    ## get indices (is it really indices???) of the datasets selected
+# Question: with the code below, you create a reactive expression with a dependency on input$Curate. BUT, when input$Curate changes (e.g the user clicks on the button), the entire code is computed, regardless if its result has changed or not? Here this is not a problem because accessing the inputs is not computationally expensive, but we should keep this in mind.
 
-    #compute all these reactive expressions only when input$Curate is activated: so only dependency on input$Curate, not on the changing of the selectInput. This also means that code depending on e.g. control_indices() will not update unless you click on curate [results are cached, and before input$Curate, this code would not know that the input has changed]
-    ## question: is my understanding here correct? I think that with eventReactive you create a reactive dependency on the first argument (here input$Curate), so when this updates, the entire code is computed, regardless of the fact that input$kras_control etc changed or not?
-    observeEvent(c(input$kras_control, input$myhc_control), {
-      if (input$kras_control == input$myhc_control) {
-        showModal(modalDialog(
-          title = "Important message",
-          "Control cannot be same blabla!"
-        ))
-      }
-    })
-    control_indices <- eventReactive(input$Curate, {
-      c(input$kras_control,
-        input$myhc_control,
+    control_indices <- eventReactive(input$Curate, {           ## is it really indices or names of the datasets?
+      c(input$positive_control_kras,
+        input$positive_control_myhc,
         input$negative_control)
     })
 
-    ssc <- eventReactive(input$Curate, {input$ssc_channel})
-    fsc <- eventReactive(input$Curate, {input$fsc_channel})
-
+    side_scatter <- eventReactive(input$Curate, {input$side_scatter})
+    forward_scatter <- eventReactive(input$Curate, {input$forward_scatter})
 
 # define the polygon gate matrix ------------------------------------------
-  # can maybe be placed outside the server function
 
-    pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
-                      ncol = 2,
-                      nrow = 5)
 
-    # define a reactive expression which generates the gate, since it depends on ssc() and fsc() (which themselves depend on input$Curate), they don't trigger unless they have input.
-    # However, I have no idea why this is not giving a sort of "don't know how to deal with object of type NULL" error....)
-    # -->  now i know why: ssc() has an initial value, since i added "selected =... " argument to selectInput, so initially ssc() does exist and is not NULL!!! BUT only after "Curate"???)
-    # ideally, pgn-cut should  be out of the reactive, since it does not depend on any reactive input(and it does not have to be recomputed every time ssc() changes!
+
+# We now need to define a reactive expression generating our first gate. How this gate is generated obviously depends on the name of our side_scatter and forward_scatter reactive expressions (i.e which channels the user wants to gate on). These reactive expressions have a dependency on input$Curate, so they won't change unless the user clicks "Curate". 
+
+# Question: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate". 
+
+
     #  polygonGate however HAS to be inside, because it uses ssc() and fsc()
 
     #very important question: when ssc() changes (because selectInput changed and input$Curate was activated, is polygonGate updated (i think yes)? or does pgn_cut have to be a reactive for this and used in polygonGate as .gate = pgn_cut()) (i think no)
     #exlude debris should not be in observe({}) since you can't use observers in other statements, they're made for their side effects!
 
-    exclude_debris <- reactive({
-      colnames(pgn_cut) <- c(ssc(), fsc())
-      polygonGate(filterId = "NonDebris", .gate = pgn_cut)
-    })
 
 
   #control_incides() is under the control of input$Curate. It's funny that i don't get an error of the type: "Can't subset r$gs" because initially control_indices() does not exist. does this have to do with lazyness? render*_ functions only compute their content when it's necessary? when drawing the reactive graph it makes sense! ssc() cannot be computed, therefore exclude_debris() cannot be computed, and ultimately the renderPlot({}) is stuck at the first line and will not try to compute ggcyto (which would lead to an error?)
 
     ## is this good practice here to put other stuff than the actual plot inside renderPlot()?
 
-  # output$non_debris_gate <- renderPlot({
-  #   # gate_non_debris <-
-  #   #exclude_debris()
-  #   message("okay")
-  #   # add gate to gs
-  #   gs_pop_add(r$gs, exclude_debris(), parent = "root")
-  #   # recompute the GatingSet
-  #   message("Added the non_debris gate to the gatingSet")
-  #   recompute(r$gs)
-  #   message("Recomputed the gatingSet")
-  #   ggcyto(r$gs[[control_indices()]],
-  #          aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
-  #          subset = "root") +
-  #     geom_hex(bins = 150) +
-  #     theme_bw()
-  #     geom_gate(exclude_debris())
-  #     geom_stats()
-  # })
-  #
-
 observe({
-  colnames(pgn_cut) <- c(ssc(), fsc())
+  # create the gate
+  pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),      # could be placed outside the server function
+                    ncol = 2,
+                    nrow = 5)
+  colnames(pgn_cut) <- c(side_scatter(), forward_scatter())
   gate_non_debris <- polygonGate(filterId = "NonDebris", .gate = pgn_cut)
-  message("created the gate")
+  message("Created the gate")
+  
   # add gate to gs
-  gs_pop_add(r$gs, exclude_debris(), parent = "root")
-  # recompute the GatingSet
+  gs_pop_add(r$gs, gate_non_debris, parent = "root")
   message("Added the non_debris gate to the gatingSet")
+  
+  # recompute the GatingSet
   recompute(r$gs)
   message("Recomputed the gatingSet")
+  
+  #plot the gate
   output$non_debris_gate <- renderPlot({
     ggcyto(r$gs[[control_indices()]],
-         aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
-         subset = "root") +
-    geom_hex(bins = 150) +
-    theme_bw()+
-    geom_gate(gate_non_debris)+
-    geom_stats()
+           aes(x = .data[[side_scatter()]] , y = .data[[forward_scatter()]]),
+           subset = "root") +
+      geom_hex(bins = 150) +
+      theme_bw() +
+      geom_gate(gate_non_debris) +
+      geom_stats()
 })}) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
 
