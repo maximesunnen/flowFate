@@ -112,7 +112,7 @@ mod_curate_server <- function(id,r){
     })
     
     
-# add alerts when non-unique channels/control datasets --------------------    
+# alerts if non-unique channels/control datasets --------------------    
     
     observeEvent(c(input$positive_control_kras, input$positive_control_myhc, input$negative_control), {
       if (input$positive_control_kras %in% c(input$positive_control_myhc, input$negative_control) | input$positive_control_myhc == input$negative_control) {
@@ -149,29 +149,13 @@ mod_curate_server <- function(id,r){
     side_scatter <- eventReactive(input$Curate, {input$side_scatter})
     forward_scatter <- eventReactive(input$Curate, {input$forward_scatter})
 
-# define the polygon gate matrix ------------------------------------------
-
-
-
 # We now need to define a reactive expression generating our first gate. How this gate is generated obviously depends on the name of our side_scatter and forward_scatter reactive expressions (i.e which channels the user wants to gate on). These reactive expressions have a dependency on input$Curate, so they won't change unless the user clicks "Curate". 
 
-# Question: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate". 
-
-
-    #  polygonGate however HAS to be inside, because it uses ssc() and fsc()
-
-    #very important question: when ssc() changes (because selectInput changed and input$Curate was activated, is polygonGate updated (i think yes)? or does pgn_cut have to be a reactive for this and used in polygonGate as .gate = pgn_cut()) (i think no)
-    #exlude debris should not be in observe({}) since you can't use observers in other statements, they're made for their side effects!
-
-
-
-  #control_incides() is under the control of input$Curate. It's funny that i don't get an error of the type: "Can't subset r$gs" because initially control_indices() does not exist. does this have to do with lazyness? render*_ functions only compute their content when it's necessary? when drawing the reactive graph it makes sense! ssc() cannot be computed, therefore exclude_debris() cannot be computed, and ultimately the renderPlot({}) is stuck at the first line and will not try to compute ggcyto (which would lead to an error?)
-
-    ## is this good practice here to put other stuff than the actual plot inside renderPlot()?
+# Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate". 
 
 observe({
   # create the gate
-  pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),      # could be placed outside the server function
+  pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),      # place outside the server function?
                     ncol = 2,
                     nrow = 5)
   colnames(pgn_cut) <- c(side_scatter(), forward_scatter())
@@ -195,15 +179,36 @@ observe({
       theme_bw() +
       geom_gate(gate_non_debris) +
       geom_stats()
-})}) |> bindEvent(input$Curate, ignoreInit = TRUE)
+})}) |> bindEvent(input$Curate, ignoreInit = TRUE)        # create reactive dependency of observe() on input$Curate
 
 
+
+# curate background noise - KRAS channel ----------------------------------
+
+#extract NonDebris population data
+nonDebris.data <- gh_pop_get_data(gs[[control_indices()[1,3]]], "NonDebris")
+
+# change the object class to flowSet
+## necessary to apply the quantileGate function from flowWorkspace,
+nonDebris.data <- cytoset_to_flowSet(nonDebris.data)
+
+# apply the quantileGate on both negative controls and assign result to gfp.test.gate
+gfp.test.gate <- fsApply(nonDebris.data, 
+                         function(fr) openCyto:::.quantileGate(fr, 
+                                                               channels = "GFP",
+                                                               probs = 0.99))
+
+a <- names(gfp.test.gate[1])
+b <- names(gfp.test.gate[2])
+df <- data.frame(min = c(gfp.test.gate[[a]]@min,
+                         gfp.test.gate[[b]]@min),
+                 # note: we do not need the "max" column technically, it will always be Inf
+                 max = c(gfp.test.gate[[a]]@max,
+                         gfp.test.gate[[b]]@max))
+    
   })
+  
 }
-
-# )}
-
-# here we should also be able to provide an input$ssc or ssc() to not explicitly name "SSC.HLin" because these might be called differently for another user. somehow this is not working: if I add c(ssc(), fsc()) it says "error in ssc: could not find function "ssc""
 
 
 
