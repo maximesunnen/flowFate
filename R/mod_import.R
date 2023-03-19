@@ -143,7 +143,7 @@ mod_import_server <- function(id, r = NULL){
 
     output$overview_SSC_FSC <- renderPlot({
       if (!is_null(r$s())) {
-        ggcyto(r$gs[[r$s()]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+        ggcyto(r$gs[[r$s()]], aes(x = "SSC.HLin", y = "FSC.HLin"), subset = "root") +
           geom_hex(bins = 150) +
           theme_bw()
       }
