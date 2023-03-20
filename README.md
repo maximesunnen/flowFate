@@ -45,11 +45,12 @@ renv.lock.prod
 
 3.  `scp` the `deploy` folder to the \`shiny-sever\` in `/home/aurelien.ginolhac/deploiement/container_apps/` and execute **as root** the commands in the README
 
-    docker build -f Dockerfile_base --progress=plain -t labbook_base .
-    docker build -f Dockerfile --progress=plain -t labbook:latest .
-    docker run -p 3838:3838 labbook:latest
-# then go to 127.0.0.1:3838 # only local machine for testing
-    
+```
+docker build -f Dockerfile_base --progress=plain -t labbook_base .
+docker build -f Dockerfile --progress=plain -t labbook:latest .
+docker run -p 3838:3838 labbook:latest
+```
+
 4. edit `/home/aurelien.ginolhac/deploiement/container_system/shinyproxy-docker/application.yml`
 
 adding something like:

@@ -161,70 +161,6 @@ mod_curate_server <- function(id,r){
     forward_scatter <- eventReactive(input$Curate, {input$forward_scatter})
 
 
-# We now need to define a reactive expression generating our first gate. How this gate is generated obviously depends on the name of our side_scatter and forward_scatter reactive expressions (i.e which channels the user wants to gate on). These reactive expressions have a dependency on input$Curate, so they won't change unless the user clicks "Curate". 
-
-# Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate". 
-
-observe({
-  # create the gate (place outside server function?)
-  pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),      
-                    ncol = 2,
-                    nrow = 5)
-  colnames(pgn_cut) <- c(side_scatter(), forward_scatter())
-  gate_non_debris <- polygonGate(filterId = "NonDebris", .gate = pgn_cut)
-  message("Created the gate")
-  
-  # add gate to gs
-  gs_pop_add(r$gs, gate_non_debris, parent = "root")
-  message("Added the non_debris gate to the gatingSet")
-  
-  # recompute the GatingSet
-  recompute(r$gs)
-  message("Recomputed the gatingSet")
-  
-  #plot the gate
-  output$non_debris_gate <- renderPlot({
-    ggcyto(r$gs[[control_indices()]],
-           aes(x = .data[[side_scatter()]] , y = .data[[forward_scatter()]]),
-           subset = "root") +
-      geom_hex(bins = 150) +
-      theme_bw() +
-      geom_gate(gate_non_debris) +
-      geom_stats()
-})}) |> bindEvent(input$Curate, ignoreInit = TRUE)        # create reactive dependency of observe() on input$Curate
-
-
-
-# # curate background noise - KRAS channel ----------------------------------
-#
-observe({
-  #extract NonDebris population data and change to flowSet
-  nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[1]]], "NonDebris") |> cytoset_to_flowSet()
-  message("nonDebris_data created")
-  # create a quantileGate for both samples
-  gfp_test_gate <- fsApply(nonDebris_data,
-                         function(fr) openCyto::gate_quantile(fr,
-                                                   channel = "GRN.B.HLin",
-                                                   probs = 0.99))
-  message("gfp_test_gate created")
-  # # average the lower threshold from both gates
-  # lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
-  # 
-  # # create the final gate
-  # gfp_gate <- rectangleGate(input$kras_channel = c(lower_limit_gfp_gate, Inf), 
-  #                           filterId = "GFP+")
-  # 
-  # output$gfp_gate <- renderPlot({
-  #   ggcyto(r$gs[[control_indices()]],
-  #          aes(x = .data[[input$kras_channel]]),
-  #          subset = "root") +
-  #     geom_density(fill = "forestgreen") +
-  #     theme_bw() +
-  #     geom_gate(gfp_gate) +
-  #     geom_stats()
-    
-}) |> bindEvent(input$Curate, ignoreInit = TRUE)
-
     # We now need to define a reactive expression generating our first gate. How this gate is generated obviously depends on the name of our side_scatter and forward_scatter reactive expressions (i.e which channels the user wants to gate on). These reactive expressions have a dependency on input$Curate, so they won't change unless the user clicks "Curate".
 
     # Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate".
@@ -266,10 +202,8 @@ observe({
       nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[1]]], "NonDebris") |>
         cytoset_to_flowSet()
       message("nonDebris_data created")
-
       # create a quantileGate for both samples
       gfp_test_gate <- create_quantile_gate(nonDebris_data)
-
       message("gfp_test_gate created")
       # # average the lower threshold from both gates
       # lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
@@ -288,9 +222,7 @@ observe({
       #     geom_stats()
 
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
-
   })}
-
 
 #' @import openCyto
 #' @import flowCore
@@ -299,12 +231,11 @@ create_quantile_gate <- function(samples) {
   fsApply(samples,
           function(fr) {
             print(fr)
-            openCyto:::gate_quantile(fr,
-                                     channel = "GRN.B.HLin",
-                                     probs = 0.99)
+            openCyto::gate_quantile(fr,
+                                    channel = "GRN.B.HLin",
+                                    probs = 0.99)
           })
 }
-
 
 ## To be copied in the UI
 # mod_curate_ui("curate_1")
