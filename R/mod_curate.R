@@ -200,13 +200,11 @@ observe({
   #extract NonDebris population data and change to flowSet
   nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[1]]], "NonDebris") |> cytoset_to_flowSet()
   message("nonDebris_data created")
-  
   # create a quantileGate for both samples
   gfp_test_gate <- fsApply(nonDebris_data,
-                         function(fr) openCyto:::gate_quantile(fr,
+                         function(fr) openCyto::gate_quantile(fr,
                                                    channel = "GRN.B.HLin",
                                                    probs = 0.99))
-  
   message("gfp_test_gate created")
   # # average the lower threshold from both gates
   # lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
