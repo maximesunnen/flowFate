@@ -35,16 +35,6 @@ library(dplyr)
 ## Loading dependencies
 Visualization and analysis of flow cytometry data requires some R packages. The code below ensures that all the necessary packages and dependencies are installed and loaded. 
 
-**Aurélien:** the install.packages("pacman") leads to a popup window saying "One or more of the packages to be updated are currently loaded. Restarting R prior to install is highly recommended.". I have to "cancel" this for the code to run properly)
-```{r, eval = FALSE, message=FALSE}
-install.packages("pacman", repos = "http://cran.us.r-project.org")
-library(pacman)
-
-pacman::p_load(tidyverse, flowCore, ggcyto, knitr, openCyto, gtools, patchwork)
-```
-
-
-
 ## Preliminary steps
 
 ### Output folder
@@ -172,12 +162,12 @@ gs <- GatingSet(fs)
 Preparing cells for FACS analysis (fixation, permeabilization, etc.) can lead to cell death and therefore debris in our sample that that should be excluded from our analysis. Since intact cells have a different morphology and size compared to debris, we can distinguish them in a SSC vs FSC plot. 
 
 ```{r, out.width="100%", message=FALSE}
-ggcyto(gs[[1:3]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
-  geom_hex(bins = 150) +
-  ggcyto_par_set(limits = "instrument") +
-  theme(complete = TRUE,
-        axis.text.x = element_text(angle = 45, size = 10)) +
-  theme_bw()
+# ggcyto(gs[[1:3]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+#   geom_hex(bins = 150) +
+#   ggcyto_par_set(limits = "instrument") +
+#   theme(complete = TRUE,
+#         axis.text.x = element_text(angle = 45, size = 10)) +
+#   theme_bw()
 ```
 
 In SSC vs FSC plots, dead cells and debris cluster in the bottom left corner because of their morphology. However, some variation across samples can be observed regarding the shape and size of this cluster. To properly define a gate excluding this region we think it's best to add a debris control (staurosporin treatment, concentration to be determined) to your samples.
@@ -222,33 +212,11 @@ recompute(gs)
 plot(gs)
 ```
 
-If we want, we can plot our first gate for our entire gatingSet. Note that this operation can take some time depending on the size of your gatingSet.
-
-```{r, out.width="100%"}
-ggcyto(gs[[5:15]], aes(x = SSC, y = FSC), subset = "root") +
-  geom_hex(bins = 200) +
-  geom_gate(non.debris.gate) +
-  ggcyto_par_set(limits = "instrument") +
-  geom_stats() +
-  theme(complete = TRUE,
-        axis.text.x = element_text(angle = 45))
-```
-
-Gating "splits" your initial population of cells into two (or more) subpopulations: one that meets your gating criteria and one that does not. You can extract some statistics from your (sub)population of interest. To save space, we only show the first lines of data. The entire table will be exported as a csv file to our data.output folder. 
-
-```{r}
-non_debris_stats <- gs_pop_get_count_fast(gs, statistic = c("count")) |>
-	as_tibble() |> 
-  mutate(Freq = Count / ParentCount) |>
-  select(name, Parent, ParentCount, Population, Count, Freq)
-non_debris_stats
-```
-
 ### Gating GFP-positive cells
 We want to focus our analysis on cells successfully transfected with GFP-tagged KRAS. Random noise as well as autofluorescence from untransfected cells inevitably leads to some degree of "background" signal in the GFP channel. We can determine the threshold for background signals using our unstained and MyoHC control. Let's plot the GFP intensitiy distribution for these two samples.
 
 ```{r, out.width="100%"}
-ggcyto(gs[[c(1,3)]], aes(x = GFP), subset = "NonDebris") +
+ggcyto(gs[[c(1,3)]], aes(x = "GRN.B.HLin"), subset = "NonDebris") +
   geom_density(fill = "palegreen") +
   ggcyto_par_set(limits = "instrument") +
   scale_x_flowjo_biexp() +
@@ -258,54 +226,44 @@ ggcyto(gs[[c(1,3)]], aes(x = GFP), subset = "NonDebris") +
 Although the differences are small, these two distributions are not identical, indicating that background intenities are fluctuating across samples and a threshold intensity for GFP-positive cells should therefore consider both distributions. 
 Conceptually, we apply the quantile_gate() function that determines a cutpoint by the events quantile. In our case, we set the *probs* argument to 0.99 to find a cutpoint that encompasses 99% of the data. Applying this function to both negative GFP controls and averaging the result, we obtain a cutpoint for our final gate. 
 
-**!!! This code will be simplified once we agree on the precise order of controls that should be used for each differentiation assay !!!**
+**Convention. Controls should be in a precise order: (1) unstained, (2) GFP only, (3) MYHC only.**
 
 ```{r}
-#extract the data from the NonDebris population
-nonDebris.data <- gs_pop_get_data(gs[[c(1,3)]], "NonDebris")
+#extract NonDebris population data and change to flowSet
+nonDebris_data <- gs_pop_get_data(gs[[c(1,3)]], "NonDebris") |> cytoset_to_flowSet()
 
-# change the object class to flowSet
-## necessary to apply the quantileGate function from flowWorkspace,
-nonDebris.data <- cytoset_to_flowSet(nonDebris.data)
+# create a quantileGate for both samples
+gfp_test_gate <- fsApply(nonDebris_data, 
+                         function(fr) openCyto::gate_quantile(fr, 
+                                                              channel = "GRN.B.HLin",
+                                                              probs = 0.99))
 
-# apply the quantileGate on both negative controls and assign result to gfp.test.gate
-gfp.test.gate <- fsApply(nonDebris.data, 
-                         function(fr) openCyto:::.quantileGate(fr, 
-                                                               channels = "GFP",
-                                                               probs = 0.99))
+# average the lower threshold from both gates
+lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
 
-a <- names(gfp.test.gate[1])
-b <- names(gfp.test.gate[2])
-df <- data.frame(min = c(gfp.test.gate[[a]]@min,
-                         gfp.test.gate[[b]]@min),
-# note: we do not need the "max" column technically, it will always be Inf
-                 max = c(gfp.test.gate[[a]]@max,
-                       gfp.test.gate[[b]]@max))
-```
-
-We can create the final GFP gate by averaging the cutpoints determined above. You can type mean(df$min) into the console to get this mean value.
-
-```{r}
-gfp.gate <- rectangleGate("GFP" = c(mean(df$min), Inf), 
+# create the final gate
+gfp_gate <- rectangleGate("GRN.B.HLin" = c(lower_limit_gfp_gate, Inf), 
                           filterId = "GFP+")
 ```
 
-We then plot our result as a visual control.
+We can plot our result...
 
 ```{r, out.width="100%"}
-ggcyto(gs[[5:15]], aes(x = GFP), subset = "NonDebris") +
+ggcyto(gs, aes(x = "GRN.B.HLin"), subset = "NonDebris") +
   geom_density(fill = "palegreen") +
-  geom_gate(gfp.gate) +
+  geom_gate(gfp_gate) +
   ggcyto_par_set(limits = "instrument") +
   scale_x_flowjo_biexp() +
   theme_bw()
 ```
-We then add the gate to our gatingSet object. The recompute() function performs the actual filtering operation on our data. In addition, we plot the gating tree.
-We then add gatingSet object, plot the gating tree and recompute the gatingSet. When adding the gate to the gatingSet, we need to specify the parent population (NonDebris in this case). 
+
+... and add the gate to our gatingSet object, plot the gating tree and recompute the gatingSet. 
+
+When adding the gate to the gatingSet, we need to specify the parent population. In our case, this should be the "NonDebris".
 
 ```{r}
 # add the gate to the GatingSet
-gs_pop_add(gs,gfp.gate, parent = "NonDebris")
+gs_pop_add(gs,gfp_gate, parent = "NonDebris")
 
 # plot the GatingSet to verify the underlying hierarchy
 plot(gs)
@@ -314,72 +272,50 @@ plot(gs)
 recompute(gs)
 ```
 
-We can again retrieve population statistics (to save space, only the head of the data is displayed).
-
-```{r}
-gfp.positive.stats <- data.frame(gs_pop_get_count_fast(gs, 
-                                                       statistic="count")) %>%
-  mutate("Freq" = Count/ParentCount) %>% 
-  select(1,3,5,2,4,6)
-
-print(head(gfp.positive.stats))
-```
-
 ### Identify and select MYHC-positive cells
-The same procedure is applied to gate for myosin-positive cells. 
-
-We first check the intensity distribution in the APC channel.  
-**Note:** we have to plot the intensity distribution of the "NonDebris" population and **not** the "GFP+" population. The latter contains, for our GFP-negative controls, only very few cells for which plotting intensity distributions does not make sense.
-
-MYHC-negative controls are on the left and in the middle.
+We apply the same logic to gate for myosin-positive cells.
 
 ```{r, out.width="100%"}
-ggcyto(gs[[c(1,2)]],aes(x = APC), subset="NonDebris")+
-  geom_density(fill="pink")+
-  ggcyto_par_set(limits = "instrument")+
-  scale_x_flowjo_biexp()+
+ggcyto(gs[[c(1,2)]], aes(x = "RED.R.HLin"), subset = "NonDebris") +
+  geom_density(fill = "pink") +
+  ggcyto_par_set(limits = "instrument") +
+  scale_x_flowjo_biexp() +
   theme_bw()
 ```
 
 We retrieve data from the NonDebris population, create a flowSet from a cytoSet and apply a quantile gate to obtain a threshold value that excludes 99% of the cells. 
 
 ```{r}
-nonDebris.data <- gs_pop_get_data(gs[[1:3]], "NonDebris")
-nonDebris.data <- cytoset_to_flowSet(nonDebris.data)
+nonDebris_data <- gs_pop_get_data(gs[[c(1,2)]], "NonDebris") |> cytoset_to_flowSet()
 
-myo.test.gate <- fsApply(nonDebris.data, function(fr) openCyto:::.quantileGate(fr, channels = "APC", probs = 0.99))
+myo_test_gate <- fsApply(nonDebris_data, 
+                         function(fr) openCyto::gate_quantile(fr, 
+                                                              channel = "RED.R.HLin", 
+                                                              probs = 0.99))
+# average the lower threshold from both gates
+lower_limit_myo_gate <- mean(c(myo_test_gate[[1]]@min, myo_test_gate[[2]]@min))
 
-c <- names(myo.test.gate[1])
-d <- names(myo.test.gate[2])
-df <- data.frame(min = c(myo.test.gate[[c]]@min,
-                         myo.test.gate[[d]]@min),
-                 max = c(myo.test.gate[[c]]@max,
-                         myo.test.gate[[d]]@max))
-```
-
-We then average both threshold intensities to create the final gate.
-
-```{r}
-myo.gate <- rectangleGate("APC" = c(mean(df$min), Inf), 
+# create the final gate
+myo_gate <- rectangleGate("RED.R.HLin" = c(lower_limit_myo_gate, Inf), 
                           filterId = "MYO+")
 ```
 
-We check the gate in a plot...
+We can check the gate in a plot...
 
 ```{r, out.width="100%"}
-ggcyto(gs[[c(1,2)]],aes(x = APC), subset="NonDebris")+
-  geom_density(fill="pink")+
-  geom_gate(myo.gate)+
-  ggcyto_par_set(limits = "instrument")+
-  scale_x_flowjo_biexp()+
+ggcyto(gs,aes(x = "RED.R.HLin"), subset = "NonDebris") +
+  geom_density(fill = "pink") +
+  geom_gate(myo_gate) +
+  ggcyto_par_set(limits = "instrument") +
+  scale_x_flowjo_biexp() +
   theme_bw()
 ```
 
-...and add the gate to the gatingSet, plot the gating tree and recompute the gatingSet. When adding the gate to the gatingSet, we need to specify the parent population, in this case the GFP-positive ("GFP+") population.
+...add the gate to the gatingSet, plot the gating tree and recompute the gatingSet. When adding the gate to the gatingSet, we need to specify the parent population. Now this should correspond to "GFP+". 
 
 ```{r}
 #add gate to GFP+ population
-gs_pop_add(gs,myo.gate, parent = "GFP+")
+gs_pop_add(gs,myo_gate, parent = "GFP+")
 
 #plot the GatingSet
 plot(gs)
@@ -388,79 +324,90 @@ plot(gs)
 recompute(gs)
 ```
 
-We retrieve population statistics as before.
+### Binning GFP+ cells
+We want to subset the MYO+ population into three distinct subpopulations based on GFP expression:
+
+- GFP-low: intensities = [lower_limit_gfp_gate,100]
+- GFP-medium: intensities = [101, 350]
+- GFP-high: intensities = [351, 1000]
 
 ```{r}
-myo.positive.stats <- data.frame(gs_pop_get_count_fast(gs, 
-                                                       statistic = "count")) %>%
-  mutate("Freq" = Count/ParentCount) %>% 
-  select(1,3,5,2,4,6)
+gfp_low <- rectangleGate("GRN.B.HLin" = c(lower_limit_gfp_gate, 100), filterId = "GFP-low")
+gfp_medium <- rectangleGate("GRN.B.HLin" = c(101, 350), filterId = "GFP-medium")
+gfp_high <- rectangleGate("GRN.B.HLin" = c(351, 1000), filterId = "GFP-high")
 
-print(head(myo.positive.stats))
+gs_pop_add(gs, gfp_low, parent = "MYO+")
+gs_pop_add(gs, gfp_medium, parent = "MYO+")
+gs_pop_add(gs, gfp_high, parent = "MYO+")
+
+plot(gs)
+
+recompute(gs)
 ```
 
-### Gating MYHC-positive **sub**populations
-Let's plot the APC distribution of the myosin-positive population for some samples.
+We can visualize the gates.
 
-```{r, out.width="100%"}
-ggcyto(gs[[5:15]], aes(x = APC), subset = "MYO+") +
-  geom_density(fill = "pink") +
-  ggcyto_par_set(limits = "instrument") +
-  scale_x_flowjo_biexp()+
-  theme_bw()
-```
-
-Two distinct peaks can be identified in these density plots, indicating the presence of distinct subpopulations in our myosin-positive population: a population of cells with low myosin expression and a population of cells with high myosin expression. Cells with higher myosin expression are in a more advanced state of differentiation than cells with lower myosin expression. 
-
-We can also visualize the presence of these two subpopulations in a 2D scatter plot (GFP vs APC).
-
-```{r, out.width="100%"}
-ggcyto(gs[[5:15]], aes(x = GFP, y = APC), subset = "MYO+") +
-  geom_point(size = 0.01, alpha = 0.5) +
-  ggcyto_par_set(limits = "instrument") +
+```{r}
+ggcyto(gs, aes(x = "GRN.B.HLin"), subset = "MYO+") +
+  geom_density(fill = "forestgreen") +
   scale_x_flowjo_biexp() +
-  scale_y_flowjo_biexp() +
-  theme(axis.text.x = element_text(angle = 45))+
-  theme_bw()
+  theme_bw() +
+  geom_gate(gfp_low) +
+  geom_gate(gfp_medium) +
+  geom_gate(gfp_high)
 ```
 
-There's no single cutpoint intensity that accurately splits our myosin-positive populations into their two subpopulations for each sample. We need some data-driven gating function that can indetify this cutpoint on a per-sample basis. The gate_flowclust_1d() function from the openCyto package can be used for this purpose.
+Our control samples have served their purpose to narrow down the population we want to perform our analysis on. As shown below, the GFP-low/medium/high populations only contain, if any at all, very few cells. Before we proceed our analysis, we should therefore remove these three control samples from the gaingSet (reasons explained below).
 
+```{r}
+# inspect data
+head(data.frame(gs_pop_get_count_fast(gs)))
 
-**Note 1:** Add some description of the algorithm behind this function: how it works, rationale, why this can be used here.
-**Note 2:** How to get rid of this annoying warning message? (Aurélien)
+# remove control samples from gatingSet
 
-The code below extracts the data from our myosin-positive population and transforms the generated cytoSet to a flowSet. It then applies the gate_flowclust_1d() function to all the samples and saves the respective cutpoint it determined.
-
-```{r message=FALSE}
-myo.gate.data <- gs_pop_get_data(gs, "MYO+")
-myo.gate.data <- cytoset_to_flowSet(myo.gate.data)
-
-myosin.flowclust.gate <- fsApply(myo.gate.data, function(fr) 
-  gate_flowclust_1d(fr,params = "APC", K=2, cutpoint_method = "min_density", filterId = "MYO-high"))
+gs <- gs[[4:length(gs)]]
 ```
 
-The created gate(s) can be visualized again in a density or 2d scatter plot. 
+### Myosin expression-based clustering
 
-**Note:** Again, annoying warning message, hidden with warning=FALSE. (Aurélien)
-```{r, warning=FALSE, out.width="100%"}
-ggcyto(gs[[5:15]], aes(x = APC), subset = "MYO+")+
-  geom_density(fill = "pink")+
-  geom_gate(myosin.flowclust.gate)+
-  scale_x_flowjo_biexp()+
-  theme_bw()
+We're interested in myosin expression in our GFP-low/medium/high subpopulations. Usually we observe two distinct peaks: one with high and one with low myosin expression. Our goal is to automate the gating procedure and therefore we need an algorithm that automatically finds the cutpoint between these two peaks based on the underlying data.
+
+**Note: we run into problems for samples that do not contain a sufficient amount of cells. Somehow the clustering algorithm cannot perform necessary computations. We therefore either need a way of removing these samples (for this we would need to find a way to know how many observations are sufficient) or we file an issue for the non-working mindensity function so that the developers can suggest a solution?**
+
+```{r}
+# extract the data
+data_gfp_low <- gs_pop_get_data(gs, y = "GFP-low") |> cytoset_to_flowSet()
+data_gfp_medium <- gs_pop_get_data(gs, y = "GFP-medium") |> cytoset_to_flowSet()
+data_gfp_high <- gs_pop_get_data(gs, y = "GFP-high") |> cytoset_to_flowSet()
+
+
+# apply a clustering algorithm
+gfp_low_myo_high <- fsApply(data_gfp_low, 
+                            function(fr) gate_flowclust_1d(fr,params = "RED.R.HLin",
+                                                           K = 2, 
+                                                           cutpoint_method = "min_density",
+                                                           filterId = "GFP-low-MYO-high"))
+
+gfp_medium_myo_high <- fsApply(data_gfp_medium, 
+                            function(fr) gate_flowclust_1d(fr,params = "RED.R.HLin",
+                                                           K = 2, 
+                                                           cutpoint_method = "min_density",
+                                                           filterId = "GFP-medium-MYO-high"))
+
+gfp_high_myo_high <- fsApply(data_gfp_high, 
+                            function(fr) gate_flowclust_1d(fr,params = "RED.R.HLin",
+                                                           K = 2, 
+                                                           cutpoint_method = "min_density",
+                                                           filterId = "GFP-high-MYO-high"))
+
+ggcyto(gs, aes(x = "RED.R.HLin"), subset = "GFP-high") +
+  geom_density() +
+  scale_x_flowjo_biexp() +
+  theme_bw() +
+  geom_gate(gfp_high_myo_high)
 ```
 
-```{r, warning=FALSE, out.width="100%"}
-ggcyto(gs[[5:15]], aes(x = GFP, y = APC), subset = "MYO+")+
-  geom_point(size = 0.05, alpha = 0.5)+
-  geom_gate(myosin.flowclust.gate)+
-  scale_x_flowjo_biexp()+
-  scale_y_flowjo_biexp()+
-  theme(axis.text.x = element_text(angle = 45))+
-  theme_bw()
-```
-
+**below: out-of-data, review**
 We add the gate to the gatingSet, plot the gating tree and recompute the gatingSet.
 ```{r}
 # add the gate to the GatingSet
