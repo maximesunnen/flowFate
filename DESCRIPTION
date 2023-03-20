@@ -23,8 +23,10 @@ Imports:
     ggplot2,
     glue,
     golem (>= 0.3.5),
+    openCyto,
     purrr,
     shiny (>= 1.7.4),
+    shinyWidgets,
     stringr,
     tibble
 Suggests: 
