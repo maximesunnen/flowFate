@@ -58,7 +58,7 @@ mod_curate_ui <- function(id){
 #' @import ggplot2
 #' @importFrom ggcyto ggcyto geom_gate geom_stats
 #' @import flowWorkspace
-#' @importFrom openCyto gate_quantile
+#' @import openCyto
 
 
 mod_curate_server <- function(id,r){
@@ -150,12 +150,12 @@ mod_curate_server <- function(id,r){
 
 # Question: with the code below, you create a reactive expression with a dependency on input$Curate. BUT, when input$Curate changes (e.g the user clicks on the button), the entire code is computed, regardless if its result has changed or not? Here this is not a problem because accessing the inputs is not computationally expensive, but we should keep this in mind.
 
-    control_indices <- eventReactive(input$Curate, {           
-      ## is it really indices or names of the datasets?
-      c(input$positive_control_kras,
-        input$positive_control_myhc,
-        input$negative_control)
-    })
+    control_indices <- eventReactive(input$Curate,
+                                     {## is it really indices or names of the datasets?
+                                       c(input$positive_control_kras,
+                                         input$positive_control_myhc,
+                                         input$negative_control)
+                                     })
 
     side_scatter <- eventReactive(input$Curate, {input$side_scatter})
     forward_scatter <- eventReactive(input$Curate, {input$forward_scatter})
@@ -165,8 +165,8 @@ mod_curate_server <- function(id,r){
 # Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate". 
 
 observe({
-  # create the gate
-  pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),      # place outside the server function?
+  # create the gate (place outside server function?)
+  pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),      
                     ncol = 2,
                     nrow = 5)
   colnames(pgn_cut) <- c(side_scatter(), forward_scatter())
