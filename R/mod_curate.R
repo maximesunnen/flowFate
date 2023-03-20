@@ -58,6 +58,7 @@ mod_curate_ui <- function(id){
 #' @import ggplot2
 #' @importFrom ggcyto ggcyto geom_gate geom_stats
 #' @import flowWorkspace
+#' @importFrom openCyto gate_quantile
 
 
 mod_curate_server <- function(id,r){
@@ -124,15 +125,24 @@ mod_curate_server <- function(id,r){
         )
       }})
     
-    observeEvent(c(input$forward_scatter, input$side_scatter, input$kras_channel, input$myhc_channel), {
-      if (input$forward_scatter %in% c(input$side_scatter, input$kras_channel, input$myhc_channel) | input$side_scatter %in% c(input$kras_channel, input$myhc_channel) | input$kras_channel == input$myhc_channel) {
-        sendSweetAlert(
-          session = session,
-          title = "Warning.",
-          text = "Channel names have to be unique!",
-          type = "warning"
-        )
-      }})
+    observeEvent(c(input$forward_scatter, 
+                   input$side_scatter, 
+                   input$kras_channel, 
+                   input$myhc_channel), {
+                     if (input$forward_scatter %in% c(input$side_scatter, 
+                                                      input$kras_channel, 
+                                                      input$myhc_channel) | 
+                         input$side_scatter %in% c(input$kras_channel, 
+                                                   input$myhc_channel) | 
+                         input$kras_channel %in% input$myhc_channel) {
+                       
+                       sendSweetAlert(
+                         session = session,
+                         title = "Warning.",
+                         text = "Channel names have to be unique!",
+                         type = "warning"
+                       )
+                     }})
     
     
 # SSC vs FSC plot of control samples --------------------------------------
@@ -140,7 +150,8 @@ mod_curate_server <- function(id,r){
 
 # Question: with the code below, you create a reactive expression with a dependency on input$Curate. BUT, when input$Curate changes (e.g the user clicks on the button), the entire code is computed, regardless if its result has changed or not? Here this is not a problem because accessing the inputs is not computationally expensive, but we should keep this in mind.
 
-    control_indices <- eventReactive(input$Curate, {           ## is it really indices or names of the datasets?
+    control_indices <- eventReactive(input$Curate, {           
+      ## is it really indices or names of the datasets?
       c(input$positive_control_kras,
         input$positive_control_myhc,
         input$negative_control)
@@ -183,32 +194,38 @@ observe({
 
 
 
-# curate background noise - KRAS channel ----------------------------------
-
-#extract NonDebris population data
-nonDebris.data <- gh_pop_get_data(gs[[control_indices()[1,3]]], "NonDebris")
-
-# change the object class to flowSet
-## necessary to apply the quantileGate function from flowWorkspace,
-nonDebris.data <- cytoset_to_flowSet(nonDebris.data)
-
-# apply the quantileGate on both negative controls and assign result to gfp.test.gate
-gfp.test.gate <- fsApply(nonDebris.data, 
-                         function(fr) openCyto:::.quantileGate(fr, 
-                                                               channels = "GFP",
-                                                               probs = 0.99))
-
-a <- names(gfp.test.gate[1])
-b <- names(gfp.test.gate[2])
-df <- data.frame(min = c(gfp.test.gate[[a]]@min,
-                         gfp.test.gate[[b]]@min),
-                 # note: we do not need the "max" column technically, it will always be Inf
-                 max = c(gfp.test.gate[[a]]@max,
-                         gfp.test.gate[[b]]@max))
-    
-  })
+# # curate background noise - KRAS channel ----------------------------------
+#
+observe({
+  #extract NonDebris population data and change to flowSet
+  nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[1]]], "NonDebris") |> cytoset_to_flowSet()
+  message("nonDebris_data created")
   
-}
+  # create a quantileGate for both samples
+  gfp_test_gate <- fsApply(nonDebris_data,
+                         function(fr) openCyto:::gate_quantile(fr,
+                                                   channel = "GRN.B.HLin",
+                                                   probs = 0.99))
+  
+  message("gfp_test_gate created")
+  # # average the lower threshold from both gates
+  # lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
+  # 
+  # # create the final gate
+  # gfp_gate <- rectangleGate(input$kras_channel = c(lower_limit_gfp_gate, Inf), 
+  #                           filterId = "GFP+")
+  # 
+  # output$gfp_gate <- renderPlot({
+  #   ggcyto(r$gs[[control_indices()]],
+  #          aes(x = .data[[input$kras_channel]]),
+  #          subset = "root") +
+  #     geom_density(fill = "forestgreen") +
+  #     theme_bw() +
+  #     geom_gate(gfp_gate) +
+  #     geom_stats()
+    
+}) |> bindEvent(input$Curate, ignoreInit = TRUE)
+  })}
 
 
 
