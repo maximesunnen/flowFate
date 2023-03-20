@@ -818,22 +818,6 @@
       ],
       "Hash": "79dd7c4900b104466d67832507320c4e"
     },
-    "flowFate": {
-      "Package": "flowFate",
-      "Version": "0.0.0.9000",
-      "Source": "unknown",
-      "Requirements": [
-        "R",
-        "config",
-        "flowCore",
-        "fs",
-        "glue",
-        "golem",
-        "purrr",
-        "shiny"
-      ],
-      "Hash": "b4588501605633824555bc36be3f3c43"
-    },
     "flowViz": {
       "Package": "flowViz",
       "Version": "1.62.0",
