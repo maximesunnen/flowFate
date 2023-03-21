@@ -47,7 +47,9 @@ mod_curate_ui <- function(id){
                #plotOutput(ns("controls_ssc_fsc")),
                plotOutput(ns("non_debris_gate")),
 
-               plotOutput(ns("gfp_gate"))
+               plotOutput(ns("gfp_gate")),
+               
+               plotOutput(ns("myhc_gate"))
              )))}
 
 
@@ -56,7 +58,7 @@ mod_curate_ui <- function(id){
 #' @noRd
 #' @importFrom purrr is_null
 #' @import ggplot2
-#' @importFrom ggcyto ggcyto geom_gate geom_stats
+#' @importFrom ggcyto ggcyto geom_gate geom_stats scale_x_flowjo_biexp
 #' @import flowWorkspace
 #' @import openCyto
 
@@ -191,48 +193,119 @@ mod_curate_server <- function(id,r){
           theme_bw() +
           geom_gate(gate_non_debris) +
           geom_stats()
-      })}) |> bindEvent(input$Curate, ignoreInit = TRUE)        # create reactive dependency of observe() on input$Curate
+      })
+    # create reactive dependency of observe() on input$Curate
 
+    # curate background noise - KRAS channel ----------------------------------
 
-
-    # # curate background noise - KRAS channel ----------------------------------
-    #
-    observe({
       #extract NonDebris population data and change to flowSet
-      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[1]]], "NonDebris") |>
+      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(1,3)]]], "NonDebris") |>
         cytoset_to_flowSet()
       message("nonDebris_data created")
+      
       # create a quantileGate for both samples
-      gfp_test_gate <- create_quantile_gate(nonDebris_data)
+      gfp_test_gate <- create_quantile_gate(nonDebris_data, gate_channel = input$kras_channel)
       message("gfp_test_gate created")
-      # # average the lower threshold from both gates
-      # lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
-      #
-      # # create the final gate
-      # gfp_gate <- rectangleGate(input$kras_channel = c(lower_limit_gfp_gate, Inf),
-      #                           filterId = "GFP+")
-      #
-      # output$gfp_gate <- renderPlot({
-      #   ggcyto(r$gs[[control_indices()]],
-      #          aes(x = .data[[input$kras_channel]]),
-      #          subset = "root") +
-      #     geom_density(fill = "forestgreen") +
-      #     theme_bw() +
-      #     geom_gate(gfp_gate) +
-      #     geom_stats()
+      
+      # average the lower threshold from both gates
+      lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
+      message("averaged the gate values")
+      
+      # create the final gate
+      ## had to do a workaround because of annoying parse( ) error!
+      mat <- matrix(c(lower_limit_gfp_gate, Inf), ncol = 1)
+      colnames(mat) <- input$kras_channel
+      gfp_gate <- rectangleGate(filterId = "GFP+",
+                                .gate = mat)
+      
+      print(gfp_gate)
+      message("GFP gate created")
+      
+      # add gate to gs
+      gs_pop_add(r$gs, gfp_gate, parent = "NonDebris")
+      message("Added the gfp_gate to the gatingSet")
+      
+      # recompute the GatingSet
+      recompute(r$gs)
+      message("Recomputed the gatingSet")
+      
+      # create the plot
+      output$gfp_gate <- renderPlot({
+        ggcyto(r$gs[[control_indices()[c(1,3)]]],
+               aes(x = .data[[input$kras_channel]]),
+               subset = "NonDebris") +
+          geom_density(fill = "forestgreen") +
+          theme_bw() +
+          geom_gate(gfp_gate) +
+          geom_stats() +
+          scale_x_flowjo_biexp()
+      })
 
+
+    
+    
+    # curate background noise - MYHC channel ----------------------------------
+    
+
+      #extract NonDebris population data and change to flowSet
+      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(2,3)]]], "NonDebris") |>
+        cytoset_to_flowSet()
+      message("nonDebris_data created")
+      
+      # create a quantileGate for both samples
+      myhc_test_gate <- create_quantile_gate(nonDebris_data, gate_channel = input$myhc_channel)
+      print(myhc_test_gate)
+      message("myhc_test_gate created")
+      # 
+      # average the lower threshold from both gates
+      lower_limit_myhc_gate <- mean(c(myhc_test_gate[[1]]@min, myhc_test_gate[[2]]@min))
+      message("averaged the gate values")
+      # 
+      # create the final gate
+      ## had to do a workaround because of annoying parse( ) error!
+      mat <- matrix(c(lower_limit_myhc_gate, Inf), ncol = 1)
+      colnames(mat) <- input$myhc_channel
+      myhc_gate <- rectangleGate(filterId = "MYO+",
+                                .gate = mat)
+       
+      print(myhc_gate)
+      message("MYHC gate created")
+       
+      # # add gate to gs
+      gs_pop_add(r$gs, myhc_gate, parent = "GFP+")
+      message("Added the gfp_gate to the gatingSet")
+
+      # recompute the GatingSet
+      recompute(r$gs)
+      message("Recomputed the gatingSet")
+
+      # create the plot
+      output$myhc_gate <- renderPlot({
+        ggcyto(r$gs[[control_indices()[c(2,3)]]],
+               aes(x = .data[[input$myhc_channel]]),
+               subset = "NonDebris") +
+          geom_density(fill = "pink") +
+          theme_bw() +
+          geom_gate(myhc_gate) +
+          geom_stats() +
+          scale_x_flowjo_biexp()
+      })
+      
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
+    # create reactive dependency of observe() on input$Curate
+    
   })}
 
 #' @import openCyto
 #' @import flowCore
-create_quantile_gate <- function(samples) {
+
+create_quantile_gate <- function(samples, gate_channel) {
   require(flowCore)
   fsApply(samples,
           function(fr) {
             print(fr)
             openCyto::gate_quantile(fr,
-                                    channel = "GRN.B.HLin",
+                                    channel = gate_channel,
                                     probs = 0.99)
           })
 }
