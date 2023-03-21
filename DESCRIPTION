@@ -28,7 +28,8 @@ Imports:
     shiny (>= 1.7.4),
     shinyWidgets,
     stringr,
-    tibble
+    tibble,
+    waiter
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
