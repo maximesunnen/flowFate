@@ -43,6 +43,7 @@ mod_curate_ui <- function(id){
 
                # Action button to start curation
                actionButton(ns("Curate"), "Start curation"),
+               actionButton(ns("Delete"), "Restart curation"),
 
                # plot SSC vs FSC for control samples -------------------------------------
                #plotOutput(ns("controls_ssc_fsc")),
@@ -67,8 +68,21 @@ mod_curate_ui <- function(id){
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
 
-    # All sidebar selections/inputs (control datasets and channels) -------------
+# modal to restart curation -----------------------------------------------
+
+    modal_confirm <- modalDialog(
+      "Are you sure you want to continue?",
+      title = "Deleting files",
+      footer = tagList(
+        actionButton(ns("cancel"), "Cancel"),
+        actionButton(ns("ok"), "Restart", class = "btn btn-danger")
+      )
+    )
+    
+    # All sidebar selections/inputs (control datasets and channels) -----------
+    
     output$channel_selection <- renderUI({
       req(r$gs)
 
@@ -146,7 +160,10 @@ mod_curate_server <- function(id,r){
                          type = "warning"
                        )
                      }})
-
+    
+    observe({
+      r$gs <- GatingSet(r$fs)
+    }) |> bindEvent(input$ok)
 
     # SSC vs FSC plot of control samples --------------------------------------
     # We need a set of reactive expressions that capture the input from our selectInput widgets defined above. Since we do not want the app to perform computations every time the input changes - but rather when the user is "finished" defining his inputs - put these reactive expressions under the control of a new button "Curate" (accessed by input$Curate). Code depending on e.g. control_indices() should therefore also not update unless "Curate" is clicked (results are cached, and before input$Curate, this code would not know that the input has changed).
@@ -248,7 +265,6 @@ mod_curate_server <- function(id,r){
           scale_x_flowjo_biexp()
       })
 
-
 # Curate background noise: MYHC channel -----------------------------------
 
       # extract NonDebris population data, change object type to flowSet
@@ -296,6 +312,19 @@ mod_curate_server <- function(id,r){
       })
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
     # create reactive dependency of observe() on input$Curate
+
+    observe({
+      showModal(modal_confirm)
+    }) |> bindEvent(input$Delete)
+    
+    observe({
+      showNotification("Curation reset")
+      removeModal()
+    }) |> bindEvent(input$ok)
+    
+    observe({
+      removeModal()
+    }) |> bindEvent(input$cancel)
     
   })}
 
@@ -312,6 +341,7 @@ create_quantile_gate <- function(samples, gate_channel) {
                                     probs = 0.99)
           })
 }
+
 
 ## To be copied in the UI
 # mod_curate_ui("curate_1")
