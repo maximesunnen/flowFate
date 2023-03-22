@@ -187,7 +187,7 @@ mod_curate_server <- function(id,r){
 
     observe({
 
-# Curate debris -----------------------------------------------------------
+      # Curate debris -----------------------------------------------------------
 
       # create a gating matrix: column names depend on user input
       pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
@@ -219,7 +219,7 @@ mod_curate_server <- function(id,r){
       })
 
 
-# Curate background noise: KRas channel -----------------------------------
+      # Curate background noise: KRas channel -----------------------------------
 
       # extract NonDebris population data, change object type to flowSet
       nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(1,3)]]], "NonDebris") |>
@@ -265,7 +265,7 @@ mod_curate_server <- function(id,r){
           scale_x_flowjo_biexp()
       })
 
-# Curate background noise: MYHC channel -----------------------------------
+      # Curate background noise: MYHC channel -----------------------------------
 
       # extract NonDebris population data, change object type to flowSet
       nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(2,3)]]], "NonDebris") |>
