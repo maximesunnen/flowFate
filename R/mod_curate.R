@@ -84,33 +84,33 @@ mod_curate_server <- function(id,r){
     # All sidebar selections/inputs (control datasets and channels) -----------
     
     output$channel_selection <- renderUI({
-      req(r$gs)
+      req(r$fs)
 
       tagList(
         selectInput(ns("forward_scatter"),
                     "Forward Scatter",
-                    choices = c("", colnames(r$gs)),
-                    selected = colnames(r$gs)[1]),
+                    choices = c("", colnames(r$fs)),
+                    selected = colnames(r$fs)[1]),
 
         selectInput(ns("side_scatter"),
                     "Side Scatter",
-                    choices = c("", colnames(r$gs)),
-                    selected = colnames(r$gs)[2]),
+                    choices = c("", colnames(r$fs)),
+                    selected = colnames(r$fs)[2]),
 
         selectInput(ns("kras_channel"),
                     "KRas channel",
-                    choices = c("",colnames(r$gs)),
-                    selected = colnames(r$gs)[3]),
+                    choices = c("",colnames(r$fs)),
+                    selected = colnames(r$fs)[3]),
 
         selectInput(ns("myhc_channel"),
                     "Myosin channel",
-                    choices = c("",colnames(r$gs)),
-                    selected = colnames(r$gs)[6])
+                    choices = c("",colnames(r$fs)),
+                    selected = colnames(r$fs)[6])
       )
     })
 
     output$control_selection <- renderUI({
-      req(r$gs)
+      req(r$fs)
       tagList(
         selectInput(ns("negative_control"),
                     "Negative control",
@@ -185,14 +185,16 @@ mod_curate_server <- function(id,r){
 
     # Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate".
 
+    pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
+                      ncol = 2,
+                      nrow = 5)
+    
     observe({
 
       # Curate debris -----------------------------------------------------------
 
       # create a gating matrix: column names depend on user input
-      pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
-                        ncol = 2,
-                        nrow = 5)
+
       colnames(pgn_cut) <- c(side_scatter(), forward_scatter())
       
       # create the gate using flowCore's polygonGate
@@ -200,6 +202,9 @@ mod_curate_server <- function(id,r){
       message("Created the gate")
 
       # add the gate to the gatingSet: parent should be "root"
+      
+      if (is.null(gate_non_debris)) return(NULL)
+      
       gs_pop_add(r$gs, gate_non_debris, parent = "root")
       message("Added the non_debris gate to the gatingSet")
 
@@ -217,13 +222,14 @@ mod_curate_server <- function(id,r){
           geom_gate(gate_non_debris) +
           geom_stats()
       })
+    }) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
-
+observe({
       # Curate background noise: KRas channel -----------------------------------
 
       # extract NonDebris population data, change object type to flowSet
-      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(1,3)]]], "NonDebris") |>
-        cytoset_to_flowSet()
+      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(1,3)]]], 
+                                        "NonDebris") |> cytoset_to_flowSet()
       message("nonDebris_data created and changed to flowSet")
       
       # create a quantileGate for both controls: creates a list of two gates
@@ -264,6 +270,9 @@ mod_curate_server <- function(id,r){
           geom_stats() +
           scale_x_flowjo_biexp()
       })
+}) |> bindEvent(input$Curate, ignoreInit = TRUE)
+
+observe({
 
       # Curate background noise: MYHC channel -----------------------------------
 
