@@ -8,6 +8,7 @@ Build with [{golem}](https://github.com/ThinkR-open/golem).
 
 ## Dockerized the app
 
+0. Makes sure that no folder `deploy` exists at the project root.
 
 1. Follow steps in `dev/03_deploy.R`, namely:
 
@@ -43,7 +44,7 @@ renv.lock.prod
 ```
 
 
-3.  `scp` the `deploy` folder to the \`shiny-sever\` in `/home/aurelien.ginolhac/deploiement/container_apps/` and execute **as root** the commands in the README
+3.  `scp` the `deploy` folder to the \`shiny-sever\` in the **shinyproxy** `container_apps/` and execute **as root** the commands in the README
 
 ```
 docker build -f Dockerfile_base --progress=plain -t labbook_base .
