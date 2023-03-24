@@ -195,7 +195,7 @@ mod_curate_server <- function(id,r){
         
         #plot the gate
         output$non_debris_gate <- renderPlot({
-          ggcyto(isolate(r$gs[[control_indices()]]),
+          ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_kras(),ctrl_myhc())]]),
                  aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
                  subset = "root") +
             geom_hex(bins = 150) +
