@@ -168,10 +168,6 @@ mod_curate_server <- function(id,r){
       c(ctrl_kras(), ctrl_myhc(), ctrl_negative())
     })
 
-    side_scatter <- eventReactive(input$Curate, {input$side_scatter})
-    forward_scatter <- eventReactive(input$Curate, {input$forward_scatter})
-
-
     # We now need to define a reactive expression generating our first gate. How this gate is generated obviously depends on the name of our side_scatter and forward_scatter reactive expressions (i.e which channels the user wants to gate on). These reactive expressions have a dependency on input$Curate, so they won't change unless the user clicks "Curate".
 
     # Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate".
