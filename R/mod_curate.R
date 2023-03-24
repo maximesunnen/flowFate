@@ -210,12 +210,12 @@ observe({
       # Curate background noise: KRas channel -----------------------------------
 
       # extract NonDebris population data, change object type to flowSet
-      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(1,3)]]],
+      nonDebris_data <- gs_pop_get_data(r$gs[[c(ctrl_negative(),ctrl_myhc())]],
                                         "NonDebris") |> cytoset_to_flowSet()
       message("nonDebris_data created and changed to flowSet") 
 
       # create a quantileGate for both controls: creates a list of two gates
-      gfp_test_gate <- create_quantile_gate(nonDebris_data, gate_channel = input$kras_channel)
+      gfp_test_gate <- create_quantile_gate(nonDebris_data, gate_channel = ch_kras())
       message("gfp_test_gate created")
       print(gfp_test_gate)
 
@@ -226,7 +226,7 @@ observe({
       # create the final gfp gate
       ## had to do a workaround because of annoying parse( ) error!
       mat <- matrix(c(lower_limit_gfp_gate, Inf), ncol = 1)
-      colnames(mat) <- input$kras_channel
+      colnames(mat) <- ch_kras()
       gfp_gate <- rectangleGate(filterId = "GFP+",
                                 .gate = mat)
 
@@ -243,8 +243,8 @@ observe({
 
       # plot the gate
       output$gfp_gate <- renderPlot({
-        ggcyto(isolate(r$gs[[control_indices()[c(1,3)]]]),
-               aes(x = .data[[input$kras_channel]]),
+        ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_myhc())]]),
+               aes(x = .data[[ch_kras()]]),
                subset = "NonDebris") +
           geom_density(fill = "forestgreen") +
           theme_bw() +
@@ -291,8 +291,8 @@ observe({
 
       # plot the gate
       output$myhc_gate <- renderPlot({
-        ggcyto(isolate(r$gs[[control_indices()[c(2,3)]]]),
-               aes(x = .data[[input$myhc_channel]]),
+        ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_kras())]]),
+               aes(x = .data[[ch_myhc()]]),
                subset = "NonDebris") +
           geom_density(fill = "pink") +
           theme_bw() +
