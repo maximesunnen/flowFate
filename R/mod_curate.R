@@ -212,54 +212,54 @@ mod_curate_server <- function(id,r){
       message("hello")
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
-# observe({
-#       # Curate background noise: KRas channel -----------------------------------
-# 
-#       # extract NonDebris population data, change object type to flowSet
-#       nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(1,3)]]], 
-#                                         "NonDebris") |> cytoset_to_flowSet()
-#       message("nonDebris_data created and changed to flowSet")
-#       
-#       # create a quantileGate for both controls: creates a list of two gates
-#       gfp_test_gate <- create_quantile_gate(nonDebris_data, gate_channel = input$kras_channel)
-#       message("gfp_test_gate created")
-#       print(gfp_test_gate)
-#       
-#       # average the lower boundary from both gates: use list accessors
-#       lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
-#       message("averaged the gfp gate values")
-#       
-#       # create the final gfp gate
-#       ## had to do a workaround because of annoying parse( ) error!
-#       mat <- matrix(c(lower_limit_gfp_gate, Inf), ncol = 1)
-#       colnames(mat) <- input$kras_channel
-#       gfp_gate <- rectangleGate(filterId = "GFP+",
-#                                 .gate = mat)
-#       
-#       print(gfp_gate)
-#       message("GFP gate created")
-#       
-#       # add gate to the gatingSet: parent should be NonDebris
-#       gs_pop_add(r$gs, gfp_gate, parent = "NonDebris")
-#       message("Added gfp_gate to the gatingSet")
-#       
-#       # recompute the GatingSet
-#       recompute(r$gs)
-#       message("Recomputed the gatingSet")
-#       
-#       # plot the gate
-#       output$gfp_gate <- renderPlot({
-#         ggcyto(r$gs[[control_indices()[c(1,3)]]],
-#                aes(x = .data[[input$kras_channel]]),
-#                subset = "NonDebris") +
-#           geom_density(fill = "forestgreen") +
-#           theme_bw() +
-#           geom_gate(gfp_gate) +
-#           geom_stats() +
-#           scale_x_flowjo_biexp()
-#       })
-# }) |> bindEvent(input$Curate, ignoreInit = TRUE)
-# 
+observe({
+      # Curate background noise: KRas channel -----------------------------------
+
+      # extract NonDebris population data, change object type to flowSet
+      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(1,3)]]],
+                                        "NonDebris") |> cytoset_to_flowSet()
+      message("nonDebris_data created and changed to flowSet")
+
+      # create a quantileGate for both controls: creates a list of two gates
+      gfp_test_gate <- create_quantile_gate(nonDebris_data, gate_channel = input$kras_channel)
+      message("gfp_test_gate created")
+      print(gfp_test_gate)
+
+      # average the lower boundary from both gates: use list accessors
+      lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
+      message("averaged the gfp gate values")
+
+      # create the final gfp gate
+      ## had to do a workaround because of annoying parse( ) error!
+      mat <- matrix(c(lower_limit_gfp_gate, Inf), ncol = 1)
+      colnames(mat) <- input$kras_channel
+      gfp_gate <- rectangleGate(filterId = "GFP+",
+                                .gate = mat)
+
+      print(gfp_gate)
+      message("GFP gate created")
+
+      # add gate to the gatingSet: parent should be NonDebris
+      gs_pop_add(r$gs, gfp_gate, parent = "NonDebris")
+      message("Added gfp_gate to the gatingSet")
+
+      # recompute the GatingSet
+      recompute(r$gs)
+      message("Recomputed the gatingSet")
+
+      # plot the gate
+      output$gfp_gate <- renderPlot({
+        ggcyto(r$gs[[control_indices()[c(1,3)]]],
+               aes(x = .data[[input$kras_channel]]),
+               subset = "NonDebris") +
+          geom_density(fill = "forestgreen") +
+          theme_bw() +
+          geom_gate(gfp_gate) +
+          geom_stats() +
+          scale_x_flowjo_biexp()
+      })
+}) |> bindEvent(input$Curate, ignoreInit = TRUE)
+
 # observe({
 # 
 #       # Curate background noise: MYHC channel -----------------------------------
