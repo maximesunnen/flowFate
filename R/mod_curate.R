@@ -132,34 +132,28 @@ mod_curate_server <- function(id,r){
 
     # alerts if non-unique channels/control datasets --------------------
 
-    observeEvent(c(input$positive_control_kras, input$positive_control_myhc, input$negative_control), {
-      if (input$positive_control_kras %in% c(input$positive_control_myhc, input$negative_control) | input$positive_control_myhc == input$negative_control) {
-        sendSweetAlert(
-          session = session,
-          title = "Warning.",
-          text = "Control datasets have to be unique!",
-          type = "warning"
-        )
+    ctrl_kras <- reactive(input$positive_control_kras) 
+    ctrl_myhc <- reactive(input$positive_control_myhc)
+    ctrl_negative <- reactive(input$negative_control)
+
+    observe({
+      if (is.null(ctrl_kras()) || is.null(ctrl_myhc()) || is.null(ctrl_negative())) return(NULL)
+      
+      else if (ctrl_kras() %in% c(ctrl_myhc(), ctrl_negative()) | ctrl_myhc() == ctrl_negative()) {
+        sendSweetAlert(session = session, title = "Warning.", text = "Control datasets have to be unique!", type = "warning")
       }})
-
-    observeEvent(c(input$forward_scatter,
-                   input$side_scatter,
-                   input$kras_channel,
-                   input$myhc_channel), {
-                     if (input$forward_scatter %in% c(input$side_scatter,
-                                                      input$kras_channel,
-                                                      input$myhc_channel) |
-                         input$side_scatter %in% c(input$kras_channel,
-                                                   input$myhc_channel) |
-                         input$kras_channel %in% input$myhc_channel) {
-
-                       sendSweetAlert(
-                         session = session,
-                         title = "Warning.",
-                         text = "Channel names have to be unique!",
-                         type = "warning"
-                       )
-                     }})
+    
+    fsc <- reactive(input$forward_scatter)
+    ssc <- reactive(input$side_scatter)
+    ch_kras <- reactive(input$kras_channel)
+    ch_myhc <- reactive(input$myhc_channel)
+    
+    observe({
+      if (is.null(fsc()) || is.null(ssc()) || is.null(ch_kras()) || is.null(ch_myhc())) return(NULL)
+      
+      else if (fsc() %in% c(ssc(), ch_kras(), ch_myhc()) | ssc() %in% c(ch_kras(), ch_myhc()) | ch_kras() %in% ch_myhc()) {
+        sendSweetAlert(session = session, title = "Warning.", text = "Channel names have to be unique!", type = "warning")
+      }})
     
     observe({
       r$gs <- GatingSet(r$fs)
