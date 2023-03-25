@@ -24,7 +24,13 @@ mod_import_ui <- function(id){
                            label = "Select FCS file"),
 
                  # Submit button to start the import --------------------------------------
-                 actionButton(ns("Submit"), "Submit"))),
+                 actionButton(ns("Submit"), "Submit"),
+                 br(),
+                 conditionalPanel(
+                   "input.Submit > 0",
+                   actionButton(ns("switch_curate"), "Enter"), ns = ns)
+                 ),
+                 ),
 
              mainPanel(
                h1("Welcome to flowFate."),
@@ -73,8 +79,17 @@ mod_import_server <- function(id, r = NULL){
 # increasing the maximum upload size  -------------------------------------
   options(shiny.maxRequestSize = 60 * 1024^2)
 
-  moduleServer(id, function(input, output, session){
+  moduleServer(id, function(input, output, session, parent_session){
     ns <- session$ns
+    
+    observe({
+      updateTabsetPanel(session = parent_session, "FlowFate",
+                        selected = "Curate")
+    }) |> bindEvent(input$switch_curate, ignoreInit = TRUE, ignoreNULL = TRUE)
+
+    # observe({
+    #   output$switch_curate <- renderUI({actionButton(ns(switch_curate_btn))})
+    # }) |> bindEvent(input$Submit, ignoreInit = TRUE)
 
 # defining a reactive observer with observe() ----------------------------
     observe({
