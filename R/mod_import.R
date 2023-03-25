@@ -46,6 +46,7 @@ mod_import_ui <- function(id){
 
                # Header over ind. FCS but printed only after submit ----------------------
                uiOutput(ns("your_datasets")),
+               br(),
 
                # Table showing individual FCS (interactive because DT) -------------------
                DTOutput(ns("individual_FCS")),
@@ -127,7 +128,6 @@ mod_import_server <- function(id, r = NULL){
 
         # render header of individual datasets only printed upon Submit -----------
         output$your_datasets <- renderUI({h3("Your datasets")})
-        br()
 
         # render DT with individual datasets, interactive -------------------------
         output$individual_FCS <- renderDT({pData(fs)},
