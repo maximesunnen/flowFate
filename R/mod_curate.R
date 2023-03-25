@@ -22,8 +22,7 @@ mod_curate_ui <- function(id){
              sidebarPanel(
 
                # Input selections for used channels and control samples ------------------
-               uiOutput(ns("channel_selection")),
-               uiOutput(ns("control_selection")),
+               uiOutput(ns("input_selection"))
              ),
 
              mainPanel(
@@ -69,9 +68,10 @@ mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    #selectInput custom function
     selectInput01 <- function(id, label, n, r, row = FALSE) {
       if (row == FALSE) {
-      selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
+        selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
       }
       else {
         selectInput(ns(id), label = label, choices = c("", rownames(pData(r$fs))), rownames(pData(r$fs))[n])
@@ -91,7 +91,7 @@ mod_curate_server <- function(id,r){
     
     # All sidebar selections/inputs (control datasets and channels) -----------
     
-    output$channel_selection <- renderUI({
+    output$input_selection <- renderUI({
       req(r$fs)
       
       tagList(
