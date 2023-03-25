@@ -28,14 +28,14 @@ mod_import_ui <- function(id){
 
              mainPanel(
                h1("Welcome to flowFate."),
-               HTML("You can import your FCS file by clicking on the <b>Browse</b>
-                    button on the left. Confirm your selection by clicking on
-                    the <b>Submit</b> button. A table listing the datasets contained
+               p("You can import your FCS file by clicking on the", strong("Browse"),
+                    " button on the left. Confirm your selection by clicking on
+                    the ", strong("Submit"), " button. A table listing the datasets contained
                     in your uploaded FCS file will appear.
                     Selecting one or mutliple rows will show the SSC vs FSC plot
                     of the selected dataset. You can always browse for a new FCS file,
                     but you have to confirm your new selection by clicking
-                    on the <b>Submit</b> button again."),
+                    on the ", strong("Submit"), " button again.", style="text-align:justify;color:black;background-color:papayawhip;padding:15px;border-radius:10px"),
 
                # Table showing the imported file -----------------------------------------
                tableOutput(ns("files")),
