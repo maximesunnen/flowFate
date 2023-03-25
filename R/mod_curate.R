@@ -69,6 +69,15 @@ mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    selectInput01 <- function(id, label, n, r, row = FALSE) {
+      if (row == FALSE) {
+      selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
+      }
+      else {
+        selectInput(ns(id), label = label, choices = c("", rownames(pData(r$fs))), rownames(pData(r$fs))[n])
+      }
+    }
+    
 # modal to restart curation -----------------------------------------------
 
     modal_confirm <- modalDialog(
@@ -85,47 +94,34 @@ mod_curate_server <- function(id,r){
     output$channel_selection <- renderUI({
       req(r$fs)
       
-
-      
       tagList(
-        selectInput01("forward_scatter", "Forward Scatter", 1, r = r),
-        selectInput01("side_scatter", "Side Scatter", 2, r = r),
-        selectInput01("kras_channel", "KRas channel", 3, r = r),
-        selectInput01("myhc_channel", "Myosin channel", 6, r =r)
-
+        selectInput01("forward_scatter", "Forward Scatter", n = 1, r = r),
+        selectInput01("side_scatter", "Side Scatter", n = 2, r = r),
+        selectInput01("kras_channel", "KRas channel", n = 3, r = r),
+        selectInput01("myhc_channel", "Myosin channel", n = 6, r = r),
+        
+        selectInput01("negative_control", "Negative control", n = 1, r = r, row = TRUE),
+        selectInput01("positive_control_kras", "Positive control (KRas)", n = 2, r = r, row = TRUE),
+        selectInput01("positive_control_myhc", "Positive control (MYHC)", n = 3, r = r, row = TRUE)
       )
     })
-
-    output$control_selection <- renderUI({
-      req(r$fs)
-      tagList(
-        selectInput(ns("negative_control"),
-                    "Negative control",
-                    choices = c("", rownames(pData(r$fs))),
-                    selected = rownames(pData(r$fs))[1]),
-
-        selectInput(ns("positive_control_kras"),
-                    "Positive control (KRAS)",
-                    choices = c("", rownames(pData(r$fs))),
-                    selected = rownames(pData(r$fs))[2]),
-
-        selectInput(ns("positive_control_myhc"),
-                    "Positive control (MYHC)",
-                    choices = c("", rownames(pData(r$fs))),
-                    selected = rownames(pData(r$fs))[3])
-      )
-    })
-
 
     # alerts if non-unique channels/control datasets --------------------
-
-    ctrl_kras <- reactive(input$positive_control_kras) 
-    ctrl_myhc <- reactive(input$positive_control_myhc)
-    ctrl_negative <- reactive(input$negative_control)
+    
     fsc <- reactive(input$forward_scatter)
     ssc <- reactive(input$side_scatter)
     ch_kras <- reactive(input$kras_channel)
     ch_myhc <- reactive(input$myhc_channel)
+    
+    ctrl_kras <- reactive(input$positive_control_kras) 
+    ctrl_myhc <- reactive(input$positive_control_myhc)
+    ctrl_negative <- reactive(input$negative_control)
+    
+
+    
+    observe(
+      print(input$kras_channel)
+    )
     
     # observer of control channel inputs
     observe({
@@ -320,10 +316,7 @@ create_quantile_gate <- function(samples, gate_channel) {
           })
 }
 
-selectInput01 <- function(id, label, n, r) {
-  ns <- NS(id)
-  selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
-}
+
 
 ## To be copied in the UI
 # mod_curate_ui("curate_1")
