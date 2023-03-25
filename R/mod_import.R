@@ -30,13 +30,14 @@ mod_import_ui <- function(id){
                h1("Welcome to flowFate."),
                p("You can import your FCS file by clicking on the", strong("Browse"),
                     " button on the left. Confirm your selection by clicking on
-                    the ", strong("Submit"), " button. A table listing the datasets contained
-                    in your uploaded FCS file will appear.
-                    Selecting one or mutliple rows will show the SSC vs FSC plot
-                    of the selected dataset. You can always browse for a new FCS file,
-                    but you have to confirm your new selection by clicking
-                    on the ", strong("Submit"), " button again.", style="text-align:justify;color:black;background-color:papayawhip;padding:15px;border-radius:10px"),
-
+                    the ", strong("Submit"), " button. A table with the individual datasets
+                    of your FCS file will appear. Select one or mutliple rows to show the
+                    SSC vs FSC plot of that dataset", br(), br(), "You can always upload a
+                    new FCS file but you have to confirm your selection by clicking the",
+                 strong("Submit"), " button again.", style = "text-align:justify;color
+                 :black;background-color:papayawhip;padding:15px;border-radius:10px"),
+               br(),
+               uiOutput(ns("your_data")),
                # Table showing the imported file -----------------------------------------
                tableOutput(ns("files")),
 
@@ -94,6 +95,11 @@ mod_import_server <- function(id, r = NULL){
         # printing text indicating the number of datasets -------------------------
         output$datasets <- renderText({
           glue("Your FCS file contains {nb_ds} datasets.")})
+        
+        # printing text indicating the uploaded data
+        output$your_data <- renderUI({
+          h3("Uploaded FCS file")
+        })
 
         # render the table showing the uploaded file ------------------------------
         output$files <- renderTable({input$filename})
@@ -120,7 +126,8 @@ mod_import_server <- function(id, r = NULL){
         pData(fs)$well <- str_extract(pData(fs)$name, "[A-Z]\\d{2}")
 
         # render header of individual datasets only printed upon Submit -----------
-        output$your_datasets <- renderUI({h3("Here are your datasets!")})
+        output$your_datasets <- renderUI({h3("Your datasets")})
+        br()
 
         # render DT with individual datasets, interactive -------------------------
         output$individual_FCS <- renderDT({pData(fs)},
