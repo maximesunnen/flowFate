@@ -84,27 +84,17 @@ mod_curate_server <- function(id,r){
     
     output$channel_selection <- renderUI({
       req(r$fs)
-
+      
+      selectInput01 <- function(id, label, n) {
+        selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
+      }
+      
       tagList(
-        selectInput(ns("forward_scatter"),
-                    "Forward Scatter",
-                    choices = c("", colnames(r$fs)),
-                    selected = colnames(r$fs)[1]),
+        selectInput01("forward_scatter", "Forward Scatter", 1),
+        selectInput01("side_scatter", "Side Scatter", 2),
+        selectInput01("kras_channel", "KRas channel", 3),
+        selectInput01("myhc_channel", "Myosin channel", 6)
 
-        selectInput(ns("side_scatter"),
-                    "Side Scatter",
-                    choices = c("", colnames(r$fs)),
-                    selected = colnames(r$fs)[2]),
-
-        selectInput(ns("kras_channel"),
-                    "KRas channel",
-                    choices = c("",colnames(r$fs)),
-                    selected = colnames(r$fs)[3]),
-
-        selectInput(ns("myhc_channel"),
-                    "Myosin channel",
-                    choices = c("",colnames(r$fs)),
-                    selected = colnames(r$fs)[6])
       )
     })
 
