@@ -14,7 +14,8 @@ app_ui <- function() {
               autoWaiter(),
               navbarPage(title = "FlowFate",
                          mod_import_ui("import_1"),
-                         mod_curate_ui("curate_1")
+                         mod_curate_ui("curate_1"),
+                         mod_gate_ui("gate_1")
               )
     )
   )
