@@ -65,7 +65,7 @@ Two important considerations:
 
 2. Make sure that your current working directory only contains **a single** FCS file. Otherwise, the code below will assign a vector of multiple filenames to the *filename* variable, and subsequent lines of code will procude an error.  works if a **single** FCS file is present in the current working directory.
 
-```{r }
+```{r}
 filename <- fs::dir_ls(glob = "*.fcs")
 filename
 ```
