@@ -117,27 +117,30 @@ mod_curate_server <- function(id,r){
     ctrl_myhc <- reactive(input$positive_control_myhc)
     ctrl_negative <- reactive(input$negative_control)
     
+    observe({
+      input_list <- list(fsc(), ssc(), ch_kras(), ch_myhc(), ctrl_kras(), ctrl_myhc(), ctrl_negative())
 
-    
-    observe(
-      print(input$kras_channel)
-    )
-    
+      if (any(sapply(input_list, is.null))) return(NULL)
+      
+      else if (anyDuplicated(input_list) > 0) {
+        sendSweetAlert(session = session, title = "Warning.", text = "Inputs have to be unique!", type = "warning")
+      }
+    })
     # observer of control channel inputs
-    observe({
-      if (is.null(ctrl_kras()) || is.null(ctrl_myhc()) || is.null(ctrl_negative())) return(NULL)
-      
-      else if (ctrl_kras() %in% c(ctrl_myhc(), ctrl_negative()) | ctrl_myhc() == ctrl_negative()) {
-        sendSweetAlert(session = session, title = "Warning.", text = "Control datasets have to be unique!", type = "warning")
-      }})
-    
-    # observer of control dataset inputs
-    observe({
-      if (is.null(fsc()) || is.null(ssc()) || is.null(ch_kras()) || is.null(ch_myhc())) return(NULL)
-      
-      else if (fsc() %in% c(ssc(), ch_kras(), ch_myhc()) | ssc() %in% c(ch_kras(), ch_myhc()) | ch_kras() %in% ch_myhc()) {
-        sendSweetAlert(session = session, title = "Warning.", text = "Channel names have to be unique!", type = "warning")
-      }})
+    # observe({
+    #   if (is.null(ctrl_kras()) || is.null(ctrl_myhc()) || is.null(ctrl_negative())) return(NULL)
+    #   
+    #   else if (ctrl_kras() %in% c(ctrl_myhc(), ctrl_negative()) | ctrl_myhc() == ctrl_negative()) {
+    #     sendSweetAlert(session = session, title = "Warning.", text = "Control datasets have to be unique!", type = "warning")
+    #   }})
+    # 
+    # # observer of control dataset inputs
+    # observe({
+    #   if (is.null(fsc()) || is.null(ssc()) || is.null(ch_kras()) || is.null(ch_myhc())) return(NULL)
+    #   
+    #   else if (fsc() %in% c(ssc(), ch_kras(), ch_myhc()) | ssc() %in% c(ch_kras(), ch_myhc()) | ch_kras() %in% ch_myhc()) {
+    #     sendSweetAlert(session = session, title = "Warning.", text = "Channel names have to be unique!", type = "warning")
+    #   }})
     
     observe({
       r$gs <- GatingSet(r$fs)
