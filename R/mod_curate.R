@@ -85,15 +85,13 @@ mod_curate_server <- function(id,r){
     output$channel_selection <- renderUI({
       req(r$fs)
       
-      selectInput01 <- function(id, label, n) {
-        selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
-      }
+
       
       tagList(
-        selectInput01("forward_scatter", "Forward Scatter", 1),
-        selectInput01("side_scatter", "Side Scatter", 2),
-        selectInput01("kras_channel", "KRas channel", 3),
-        selectInput01("myhc_channel", "Myosin channel", 6)
+        selectInput01("forward_scatter", "Forward Scatter", 1, r = r),
+        selectInput01("side_scatter", "Side Scatter", 2, r = r),
+        selectInput01("kras_channel", "KRas channel", 3, r = r),
+        selectInput01("myhc_channel", "Myosin channel", 6, r =r)
 
       )
     })
@@ -322,6 +320,10 @@ create_quantile_gate <- function(samples, gate_channel) {
           })
 }
 
+selectInput01 <- function(id, label, n, r) {
+  ns <- NS(id)
+  selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
+}
 
 ## To be copied in the UI
 # mod_curate_ui("curate_1")
