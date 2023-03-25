@@ -118,12 +118,13 @@ mod_curate_server <- function(id,r){
     ctrl_negative <- reactive(input$negative_control)
     
     observe({
-      input_list <- list(fsc(), ssc(), ch_kras(), ch_myhc(), ctrl_kras(), ctrl_myhc(), ctrl_negative())
-
+      input_list <- list(fsc(), ssc(), ch_kras(), ch_myhc(), ctrl_negative(),ctrl_kras(), ctrl_myhc())
+      
       if (any(sapply(input_list, is.null))) return(NULL)
       
       else if (anyDuplicated(input_list) > 0) {
-        sendSweetAlert(session = session, title = "Warning.", text = "Inputs have to be unique!", type = "warning")
+        showModal(modalDialog("Inputs have to be unique.", title = "Warning.",
+          footer = modalButton("Dismiss")))
       }
     })
     
