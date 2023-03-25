@@ -30,7 +30,7 @@ mod_curate_ui <- function(id){
 
                # header and text description of curation ---------------------------------
                h1("How curation works."),
-               HTML("<p>By curation we understand two essential steps.
+               p("By curation we understand two essential steps.
                     First, we want to focus our analysis on intact
                     cells and not debris. We therefore need to set
                     a gate that excludes cellular debris,
@@ -39,7 +39,7 @@ mod_curate_ui <- function(id){
                     intensity thresholds in our fluorescent channels
                     below which we cannot distinguish between a real signal
                     and autofluorescence/background noise. We will define
-                    both the non-debris gate and the threshold using our controls.</p>"),
+                    both the non-debris gate and the threshold using our controls"),
 
                # Action button to start curation
                actionButton(ns("Curate"), "Start curation"),
