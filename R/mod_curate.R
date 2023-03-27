@@ -62,9 +62,8 @@ mod_curate_ui <- function(id){
 #' @import ggplot2
 #' @importFrom ggcyto ggcyto geom_gate geom_stats scale_x_flowjo_biexp
 #' @rawNamespace import(flowWorkspace, except = show)
-#' @importFrom shinyjs show
-#   #' @import openCyto
-#'
+#' @importFrom shinyjs show hide useShinyjs
+#' 
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
