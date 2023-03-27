@@ -13,6 +13,7 @@
 mod_curate_ui <- function(id){
   ns <- NS(id)
   useSweetAlert()
+  useShinyjs()
 
   # Defining a tabPanel layout ----------------------------------------------
   tabPanel(title = "Curate",
@@ -41,6 +42,7 @@ mod_curate_ui <- function(id){
                     both the non-debris gate and the threshold using our controls"),
 
                # Action button to start curation
+               #uiOutput(ns("conditional_curate_button")),
                actionButton(ns("Curate"), "Start curation"),
                actionButton(ns("Delete"), "Restart curation"),
 
@@ -62,11 +64,23 @@ mod_curate_ui <- function(id){
 #' @importFrom ggcyto ggcyto geom_gate geom_stats scale_x_flowjo_biexp
 #' @import flowWorkspace
 #' @import openCyto
-
-
+#' @import shinyjs
+#' 
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+observe({
+  shinyjs::hide(id = "Curate")
+}) |> bindEvent(input$Curate)
+# 
+observe({
+  shinyjs::show(id = "Curate")
+}) |> bindEvent(input$ok)
+      
+      
+    
+    
     
     #selectInput custom function
     selectInput01 <- function(id, label, n, r, row = FALSE) {
