@@ -26,7 +26,7 @@ mod_import_ui <- function(id){
                  # Submit button to start the import --------------------------------------
                  actionButton(ns("Submit"), "Submit"),
                  br(),
-                 
+
                  ),
                  ),
 
@@ -100,7 +100,7 @@ mod_import_server <- function(id, r = NULL){
         # printing text indicating the number of datasets -------------------------
         output$datasets <- renderText({
           glue("Your FCS file contains {nb_ds} datasets.")})
-        
+
         # printing text indicating the uploaded data
         output$your_data <- renderUI({
           h3("Uploaded FCS file")
@@ -210,7 +210,7 @@ n_datasets <- function(filename) {
 #' @noRd
 #'
 #' @importFrom purrr walk
-#' @import flowCore
+#' @rawNamespace import(flowCore, except = show)
 #' @import fs
 #' @return folder path of individual fcs
 #'

@@ -7,12 +7,11 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-#' @importFrom shinyWidgets useSweetAlert sendSweetAlert
+#' @importFrom shinyjs useShinyjs
 #' @importFrom waiter autoWaiter
 
 mod_curate_ui <- function(id){
   ns <- NS(id)
-  useSweetAlert()
   useShinyjs()
 
   # Defining a tabPanel layout ----------------------------------------------
@@ -51,7 +50,7 @@ mod_curate_ui <- function(id){
                plotOutput(ns("non_debris_gate")),
 
                plotOutput(ns("gfp_gate")),
-               
+
                plotOutput(ns("myhc_gate"))
              )))}
 
@@ -62,26 +61,23 @@ mod_curate_ui <- function(id){
 #' @importFrom purrr is_null
 #' @import ggplot2
 #' @importFrom ggcyto ggcyto geom_gate geom_stats scale_x_flowjo_biexp
-#' @import flowWorkspace
-#' @import openCyto
-#' @import shinyjs
-#' 
+#' @rawNamespace import(flowWorkspace, except = show)
+#' @importFrom shinyjs show
+#   #' @import openCyto
+#'
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
+
 observe({
   shinyjs::hide(id = "Curate")
 }) |> bindEvent(input$Curate)
-# 
+#
 observe({
   shinyjs::show(id = "Curate")
 }) |> bindEvent(input$ok)
-      
-      
-    
-    
-    
+
+
     #selectInput custom function
     selectInput01 <- function(id, label, n, r, row = FALSE) {
       if (row == FALSE) {
@@ -91,7 +87,7 @@ observe({
         selectInput(ns(id), label = label, choices = c("", rownames(pData(r$fs))), rownames(pData(r$fs))[n])
       }
     }
-    
+
 # modal to restart curation -----------------------------------------------
 
     modal_confirm <- modalDialog(
@@ -102,18 +98,18 @@ observe({
         actionButton(ns("ok"), "Restart", class = "btn btn-danger")
       )
     )
-    
+
     # All sidebar selections/inputs (control datasets and channels) -----------
-    
+
     output$input_selection <- renderUI({
       req(r$fs)
-      
+
       tagList(
         selectInput01("forward_scatter", "Forward Scatter", n = 1, r = r),
         selectInput01("side_scatter", "Side Scatter", n = 2, r = r),
         selectInput01("kras_channel", "KRas channel", n = 3, r = r),
         selectInput01("myhc_channel", "Myosin channel", n = 6, r = r),
-        
+
         selectInput01("negative_control", "Negative control", n = 1, r = r, row = TRUE),
         selectInput01("positive_control_kras", "Positive control (KRas)", n = 2, r = r, row = TRUE),
         selectInput01("positive_control_myhc", "Positive control (MYHC)", n = 3, r = r, row = TRUE)
@@ -121,27 +117,27 @@ observe({
     })
 
     # alerts if non-unique channels/control datasets --------------------
-    
+
     fsc <- reactive(input$forward_scatter)
     ssc <- reactive(input$side_scatter)
     ch_kras <- reactive(input$kras_channel)
     ch_myhc <- reactive(input$myhc_channel)
-    
-    ctrl_kras <- reactive(input$positive_control_kras) 
+
+    ctrl_kras <- reactive(input$positive_control_kras)
     ctrl_myhc <- reactive(input$positive_control_myhc)
     ctrl_negative <- reactive(input$negative_control)
-    
+
     observe({
       input_list <- list(fsc(), ssc(), ch_kras(), ch_myhc(), ctrl_negative(),ctrl_kras(), ctrl_myhc())
-      
+
       if (any(sapply(input_list, is.null))) return(NULL)
-      
+
       else if (anyDuplicated(input_list) > 0) {
         showModal(modalDialog("Inputs have to be unique.", title = "Warning.",
           footer = modalButton("Dismiss")))
       }
     })
-    
+
     observe({
       r$gs <- GatingSet(r$fs)
     }) |> bindEvent(input$ok)
@@ -162,24 +158,24 @@ observe({
     pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
                       ncol = 2,
                       nrow = 5)
-    
+
     observe({
         colnames(pgn_cut) <- c(ssc(), fsc())
         message("Renamed the columns of pgn_cut")
-        
+
         # create the gate using flowCore's polygonGate
         gate_non_debris <- polygonGate(filterId = "NonDebris", .gate = pgn_cut)
         message("Created the gate")
-        
+
         if (is.null(gate_non_debris)) return(NULL)
-        
+
         gs_pop_add(r$gs, gate_non_debris, parent = "root")
         message("Added the non_debris gate to the gatingSet")
-        
+
         # recompute the GatingSet: performs calculations
         recompute(r$gs)
         message("Recomputed the gatingSet")
-        
+
         #plot the gate
         output$non_debris_gate <- renderPlot({
           ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_kras(),ctrl_myhc())]]),
@@ -191,7 +187,7 @@ observe({
             geom_stats()
         })
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
-    
+
 
 observe({
       # Curate background noise: KRas channel -----------------------------------
@@ -199,7 +195,7 @@ observe({
       # extract NonDebris population data, change object type to flowSet
       nonDebris_data <- gs_pop_get_data(r$gs[[c(ctrl_negative(),ctrl_myhc())]],
                                         "NonDebris") |> cytoset_to_flowSet()
-      message("nonDebris_data created and changed to flowSet") 
+      message("nonDebris_data created and changed to flowSet")
 
       # create a quantileGate for both controls: creates a list of two gates
       gfp_test_gate <- create_quantile_gate(nonDebris_data, gate_channel = ch_kras())
@@ -293,20 +289,20 @@ observe({
     observe({
       showModal(modal_confirm)
     }) |> bindEvent(input$Delete)
-    
+
     observe({
       showNotification("Curation reset")
       removeModal()
     }) |> bindEvent(input$ok)
-    
+
     observe({
       removeModal()
     }) |> bindEvent(input$cancel)
-    
+
   })}
 
-#' @import openCyto
-#' @import flowCore
+#' @importFrom openCyto gate_quantile
+#' @rawNamespace import(flowCore, except = show)
 
 create_quantile_gate <- function(samples, gate_channel) {
   require(flowCore)
