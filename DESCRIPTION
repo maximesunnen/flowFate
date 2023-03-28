@@ -26,6 +26,7 @@ Imports:
     openCyto,
     purrr,
     shiny (>= 1.7.4),
+    shinyjs,
     shinyWidgets,
     stringr,
     tibble,
