@@ -25,8 +25,7 @@ mod_import_ui <- function(id){
 
                  # Submit button to start the import --------------------------------------
                  actionButton(ns("Submit"), "Submit"),
-                 br(),
-
+                 
                  ),
                  ),
 
@@ -36,7 +35,7 @@ mod_import_ui <- function(id){
                     " button on the left. Confirm your selection by clicking on
                     the ", strong("Submit"), " button. A table with the individual datasets
                     of your FCS file will appear. Select one or mutliple rows to show the
-                    SSC vs FSC plot of that dataset", br(), br(), "You can always upload a
+                    SSC vs FSC plot of that dataset.", br(), br(), "You can always upload a
                     new FCS file but you have to confirm your selection by clicking the",
                  strong("Submit"), " button again.", style = "text-align:justify;color
                  :black;background-color:papayawhip;padding:15px;border-radius:10px"),
