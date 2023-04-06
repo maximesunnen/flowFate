@@ -27,7 +27,6 @@ mod_gate_ui <- function(id){
                  condition = "input.add_input == 1", 
                  #make sure that input.<input> reacts to (and only to) to input from this module
                  ns = ns, 
-                 #
                  #what should happen if condition is met
                  checkboxInput(ns("headsonly"), "This text should...."))
                
