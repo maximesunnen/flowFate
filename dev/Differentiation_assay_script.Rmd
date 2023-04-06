@@ -25,12 +25,7 @@ library(dplyr)
 
 - the parameters for my ggcyto plot can be set once with **settings <- ggcyto::ggcyto_par_set()** so that size of the codebase is reduced. 
 
-- in the section on filtering out autoflurescence: I don't think we need to average the intensities from two negative controls (I think doing this will make the code significantly more difficult).
-
 - I think it's best to split this .Rmd file into multiple ones, one for each part of the end application (https://engineering-shiny.org/building-ispum-app.html) (import, curation, gating... these will essentially also be the "modules" of the app, if I understood the module concept from {golem} correctly)
-
-- Aurélien: thoughts about "Rmd first" philosophy (end of page https://engineering-shiny.org/building-ispum-app.html)
-
 
 ## Loading dependencies
 Visualization and analysis of flow cytometry data requires some R packages. The code below ensures that all the necessary packages and dependencies are installed and loaded. 
@@ -144,7 +139,6 @@ You can click on the fs variable in the R environment to inspect the flowSet we'
 
 ```{r}
 pData(fs)$well <- str_extract(pData(fs)$name, "[A-Z]\\d{2}")
-pData(fs)
 ```
 
 
@@ -162,12 +156,12 @@ gs <- GatingSet(fs)
 Preparing cells for FACS analysis (fixation, permeabilization, etc.) can lead to cell death and therefore debris in our sample that that should be excluded from our analysis. Since intact cells have a different morphology and size compared to debris, we can distinguish them in a SSC vs FSC plot. 
 
 ```{r, out.width="100%", message=FALSE}
-# ggcyto(gs[[1:3]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
-#   geom_hex(bins = 150) +
-#   ggcyto_par_set(limits = "instrument") +
-#   theme(complete = TRUE,
-#         axis.text.x = element_text(angle = 45, size = 10)) +
-#   theme_bw()
+ggcyto(gs[[1:3]], aes(x = SSC.HLin, y = FSC.HLin), subset = "root") +
+  geom_hex(bins = 150) +
+  ggcyto_par_set(limits = "instrument") +
+  theme(complete = TRUE,
+        axis.text.x = element_text(angle = 45, size = 10)) +
+  theme_bw()
 ```
 
 In SSC vs FSC plots, dead cells and debris cluster in the bottom left corner because of their morphology. However, some variation across samples can be observed regarding the shape and size of this cluster. To properly define a gate excluding this region we think it's best to add a debris control (staurosporin treatment, concentration to be determined) to your samples.
@@ -302,8 +296,8 @@ myo_gate <- rectangleGate("RED.R.HLin" = c(lower_limit_myo_gate, Inf),
 
 We can check the gate in a plot...
 
-```{r, out.width="100%"}
-ggcyto(gs,aes(x = "RED.R.HLin"), subset = "NonDebris") +
+```{r, out.width="100%", warning=FALSE}
+ggcyto(gs[[c(1,2)]],aes(x = "RED.R.HLin"), subset = "NonDebris") +
   geom_density(fill = "pink") +
   geom_gate(myo_gate) +
   ggcyto_par_set(limits = "instrument") +
@@ -332,6 +326,19 @@ We want to subset the MYO+ population into three distinct subpopulations based o
 - GFP-high: intensities = [351, 1000]
 
 ```{r}
+gate_limits <- list(low = list(c(lower_limit_gfp_gate, 100)),
+                    medium = list(c(101, 350)),
+                    high = list(c(351,1000)))
+
+filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
+
+# why is this working precisely?
+gates <- lapply(gate_limits, function(x) {
+  names(x) <- "GRN.B.HLIN"
+  rectangleGate(x)
+})
+
+
 gfp_low <- rectangleGate("GRN.B.HLin" = c(lower_limit_gfp_gate, 100), filterId = "GFP-low")
 gfp_medium <- rectangleGate("GRN.B.HLin" = c(101, 350), filterId = "GFP-medium")
 gfp_high <- rectangleGate("GRN.B.HLin" = c(351, 1000), filterId = "GFP-high")
@@ -348,7 +355,7 @@ recompute(gs)
 We can visualize the gates.
 
 ```{r}
-ggcyto(gs, aes(x = "GRN.B.HLin"), subset = "MYO+") +
+ggcyto(gs[[5:10]], aes(x = "GRN.B.HLin"), subset = "MYO+") +
   geom_density(fill = "forestgreen") +
   scale_x_flowjo_biexp() +
   theme_bw() +
@@ -361,11 +368,11 @@ Our control samples have served their purpose to narrow down the population we w
 
 ```{r}
 # inspect data
-head(data.frame(gs_pop_get_count_fast(gs)))
-
-# remove control samples from gatingSet
-
-gs <- gs[[4:length(gs)]]
+# head(data.frame(gs_pop_get_count_fast(gs)))
+# 
+# # remove control samples from gatingSet
+# 
+# gs <- gs[[4:length(gs)]]
 ```
 
 ### Myosin expression-based clustering
@@ -388,6 +395,7 @@ gfp_low_myo_high <- fsApply(data_gfp_low,
                                                            cutpoint_method = "min_density",
                                                            filterId = "GFP-low-MYO-high"))
 
+
 gfp_medium_myo_high <- fsApply(data_gfp_medium, 
                             function(fr) gate_flowclust_1d(fr,params = "RED.R.HLin",
                                                            K = 2, 
@@ -400,12 +408,34 @@ gfp_high_myo_high <- fsApply(data_gfp_high,
                                                            cutpoint_method = "min_density",
                                                            filterId = "GFP-high-MYO-high"))
 
-ggcyto(gs, aes(x = "RED.R.HLin"), subset = "GFP-high") +
+test_function <- function(fr) {
+  return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density", filterId = "GFP-high-MYO-high"), error = function(e) NULL))
+  }
+
+gfp_low_myo_high <- fsApply(data_gfp_low, test_function)
+gfp_medium_myo_high <- fsApply(data_gfp_medium, test_function)
+gfp_high_myo_high <- fsApply(data_gfp_high, test_function)
+
+gfp_low_myo_high <- gfp_low_myo_high[-which(sapply(gfp_low_myo_high, is.null))]
+gfp_medium_myo_high <- gfp_medium_myo_high[-which(sapply(gfp_medium_myo_high, is.null))]
+gfp_high_myo_high <- gfp_high_myo_high[-which(sapply(gfp_high_myo_high, is.null))]
+```
+
+```{r, warning=FALSE}
+
+ggcyto(gs[[5:8]], aes(x = "RED.R.HLin"), subset = "GFP-medium") +
   geom_density() +
   scale_x_flowjo_biexp() +
   theme_bw() +
   geom_gate(gfp_high_myo_high)
+
+ggcyto(gs[[5:8]], aes(x = "RED.R.HLin"), subset = "GFP-medium") +
+  geom_density() +
+  scale_x_flowjo_biexp() +
+  theme_bw() +
+  geom_gate(gfp_medium_myo_high)
 ```
+
 
 **below: out-of-data, review**
 We add the gate to the gatingSet, plot the gating tree and recompute the gatingSet.
