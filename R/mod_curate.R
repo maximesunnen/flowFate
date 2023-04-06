@@ -204,6 +204,8 @@ observe({
       # average the lower boundary from both gates: use list accessors
       lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
       message("averaged the gfp gate values")
+      r$lower_limit_gfp <- lower_limit_gfp_gate
+      print(r$lower_limit_gfp)
 
       # create the final gfp gate
       ## had to do a workaround because of annoying parse( ) error!
@@ -252,6 +254,7 @@ observe({
       # average the lower threshold from both gates
       lower_limit_myhc_gate <- mean(c(myhc_test_gate[[1]]@min, myhc_test_gate[[2]]@min))
       message("averaged the myhc gate values")
+      r$lower_limit_myhc <- lower_limit_myhc_gate
 
       # create the final myhc gate
       ## had to do a workaround because of annoying parse( ) error!
