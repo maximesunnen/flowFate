@@ -22,9 +22,14 @@ mod_gate_ui <- function(id){
                uiOutput(ns("gfp_bin_3")),
                actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus")),
                
-               conditionalPanel(condition = "input.add_input == 1",
-                               ns = ns,
-                               checkboxInput(ns("headsonly"), "This text should...."))
+               conditionalPanel(
+                 # still a JS expression
+                 condition = "input.add_input == 1", 
+                 #make sure that input.<input> reacts to (and only to) to input from this module
+                 ns = ns, 
+                 #
+                 #what should happen if condition is met
+                 checkboxInput(ns("headsonly"), "This text should...."))
                
 
                
