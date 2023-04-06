@@ -20,7 +20,15 @@ mod_gate_ui <- function(id){
                uiOutput(ns("gfp_bin_1")),
                uiOutput(ns("gfp_bin_2")),
                uiOutput(ns("gfp_bin_3")),
-               actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus"))
+               actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus")),
+               
+               conditionalPanel(condition = "input.add_input == 1",
+                               ns = ns,
+                               checkboxInput(ns("headsonly"), "This text should...."))
+               
+
+               
+
 
              ),
              
