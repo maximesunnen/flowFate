@@ -7,58 +7,43 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-#' @importFrom shinyWidgets numericRangeInput actionBttn
+#' @importFrom shinyWidgets numericRangeInput
 mod_gate_ui <- function(id){
   ns <- NS(id)
   useShinyjs()
   
-  
   tabPanel(title = "Gate",
-           
            # Defining a sidebarLayout in the Curate tab ------------------------------
            sidebarLayout(
              sidebarPanel(
                 uiOutput(ns("gfp_bin_1")),
                 uiOutput(ns("gfp_bin_2")),
                 uiOutput(ns("gfp_bin_3")),
-                
-               actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus")),
-               actionButton(inputId = ns("Gate"), label = "Gate now"),
-
-               # illustration how conditionalPanel works
-               conditionalPanel(
-                 # still a JS expression
-                 condition = "input.add_input == 1", 
-                 #make sure that input.<input> reacts to (and only to) to input from this module
-                 ns = ns, 
-                 #what should happen if condition is met
-                 checkboxInput(ns("headsonly"), "This text should....")),
-               
+                actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus")),
+                actionButton(inputId = ns("Gate"), label = "Gate now")
              ),
              
              mainPanel(
-               
-               # header and text description of curation ---------------------------------
+               # header and text description of gating ---------------------------------
                h1("How gating works."),
                p(),
+               # outputs
                textOutput(ns("test")),
                plotOutput(ns("test_plot"))
-               
              )))}
     
 #' gate Server Functions
-#'
 #' @noRd 
 #' @importFrom shinyjs show hide useShinyjs
 #' @importFrom openCyto gate_flowclust_1d
 #' @importFrom flowCore fsApply
+
 mod_gate_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    ##SETTING UP THE GFP-BINS
-    
-    # hide "Add GFP bins" button when r$lower_limit_gfp is NULL, show it when it is not NULL
+    ## SETTING UP THE GFP-BINS
+    # hide/show "Add_input" button
     observe({
       if (is.null(r$lower_limit_gfp)) {shinyjs::hide(id = "add_input")}
       else {shinyjs::show(id = "add_input")}
@@ -68,16 +53,21 @@ mod_gate_server <- function(id, r){
     observe({
       if (is.null(input$add_input)) return(NULL)
       if (input$add_input == 1) {
-        output$gfp_bin_1 <- renderUI(numericRangeInput(ns("gfp_range_1"), label = "First GFP bin (LOW)", value = c(signif(r$lower_limit_gfp, digits = 3),100)))
+        render_bin_UI(1, c(signif(r$lower_limit_gfp, digits = 3), 100), ns, "First", output, r)
+        # output$gfp_bin_1 <- renderUI(numericRangeInput(ns("gfp_range_1"), label = "First GFP bin (LOW)", value = c(signif(r$lower_limit_gfp, digits = 3),100)))
       }
       if (input$add_input == 2) {
-        output$gfp_bin_2 <- renderUI(numericRangeInput(ns("gfp_range_2"), label = "Second GFP bin (MEDIUM)", value = c(101,350)))
+        render_bin_UI(2, c(101,350), ns, "Second", output, r)
+      #   output$gfp_bin_2 <- renderUI(numericRangeInput(ns("gfp_range_2"), label = "Second GFP bin (MEDIUM)", value = c(101,350)))
       }
       if (input$add_input == 3) {
-        output$gfp_bin_3 <- renderUI(numericRangeInput(ns("gfp_range_3"), label = "Third GFP bin (HIGH)", value = c(351,1000)))
+        render_bin_UI(3, c(351,1000), ns, "Second", output, r)
+      #   output$gfp_bin_3 <- renderUI(numericRangeInput(ns("gfp_range_3"), label = "Third GFP bin (HIGH)", value = c(351,1000)))
         shinyjs::hide(id = "add_input")
       }
     }) |> bindEvent(input$add_input)
+    
+
     
     
     ## SET UP A GATE ACCORDING TO THE USER-DEFINED BIN RANGE
@@ -140,9 +130,12 @@ mod_gate_server <- function(id, r){
       })
   })}
     
+render_bin_UI <- function(bin_number, value, ns, label, output , r) {
+  output[[paste0("gfp_bin_", bin_number)]] <- renderUI(numericRangeInput(ns(paste0("gfp_range_", bin_number)), label = paste0(label, "GFP bin"), value = value))
+}
 
 
-test_function <- function(fr, filterID) {
+test_function <- function(fr) {
   return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density"),
                   error = function(e) NULL))
 }
@@ -174,6 +167,15 @@ test_function <- function(fr, filterID) {
 #'     }
 #'   }
 #' }
+
+# # illustration how conditionalPanel works
+# conditionalPanel(
+#   # still a JS expression
+#   condition = "input.add_input == 1", 
+#   #make sure that input.<input> reacts to (and only to) to input from this module
+#   ns = ns, 
+#   #what should happen if condition is met
+#   checkboxInput(ns("headsonly"), "This text should...."))
 
 ## To be copied in the UI
 # mod_gate_ui("gate_1")
