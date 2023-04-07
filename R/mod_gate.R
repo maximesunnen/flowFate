@@ -23,6 +23,7 @@ mod_gate_ui <- function(id){
                 uiOutput(ns("gfp_bin_3")),
                 
                actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus")),
+               actionButton(inputId = ns("Gate"), label = "Gate now"),
 
                # illustration how conditionalPanel works
                conditionalPanel(
@@ -40,7 +41,8 @@ mod_gate_ui <- function(id){
                # header and text description of curation ---------------------------------
                h1("How gating works."),
                p(),
-               textOutput(ns("bin_ranges"))
+               textOutput(ns("test")),
+               plotOutput(ns("test_plot"))
                
              )))}
     
@@ -48,6 +50,8 @@ mod_gate_ui <- function(id){
 #'
 #' @noRd 
 #' @importFrom shinyjs show hide useShinyjs
+#' @importFrom openCyto gate_flowclust_1d
+#' @importFrom flowCore fsApply
 mod_gate_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -64,40 +68,84 @@ mod_gate_server <- function(id, r){
     observe({
       if (is.null(input$add_input)) return(NULL)
       if (input$add_input == 1) {
-        output$gfp_bin_1 <- renderUI(numericRangeInput(ns("gfp_range_1"), label = "First GFP bin", value = c(signif(r$lower_limit_gfp, digits = 3),100)))
+        output$gfp_bin_1 <- renderUI(numericRangeInput(ns("gfp_range_1"), label = "First GFP bin (LOW)", value = c(signif(r$lower_limit_gfp, digits = 3),100)))
       }
       if (input$add_input == 2) {
-        output$gfp_bin_2 <- renderUI(numericRangeInput(ns("gfp_range_2"), label = "Second GFP bin", value = c(101,350)))
+        output$gfp_bin_2 <- renderUI(numericRangeInput(ns("gfp_range_2"), label = "Second GFP bin (MEDIUM)", value = c(101,350)))
       }
       if (input$add_input == 3) {
-        output$gfp_bin_3 <- renderUI(numericRangeInput(ns("gfp_range_3"), label = "Third GFP bin", value = c(351,1000)))
+        output$gfp_bin_3 <- renderUI(numericRangeInput(ns("gfp_range_3"), label = "Third GFP bin (HIGH)", value = c(351,1000)))
         shinyjs::hide(id = "add_input")
       }
     }) |> bindEvent(input$add_input)
     
     
     ## SET UP A GATE ACCORDING TO THE USER-DEFINED BIN RANGE
-    # 
     observe({
-      if(is.null(input$add_input)) return(NULL)
-      gate_limits <- list(low = list(c(input$gfp_range_1[1], input$gfp_range_1[2])),
-                          medium = list(c(input$gfp_range_2[1], input$gfp_range_2[2])),
-                          high = list(c(input$gfp_range_3[1], input$gfp_range_3[2])))
-      print(gate_limits)
-      print(r$kras_channel())
+      if (is.null(input$add_input)) return(NULL)
       
-      if(!is.null(input$gfp_range_1) && !is.null(input$gfp_range_2) && !is.null(input$gfp_range_3)) {
+      if (!is.null(input$gfp_range_1) && !is.null(input$gfp_range_2) && !is.null(input$gfp_range_3)) {
+        # set gate limits (using user-defined ranges)
+        gate_limits <- list(low = list(c(input$gfp_range_1[1], input$gfp_range_1[2])),
+                            medium = list(c(input$gfp_range_2[1], input$gfp_range_2[2])),
+                            high = list(c(input$gfp_range_3[1], input$gfp_range_3[2])))
+        ### for testing
+        print(gate_limits)
+        print(r$kras_channel())
+        
+        # generate gates from the bin sizes
         gates <- lapply(gate_limits, function(x) {
           names(x) <- r$kras_channel()
           rectangleGate(x)
-      })
+        })
+        
+        # vector of filter names
+        filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
         print(gates)
-      }
-    })
-    
-  })
-}
+        
+        # assign new filterIds to the generated gates (maybe wrap all this into a smart function to reduce codebase)
+        for (i in seq_along(gates)) {
+          gates[[i]]@filterId <- filter_names[i]
+        }
+        
+        # add gates to the gatingSet
+        for (i in seq_along(gates)) {
+          gs_pop_add(r$gs, gates[[i]], parent = "MYO+")
+        }
+        
+        recompute(r$gs)
+        ### for testing
+        plot(r$gs)
+        
+        data_gfp_low <- gs_pop_get_data(r$gs, y = filter_names[1]) |> cytoset_to_flowSet()
+        data_gfp_medium <- gs_pop_get_data(r$gs, y = filter_names[2]) |> cytoset_to_flowSet()
+        data_gfp_high <- gs_pop_get_data(r$gs, y = filter_names[3]) |> cytoset_to_flowSet()
+        print(data_gfp_low)
 
+      gfp_low_myo_high <- fsApply(data_gfp_low, test_function)
+      gfp_low_myo_high <- gfp_low_myo_high[-which(sapply(gfp_low_myo_high, is.null))]
+
+      output$test_plot <- renderPlot({
+        ggcyto(r$gs[[5]], aes(x = "RED.R.HLin"), subset = "GFP-low") +
+          geom_density(fill = "forestgreen") +
+          scale_x_flowjo_biexp() +
+          theme_bw() +
+          geom_gate(gfp_low_myo_high)
+      })
+
+    ## EXTRACT GATED DATA (because we want to apply a mindensity function only on the data in the gate (in this case bin))
+    
+    output[["test"]] <- renderText(glue("Test works"))
+      }
+      })
+  })}
+    
+
+
+test_function <- function(fr, filterID) {
+  return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density"),
+                  error = function(e) NULL))
+}
 
 
 #' #' @importFrom stringr str_to_upper
