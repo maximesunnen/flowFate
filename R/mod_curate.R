@@ -121,6 +121,7 @@ observe({
     ssc <- reactive(input$side_scatter)
     ch_kras <- reactive(input$kras_channel)
     ch_myhc <- reactive(input$myhc_channel)
+    r$kras_channel <- reactive(input$kras_channel)
 
     ctrl_kras <- reactive(input$positive_control_kras)
     ctrl_myhc <- reactive(input$positive_control_myhc)
