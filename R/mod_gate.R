@@ -52,6 +52,8 @@ mod_gate_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    ##SETTING UP THE GFP-BINS
+    
     # hide "Add GFP bins" button when r$lower_limit_gfp is NULL, show it when it is not NULL
     observe({
       if (is.null(r$lower_limit_gfp)) {shinyjs::hide(id = "add_input")}
@@ -72,8 +74,31 @@ mod_gate_server <- function(id, r){
         shinyjs::hide(id = "add_input")
       }
     }) |> bindEvent(input$add_input)
+    
+    
+    ## SET UP A GATE ACCORDING TO THE USER-DEFINED BIN RANGE
+    # 
+    observe({
+      if(is.null(input$add_input)) return(NULL)
+      gate_limits <- list(low = list(c(input$gfp_range_1[1], input$gfp_range_1[2])),
+                          medium = list(c(input$gfp_range_2[1], input$gfp_range_2[2])),
+                          high = list(c(input$gfp_range_3[1], input$gfp_range_3[2])))
+      print(gate_limits)
+      print(r$kras_channel())
+      
+      if(!is.null(input$gfp_range_1) && !is.null(input$gfp_range_2) && !is.null(input$gfp_range_3)) {
+        gates <- lapply(gate_limits, function(x) {
+          names(x) <- r$kras_channel()
+          rectangleGate(x)
+      })
+        print(gates)
+      }
+    })
+    
   })
 }
+
+
 
 #' #' @importFrom stringr str_to_upper
 #' create_bin_button <- function (channel, bin_number, label, ns, lower_limit) {
