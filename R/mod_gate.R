@@ -66,8 +66,8 @@ mod_gate_server <- function(id, r){
 
     ## SET UP A GATE ACCORDING TO THE USER-DEFINED BIN RANGE
     observe({
-      if (is.null(input$add_input)) return(NULL)
-      if (!is.null(input$gfp_range_3)) {
+      if (is.null(input$gfp_range_3)) return(NULL)
+      else {
         # set up gate limits (using user-defined ranges)
         gate_limits <- list(low = list(input$gfp_range_1), medium = list(input$gfp_range_2), 
                             high = list(input$gfp_range_3))
@@ -83,21 +83,18 @@ mod_gate_server <- function(id, r){
           gates[[i]]@filterId <- filter_names[i]
         }
       }
-      print(gates)    ##>>>>>>>> until here everything is fine
+      print(gates)
       
-      ## ADD GATES TO GATINGSET
-      # for (i in seq_along(gates)) {
-      #   gs_pop_add(r$gs, gates[[i]], parent = "MYO+")
-      # }
-      gs_pop_add(r$gs, gates[[1]], parent = "MYO+")
-      gs_pop_add(r$gs, gates[[2]], parent = "MYO+")
-      gs_pop_add(r$gs, gates[[3]], parent = "MYO+")
+      # ADD GATES TO GATINGSET
+      for (i in seq_along(gates)) {
+        gs_pop_add(r$gs, gates[[i]], parent = "MYO+")
+      }
+
       recompute(r$gs)
       View(gs_pop_get_count_fast(r$gs))
                      
       ### for testing
       plot(r$gs)
-                      ## >>>>>>>> I think until here everything is fine
       
       ## EXTRACT GATED DATA FOR PEAK SPLITTING
       
