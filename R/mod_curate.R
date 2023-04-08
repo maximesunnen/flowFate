@@ -243,7 +243,7 @@ observe({
       # Curate background noise: MYHC channel -----------------------------------
 
       # extract NonDebris population data, change object type to flowSet
-      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(2,3)]]], "NonDebris") |>
+      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(1,3)]]], "NonDebris") |>
         cytoset_to_flowSet()
       message("nonDebris_data created and changed to flowSet")
 
