@@ -82,41 +82,37 @@ mod_gate_server <- function(id, r){
           gates[[i]]@filterId <- filter_names[i]
         }
       }
-    }) |> bindEvent(input$gate)
-
-
     ## ADD GATES TO GATINGSET
-    observe({
       for (i in seq_along(gates)) {
         gs_pop_add(r$gs, gates[[i]], parent = "MYO+")
       }
       recompute(r$gs)
       ### for testing
       plot(r$gs)
-    }) |> bindEvent(input$gate)
-    
-    observe({
-    data_gfp_low <- gs_pop_get_data(r$gs, y = "GFP-low") |> cytoset_to_flowSet()
-    data_gfp_medium <- gs_pop_get_data(r$gs, y = "GFP-medium") |> cytoset_to_flowSet()
-    data_gfp_high <- gs_pop_get_data(r$gs, y = "GFP-high") |> cytoset_to_flowSet()
-    print(data_gfp_low)
-    
-    gfp_low_myo_high <- fsApply(data_gfp_low, test_function)
-    gfp_low_myo_high <- gfp_low_myo_high[-which(sapply(gfp_low_myo_high, is.null))]
-    
-    gfp_medium_myo_high <- fsApply(data_gfp_medium, test_function)
-    gfp_medium_myo_high <- gfp_medium_myo_high[-which(sapply(gfp_medium_myo_high, is.null))]
-    
-    gfp_high_myo_high <- fsApply(data_gfp_high, test_function)
-    gfp_high_myo_high <- gfp_high_myo_high[-which(sapply(gfp_high_myo_high, is.null))]
-    
-    output$test_plot <- renderPlot({
-      ggcyto(r$gs[[5]], aes(x = "RED.R.HLin"), subset = "GFP-low") +
-        geom_density(fill = "pink") +
-        scale_x_flowjo_biexp() +
-        theme_bw() +
-        geom_gate(gfp_low_myo_high)
-    })
+      
+      data_gfp_low <- gs_pop_get_data(r$gs, y = "GFP-low") |> cytoset_to_flowSet()
+      # data_gfp_medium <- gs_pop_get_data(r$gs, y = "GFP-medium") |> cytoset_to_flowSet()
+      # data_gfp_high <- gs_pop_get_data(r$gs, y = "GFP-high") |> cytoset_to_flowSet()
+      # print(data_gfp_low)
+      
+      gfp_low_myo_high <- fsApply(data_gfp_low, test_function)
+      gfp_low_myo_high <- remove_null_from_list(gfp_low_myo_high)
+      
+      # gfp_medium_myo_high <- fsApply(data_gfp_medium, test_function)
+      # gfp_medium_myo_high <- gfp_medium_myo_high[-which(sapply(gfp_medium_myo_high, is.null))]
+      # gfp_high_myo_high <- remove_null_from_list(gfp_high_myo_high)
+      # 
+      # gfp_high_myo_high <- fsApply(data_gfp_high, test_function)
+      # gfp_high_myo_high <- gfp_high_myo_high[-which(sapply(gfp_high_myo_high, is.null))]
+      # gfp_high_myo_high <- remove_null_from_list(gfp_high_myo_high)
+      
+      output$test_plot <- renderPlot({
+        ggcyto(r$gs[[5]], aes(x = "RED.R.HLin"), subset = "GFP-low") +
+          geom_density(fill = "pink") +
+          scale_x_flowjo_biexp() +
+          theme_bw() +
+          geom_gate(gfp_low_myo_high)
+      })
     }) |> bindEvent(input$gate)
     
 
@@ -137,6 +133,16 @@ render_bin_UI <- function(bin_number, value, ns, label, output , r) {
 test_function <- function(fr) {
   return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density"),
                   error = function(e) NULL))
+}
+
+remove_null_from_list <- function(data) {
+  test <- which(sapply(data, is.null))
+  if (sum(test) == 0) {
+    return(data)
+  }
+  else {
+    return(data[-test])
+  }
 }
 
 
