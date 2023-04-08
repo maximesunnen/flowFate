@@ -76,21 +76,37 @@ mod_gate_server <- function(id, r){
           names(x) <- r$kras_channel()
           rectangleGate(x)
         })
+        
         # assign filterIds to gates
+        filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
         for (i in seq_along(gates)) {
-          filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
           gates[[i]]@filterId <- filter_names[i]
         }
       }
-    ## ADD GATES TO GATINGSET
-      for (i in seq_along(gates)) {
-        gs_pop_add(r$gs, gates[[i]], parent = "MYO+")
-      }
+      print(gates)    ##>>>>>>>> until here everything is fine
+      
+      ## ADD GATES TO GATINGSET
+      # for (i in seq_along(gates)) {
+      #   gs_pop_add(r$gs, gates[[i]], parent = "MYO+")
+      # }
+      gs_pop_add(r$gs, gates[[1]], parent = "MYO+")
+      gs_pop_add(r$gs, gates[[2]], parent = "MYO+")
+      gs_pop_add(r$gs, gates[[3]], parent = "MYO+")
       recompute(r$gs)
+      View(gs_pop_get_count_fast(r$gs))
+                     
       ### for testing
       plot(r$gs)
+                      ## >>>>>>>> I think until here everything is fine
+      
+      ## EXTRACT GATED DATA FOR PEAK SPLITTING
       
       data_gfp_low <- gs_pop_get_data(r$gs, y = "GFP-low") |> cytoset_to_flowSet()
+      View(data_gfp_low)
+      
+      ## >>>>>>>> here the problem occurs, data_gfp_low is not identical to data_gfp_low in the Rmd!!!!!!
+      
+      
       # data_gfp_medium <- gs_pop_get_data(r$gs, y = "GFP-medium") |> cytoset_to_flowSet()
       # data_gfp_high <- gs_pop_get_data(r$gs, y = "GFP-high") |> cytoset_to_flowSet()
       # print(data_gfp_low)
