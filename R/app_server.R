@@ -10,4 +10,5 @@ app_server <- function(input, output, session) {
 	mod_import_server(id = "import_1", r = r)
 	mod_curate_server(id = "curate_1", r = r)
 	mod_gate_server(id = "gate_1", r = r)
+	mod_export_server(id = "export_1", r = r)
 }
