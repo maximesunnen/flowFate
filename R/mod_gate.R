@@ -89,36 +89,20 @@ mod_gate_server <- function(id, r){
       for (i in seq_along(gates)) {
         gs_pop_add(r$gs, gates[[i]], parent = "MYO+")
       }
-
       recompute(r$gs)
       View(gs_pop_get_count_fast(r$gs))
-                     
-      ### for testing
-      plot(r$gs)
-      
-      ## EXTRACT GATED DATA FOR PEAK SPLITTING
-      
-      data_gfp_low <- gs_pop_get_data(r$gs, y = "GFP-low") |> cytoset_to_flowSet()
-      View(data_gfp_low)
-      
-      ## >>>>>>>> here the problem occurs, data_gfp_low is not identical to data_gfp_low in the Rmd!!!!!!
-      
-      
-      # data_gfp_medium <- gs_pop_get_data(r$gs, y = "GFP-medium") |> cytoset_to_flowSet()
-      # data_gfp_high <- gs_pop_get_data(r$gs, y = "GFP-high") |> cytoset_to_flowSet()
-      # print(data_gfp_low)
-      
-      gfp_low_myo_high <- fsApply(data_gfp_low, test_function)
-      gfp_low_myo_high <- remove_null_from_list(gfp_low_myo_high)
-      
-      # gfp_medium_myo_high <- fsApply(data_gfp_medium, test_function)
-      # gfp_medium_myo_high <- gfp_medium_myo_high[-which(sapply(gfp_medium_myo_high, is.null))]
-      # gfp_high_myo_high <- remove_null_from_list(gfp_high_myo_high)
-      # 
-      # gfp_high_myo_high <- fsApply(data_gfp_high, test_function)
-      # gfp_high_myo_high <- gfp_high_myo_high[-which(sapply(gfp_high_myo_high, is.null))]
-      # gfp_high_myo_high <- remove_null_from_list(gfp_high_myo_high)
-      
+
+      # EXTRACT GATED DATA FOR PEAK SPLITTING
+      getData_splitPeak <- function(gs, bin) {
+        x <- gs_pop_get_data(gs, bin) |> cytoset_to_flowSet()
+        x <- fsApply(x, test_function)
+        return(remove_null_from_list(x))
+      }
+    
+      gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
+      gfp_medium_myo_high <- getData_splitPeak(r$gs, "GFP-medium")
+      gfp_high_myo_high <- getData_splitPeak(r$gs, "GFP-high")
+
       output$test_plot <- renderPlot({
         ggcyto(r$gs[[5]], aes(x = "RED.R.HLin"), subset = "GFP-low") +
           geom_density(fill = "pink") +
