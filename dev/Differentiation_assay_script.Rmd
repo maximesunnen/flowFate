@@ -426,14 +426,26 @@ gfp_low_myo_high <- fsApply(data_gfp_low, test_function)
 gfp_medium_myo_high <- fsApply(data_gfp_medium, test_function)
 gfp_high_myo_high <- fsApply(data_gfp_high, test_function)
 
-gfp_low_myo_high <- gfp_low_myo_high[-which(sapply(gfp_low_myo_high, is.null))]
-gfp_medium_myo_high <- gfp_medium_myo_high[-which(sapply(gfp_medium_myo_high, is.null))]
-gfp_high_myo_high <- gfp_high_myo_high[-which(sapply(gfp_high_myo_high, is.null))]
+remove_null_from_list <- function(data) {
+  test <- which(sapply(data, is.null))
+  if (sum(test) == 0) {
+    return(data)
+  }
+  else {
+    return(data[-test])
+  }
+}
+gfp_low_myo_high <- remove_null_from_list(gfp_low_myo_high)
+gfp_medium_myo_high <- remove_null_from_list(gfp_medium_myo_high)
+gfp_high_myo_high <- remove_null_from_list(gfp_high_myo_high)
+# gfp_low_myo_high <- gfp_low_myo_high[-which(sapply(gfp_low_myo_high, is.null))]
+# gfp_medium_myo_high <- gfp_medium_myo_high[-which(sapply(gfp_medium_myo_high, is.null))]
+# gfp_high_myo_high <- gfp_high_myo_high[-which(sapply(gfp_high_myo_high, is.null))]
 ```
 
 ```{r, warning=FALSE}
 
-ggcyto(gs[[5:8]], aes(x = "RED.R.HLin"), subset = "GFP-medium") +
+ggcyto(gs[[5]], aes(x = "RED.R.HLin"), subset = "GFP-low") +
   geom_density() +
   scale_x_flowjo_biexp() +
   theme_bw() +
