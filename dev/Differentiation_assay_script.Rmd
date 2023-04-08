@@ -171,7 +171,7 @@ Below we define a polygonal gate that to excludes most of the cells clustering i
 ```{r}
 #defining the polygon gate matrix
 pgn.cut <- matrix(c(0, 12500, 99000, 99000,0,
-										12500, 0, 0, 99000, 99000),
+										6250, 6250, 6250, 99000, 99000),
 									ncol = 2,
 									nrow = 5)
 #setting the correct column names
