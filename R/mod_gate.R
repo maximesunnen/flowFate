@@ -73,7 +73,7 @@ mod_gate_server <- function(id, r){
                             high = list(input$gfp_range_3))
         # generate gates from bins
         gates <- lapply(gate_limits, function(x) {
-          names(x) <- r$kras_channel()
+          names(x) <- r$ch_kras()
           rectangleGate(x)
         })
         
