@@ -20,13 +20,11 @@ mod_curate_ui <- function(id){
            # Defining a sidebarLayout in the Curate tab ------------------------------
            sidebarLayout(
              sidebarPanel(
-
                # Input selections for used channels and control samples ------------------
                uiOutput(ns("input_selection"))
              ),
 
              mainPanel(
-
                # header and text description of curation ---------------------------------
                h1("How curation works."),
                p("By curation we understand two essential steps.
@@ -41,19 +39,15 @@ mod_curate_ui <- function(id){
                     both the non-debris gate and the threshold using our controls"),
 
                # Action button to start curation
-               #uiOutput(ns("conditional_curate_button")),
                actionButton(ns("Curate"), "Start curation"),
                actionButton(ns("Delete"), "Restart curation"),
 
                # plot SSC vs FSC for control samples -------------------------------------
                #plotOutput(ns("controls_ssc_fsc")),
                plotOutput(ns("non_debris_gate")),
-
                plotOutput(ns("gfp_gate")),
-
                plotOutput(ns("myhc_gate"))
              )))}
-
 
 #' curate Server Functions
 #'
@@ -67,17 +61,17 @@ mod_curate_ui <- function(id){
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-
-observe({
-  shinyjs::hide(id = "Curate")
-}) |> bindEvent(input$Curate)
-#
-observe({
-  shinyjs::show(id = "Curate")
-}) |> bindEvent(input$ok)
-
-
-    #selectInput custom function
+    
+    # Make the Curate button conditionally visible
+    observe({
+      shinyjs::hide(id = "Curate")
+    }) |> bindEvent(input$Curate)
+    
+    observe({
+      shinyjs::show(id = "Curate")
+    }) |> bindEvent(input$ok)
+    
+    #selectInput custom function (row argument for ROWnames, default=COLnames for choices)
     selectInput01 <- function(id, label, n, r, row = FALSE) {
       if (row == FALSE) {
         selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
@@ -86,9 +80,8 @@ observe({
         selectInput(ns(id), label = label, choices = c("", rownames(pData(r$fs))), rownames(pData(r$fs))[n])
       }
     }
-
-# modal to restart curation -----------------------------------------------
-
+    
+    # Restart curation MODAL
     modal_confirm <- modalDialog(
       "Are you sure you want to continue?",
       title = "Deleting files",
@@ -98,25 +91,22 @@ observe({
       )
     )
 
-    # All sidebar selections/inputs (control datasets and channels) -----------
-
+    # Sidebar selections/inputs (control datasets and channels) -----------
     output$input_selection <- renderUI({
       req(r$fs)
-
       tagList(
         selectInput01("forward_scatter", "Forward Scatter", n = 1, r = r),
         selectInput01("side_scatter", "Side Scatter", n = 2, r = r),
         selectInput01("kras_channel", "KRas channel", n = 3, r = r),
         selectInput01("myhc_channel", "Myosin channel", n = 6, r = r),
-
         selectInput01("negative_control", "Negative control", n = 1, r = r, row = TRUE),
         selectInput01("positive_control_kras", "Positive control (KRas)", n = 2, r = r, row = TRUE),
         selectInput01("positive_control_myhc", "Positive control (MYHC)", n = 3, r = r, row = TRUE)
       )
     })
 
-    # alerts if non-unique channels/control datasets --------------------
-
+    # Alerts if non-unique channels/control datasets
+    ## create reactive expressions to avoid typing input$XXX every time
     fsc <- reactive(input$forward_scatter)
     ssc <- reactive(input$side_scatter)
     ch_kras <- reactive(input$kras_channel)
