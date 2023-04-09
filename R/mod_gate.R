@@ -104,7 +104,7 @@ mod_gate_server <- function(id, r){
       gfp_high_myo_high <- getData_splitPeak(r$gs, "GFP-high")
 
       output$test_plot <- renderPlot({
-        ggcyto(r$gs[[5]], aes(x = "RED.R.HLin"), subset = "GFP-low") +
+        ggcyto(r$gs, aes(x = "RED.R.HLin"), subset = "GFP-low") +
           geom_density(fill = "pink") +
           scale_x_flowjo_biexp() +
           theme_bw() +
