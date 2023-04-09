@@ -107,27 +107,44 @@ mod_curate_server <- function(id,r){
 
     # Alerts if non-unique channels/control datasets
     ## create reactive expressions to avoid typing input$XXX every time
+    ### in fact, assigning only to r$XXX is sufficient, but then need to change this everywhere e.g. fsc() was used to r$fsc()
     fsc <- reactive(input$forward_scatter)
+    r$fsc <- reactive(input$forward_scatter)
+    
     ssc <- reactive(input$side_scatter)
+    r$ssc <- reactive(input$side_scatter)
+    
     ch_kras <- reactive(input$kras_channel)
+    r$ch_kras <- reactive(input$kras_channel)
+    
     ch_myhc <- reactive(input$myhc_channel)
-    r$kras_channel <- reactive(input$kras_channel)
+    r$ch_myhc <- reactive(input$myhc_channel)
 
     ctrl_kras <- reactive(input$positive_control_kras)
+    r$ctrl_kras <- reactive(input$positive_control_kras)
+    
     ctrl_myhc <- reactive(input$positive_control_myhc)
+    r$ctrl_myhc <- reactive(input$positive_control_myhc)
+    
     ctrl_negative <- reactive(input$negative_control)
+    r$ctrl_negative <- reactive(input$negative_control)
 
     observe({
-      input_list <- list(fsc(), ssc(), ch_kras(), ch_myhc(), ctrl_negative(),ctrl_kras(), ctrl_myhc())
-
+      input_list <- list(fsc(), ssc(), ch_kras(), ch_myhc(),
+                         ctrl_negative(),ctrl_kras(), ctrl_myhc())
       if (any(sapply(input_list, is.null))) return(NULL)
-
       else if (anyDuplicated(input_list) > 0) {
         showModal(modalDialog("Inputs have to be unique.", title = "Warning.",
           footer = modalButton("Dismiss")))
       }
     })
+  # Comments on the function above:
+  # (1) initially, return NULL if any of the inputs are NULL (inputs inexistant)
+  # (2) then check for duplications, anyDuplicated() returns :
+  #     - index i of first duplicated entry x[i] if there are any
+  #     -  0 otherwise --> > 0 is therefore a good condition.
 
+    # if user wants to reset curation (input$ok), create new gs from initial fs
     observe({
       r$gs <- GatingSet(r$fs)
     }) |> bindEvent(input$ok)
@@ -135,7 +152,7 @@ mod_curate_server <- function(id,r){
     # SSC vs FSC plot of control samples --------------------------------------
     # We need a set of reactive expressions that capture the input from our selectInput widgets defined above. Since we do not want the app to perform computations every time the input changes - but rather when the user is "finished" defining his inputs - put these reactive expressions under the control of a new button "Curate" (accessed by input$Curate). Code depending on e.g. control_indices() should therefore also not update unless "Curate" is clicked (results are cached, and before input$Curate, this code would not know that the input has changed).
 
-    # Question: with the code below, you create a reactive expression with a dependency on input$Curate. BUT, when input$Curate changes (e.g the user clicks on the button), the entire code is computed, regardless if its result has changed or not? Here this is not a problem because accessing the inputs is not computationally expensive, but we should keep this in mind.
+    # Question: with the code below, you create a reactive expression with a dependency on input$Curate. BUT, when input$Curate changes (e.g the user clicks on the button), the entire code is computed (correct?), if the results have changed or not? Here this is not a problem because accessing the inputs is not computationally expensive, but we should keep this in mind. isolate() is what you need here!
 
     control_indices <- eventReactive(input$Curate, {
       c(ctrl_kras(), ctrl_myhc(), ctrl_negative())
