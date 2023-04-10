@@ -154,6 +154,7 @@ mod_curate_server <- function(id,r){
 
     # Question: with the code below, you create a reactive expression with a dependency on input$Curate. BUT, when input$Curate changes (e.g the user clicks on the button), the entire code is computed (correct?), if the results have changed or not? Here this is not a problem because accessing the inputs is not computationally expensive, but we should keep this in mind. isolate() is what you need here!
 
+    # I wonder if this is even necessary, why not use ctrl_kras() etc. where I need it
     control_indices <- eventReactive(input$Curate, {
       c(ctrl_kras(), ctrl_myhc(), ctrl_negative())
     })
@@ -162,66 +163,65 @@ mod_curate_server <- function(id,r){
 
     # Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate".
 
-    pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
-                      ncol = 2,
-                      nrow = 5)
 
     observe({
-        colnames(pgn_cut) <- c(ssc(), fsc())
-        message("Renamed the columns of pgn_cut")
+      pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
+                        ncol = 2,
+                        nrow = 5)
+      colnames(pgn_cut) <- c(ssc(), fsc())
+      message("Renamed the columns of pgn_cut")
+      # create a polygonGate
+      gate_non_debris <- polygonGate(filterId = "NonDebris", .gate = pgn_cut)
+      message("Created the gate")
 
-        # create the gate using flowCore's polygonGate
-        gate_non_debris <- polygonGate(filterId = "NonDebris", .gate = pgn_cut)
-        message("Created the gate")
+      if (is.null(gate_non_debris)) return(NULL)
+      gs_pop_add(r$gs, gate_non_debris, parent = "root")
+      message("Added the non_debris gate to the gatingSet")
 
-        if (is.null(gate_non_debris)) return(NULL)
-
-        gs_pop_add(r$gs, gate_non_debris, parent = "root")
-        message("Added the non_debris gate to the gatingSet")
-
-        # recompute the GatingSet: performs calculations
-        recompute(r$gs)
-        message("Recomputed the gatingSet")
-
-        #plot the gate
-        output$non_debris_gate <- renderPlot({
-          ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_kras(),ctrl_myhc())]]),
-                 aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
-                 subset = "root") +
-            geom_hex(bins = 150) +
-            theme_bw() +
-            geom_gate(gate_non_debris) +
-            geom_stats()
-        })
+      recompute(r$gs)
+      message("Recomputed the gatingSet")
+      
+      output$non_debris_gate <- renderPlot({
+        ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_kras(),ctrl_myhc())]]),
+               aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
+               subset = "root") +
+          geom_hex(bins = 150) +
+          theme_bw() +
+          geom_gate(gate_non_debris) +
+          geom_stats()
+      })
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
+    # Curate background noise: KRas channel -----------------------------------
+    observe({
+      # complex custom function
+      # - gs: the gatingSet you want to extract data from
+      # - datasets: the dataSets you want to extract data from
+      # - node: the node/gate inside the gatingSet you want to extract data from
+      # - ch_gate: the name of the channel you want to perform a quantileGate on
 
-observe({
-      # Curate background noise: KRas channel -----------------------------------
+      get_lowerLimit <- function(gs, datasets, node, ch_gate) {
+        # extract the data as a flowSet
+        x <- gs_pop_get_data(r$gs[[datasets]], node) |> cytoset_to_flowSet()
+        # create a quantile get using extracted data and the respective channel name
+        y <- create_quantile_gate(x, gate_channel = ch_gate)
+        # average the minimum values from the respective quantile gateS(!)
+        z <- mean(c(y[[1]]@min, y[[2]]@min))
+      }
 
-      # extract NonDebris population data, change object type to flowSet
-      nonDebris_data <- gs_pop_get_data(r$gs[[c(ctrl_negative(),ctrl_myhc())]],
-                                        "NonDebris") |> cytoset_to_flowSet()
-      message("nonDebris_data created and changed to flowSet")
-
-      # create a quantileGate for both controls: creates a list of two gates
-      gfp_test_gate <- create_quantile_gate(nonDebris_data, gate_channel = ch_kras())
-      message("gfp_test_gate created")
-      print(gfp_test_gate)
-
-      # average the lower boundary from both gates: use list accessors
-      lower_limit_gfp_gate <- mean(c(gfp_test_gate[[1]]@min, gfp_test_gate[[2]]@min))
-      message("averaged the gfp gate values")
+      lower_limit_gfp_gate <- get_lowerLimit(gs = r$gs, 
+                                             datasets = c(ctrl_negative(), ctrl_myhc()),
+                                             node = "NonDebris", 
+                                             ch_gate = ch_kras())
+      message("lower_limit_gfp_gate successfully computed")
       r$lower_limit_gfp <- lower_limit_gfp_gate
       print(r$lower_limit_gfp)
 
-      # create the final gfp gate
-      ## had to do a workaround because of annoying parse( ) error!
+      # create the final gfp gate: workaround necessary because of annoying parse( ) error!
       mat <- matrix(c(lower_limit_gfp_gate, Inf), ncol = 1)
       colnames(mat) <- ch_kras()
       gfp_gate <- rectangleGate(filterId = "GFP+",
                                 .gate = mat)
-
       print(gfp_gate)
       message("GFP gate created")
 
@@ -246,7 +246,6 @@ observe({
       })}) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
 observe({
-
       # Curate background noise: MYHC channel -----------------------------------
 
       # extract NonDebris population data, change object type to flowSet
