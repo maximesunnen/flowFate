@@ -158,7 +158,6 @@ mod_curate_server <- function(id,r){
 
     # Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate".
 
-
     observe({
       pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
                         ncol = 2,
@@ -200,11 +199,9 @@ mod_curate_server <- function(id,r){
       r$lower_limit_gfp <- lower_limit_gfp_gate
       print(r$lower_limit_gfp)
 
-      # create the final gfp gate: workaround necessary because of annoying parse( ) error!
-      mat <- matrix(c(lower_limit_gfp_gate, Inf), ncol = 1)
-      colnames(mat) <- ch_kras()
-      gfp_gate <- rectangleGate(filterId = "GFP+",
-                                .gate = mat)
+      # create the final gfp gate
+      gfp_gate <- make_gate(lower_limit_gfp_gate, ch_kras(),filterId = "GFP+")
+
       # For testing/debugging
       print(gfp_gate)
       message("GFP gate created")
@@ -244,11 +241,7 @@ mod_curate_server <- function(id,r){
       r$lower_limit_myhc <- lower_limit_myhc_gate
 
       # create the final myhc gate
-      ## had to do a workaround because of annoying parse( ) error!
-      mat <- matrix(c(lower_limit_myhc_gate, Inf), ncol = 1)
-      colnames(mat) <- input$myhc_channel
-      myhc_gate <- rectangleGate(filterId = "MYO+",
-                                .gate = mat)
+      myhc_gate <- make_gate(lower_limit_myhc_gate, ch_myhc(),filterId = "MYO+")
 
       print(myhc_gate)
       message("MYHC gate created")
@@ -273,7 +266,6 @@ mod_curate_server <- function(id,r){
           scale_x_flowjo_biexp()
       })
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
-    # create reactive dependency of observe() on input$Curate
 
     observe({
       showModal(modal_confirm)
@@ -319,6 +311,13 @@ get_lowerLimit <- function(gs, datasets, node, ch_gate, r) {
   z <- mean(c(y[[1]]@min, y[[2]]@min))
 }
 
+### make_gate:
+#
+make_gate <- function(lower_limit, col_name, filterId) {
+  mat <- matrix(c(lower_limit, Inf), ncol = 1)
+  colnames(mat) <- col_name
+  return(rectangleGate(filterId = filterId, .gate = mat))
+}
 
 
 ## To be copied in the UI
