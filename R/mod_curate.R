@@ -26,7 +26,8 @@ mod_curate_ui <- function(id){
              mainPanel(
                # header and text description of curation ---------------------------------
                h1("How curation works."),
-               p("By curation we understand two essential steps. First, we want to focus our analysis on intact cells and not debris. We therefore need to set a gate that excludes cellular debris, which normally clusters in the lower left corner in a SSC vs FSC plot. Second, we have to define intensity thresholds in our fluorescent channels below which we cannot distinguish between a real signal and autofluorescence/background noise. We will define both the non-debris gate and the threshold using our controls"),
+               p("By curation we understand two essential steps. First, we want to focus our analysis on intact cells and not debris. We therefore need to set a gate that excludes cellular debris, which normally clusters in the lower left corner in a SSC vs FSC plot. Second, we have to define intensity thresholds in our fluorescent channels below which we cannot distinguish between a real signal and autofluorescence/background noise. We will define both the non-debris gate and the threshold using our controls", style = "text-align:justify;color
+                 :black;background-color:papayawhip;padding:15px;border-radius:10px"),
 
                # Action button to start curation
                actionButton(ns("Curate"), "Start curation", class = "btn-success"),
