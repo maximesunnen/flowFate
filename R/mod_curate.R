@@ -154,11 +154,6 @@ mod_curate_server <- function(id,r){
 
     # Question: with the code below, you create a reactive expression with a dependency on input$Curate. BUT, when input$Curate changes (e.g the user clicks on the button), the entire code is computed (correct?), if the results have changed or not? Here this is not a problem because accessing the inputs is not computationally expensive, but we should keep this in mind. isolate() is what you need here!
 
-    # I wonder if this is even necessary, why not use ctrl_kras() etc. where I need it
-    control_indices <- eventReactive(input$Curate, {
-      c(ctrl_kras(), ctrl_myhc(), ctrl_negative())
-    })
-
     # We now need to define a reactive expression generating our first gate. How this gate is generated obviously depends on the name of our side_scatter and forward_scatter reactive expressions (i.e which channels the user wants to gate on). These reactive expressions have a dependency on input$Curate, so they won't change unless the user clicks "Curate".
 
     # Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate".
@@ -194,25 +189,13 @@ mod_curate_server <- function(id,r){
 
     # Curate background noise: KRas channel -----------------------------------
     observe({
-      # complex custom function
-      # - gs: the gatingSet you want to extract data from
-      # - datasets: the dataSets you want to extract data from
-      # - node: the node/gate inside the gatingSet you want to extract data from
-      # - ch_gate: the name of the channel you want to perform a quantileGate on
-
-      get_lowerLimit <- function(gs, datasets, node, ch_gate) {
-        # extract the data as a flowSet
-        x <- gs_pop_get_data(r$gs[[datasets]], node) |> cytoset_to_flowSet()
-        # create a quantile get using extracted data and the respective channel name
-        y <- create_quantile_gate(x, gate_channel = ch_gate)
-        # average the minimum values from the respective quantile gateS(!)
-        z <- mean(c(y[[1]]@min, y[[2]]@min))
-      }
-
+      # custom function: see end of document for details
       lower_limit_gfp_gate <- get_lowerLimit(gs = r$gs, 
                                              datasets = c(ctrl_negative(), ctrl_myhc()),
                                              node = "NonDebris", 
-                                             ch_gate = ch_kras())
+                                             ch_gate = ch_kras(), 
+                                             r = r)
+      # For testing/debugging
       message("lower_limit_gfp_gate successfully computed")
       r$lower_limit_gfp <- lower_limit_gfp_gate
       print(r$lower_limit_gfp)
@@ -222,15 +205,18 @@ mod_curate_server <- function(id,r){
       colnames(mat) <- ch_kras()
       gfp_gate <- rectangleGate(filterId = "GFP+",
                                 .gate = mat)
+      # For testing/debugging
       print(gfp_gate)
       message("GFP gate created")
 
       # add gate to the gatingSet: parent should be NonDebris
       gs_pop_add(r$gs, gfp_gate, parent = "NonDebris")
+      # For testing/debugging
       message("Added gfp_gate to the gatingSet")
 
       # recompute the GatingSet
       recompute(r$gs)
+      # For testing/debugging
       message("Recomputed the gatingSet")
 
       # plot the gate
@@ -245,22 +231,16 @@ mod_curate_server <- function(id,r){
           scale_x_flowjo_biexp()
       })}) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
-observe({
-      # Curate background noise: MYHC channel -----------------------------------
+    # Curate background noise: MYHC channel -----------------------------------
+    observe({
+      # custom function: see end of document for details
+      lower_limit_myhc_gate <- get_lowerLimit(gs = r$gs, 
+                                             datasets = c(ctrl_negative(), ctrl_kras()),
+                                             node = "NonDebris", 
+                                             ch_gate = ch_myhc(),
+                                             r = r)
 
-      # extract NonDebris population data, change object type to flowSet
-      nonDebris_data <- gs_pop_get_data(r$gs[[control_indices()[c(1,3)]]], "NonDebris") |>
-        cytoset_to_flowSet()
-      message("nonDebris_data created and changed to flowSet")
-
-      # create a quantileGate for both controls: creates a list of two gates
-      myhc_test_gate <- create_quantile_gate(nonDebris_data, gate_channel = input$myhc_channel)
-      print(myhc_test_gate)
-      message("myhc_test_gate created")
-
-      # average the lower threshold from both gates
-      lower_limit_myhc_gate <- mean(c(myhc_test_gate[[1]]@min, myhc_test_gate[[2]]@min))
-      message("averaged the myhc gate values")
+      print(lower_limit_myhc_gate)
       r$lower_limit_myhc <- lower_limit_myhc_gate
 
       # create the final myhc gate
@@ -313,6 +293,7 @@ observe({
 #' @importFrom openCyto gate_quantile
 #' @rawNamespace import(flowCore, except = show)
 
+### create_quantile_gate:
 create_quantile_gate <- function(samples, gate_channel) {
   require(flowCore)
   fsApply(samples,
@@ -322,6 +303,20 @@ create_quantile_gate <- function(samples, gate_channel) {
                                     channel = gate_channel,
                                     probs = 0.99)
           })
+}
+
+### get_lowerLimit:
+# - gs: the gatingSet you want to extract data from
+# - datasets: the dataSets you want to extract data from
+# - node: the node/gate inside the gatingSet you want to extract data from
+# - ch_gate: the name of the channel you want to perform a quantileGate on
+get_lowerLimit <- function(gs, datasets, node, ch_gate, r) {
+  # extract the data as a flowSet
+  x <- gs_pop_get_data(r$gs[[datasets]], node) |> cytoset_to_flowSet()
+  # create a quantile get using extracted data and the respective channel name
+  y <- create_quantile_gate(x, gate_channel = ch_gate)
+  # average the minimum values from the respective quantile gateS(!)
+  z <- mean(c(y[[1]]@min, y[[2]]@min))
 }
 
 
