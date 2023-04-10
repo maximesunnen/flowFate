@@ -19,8 +19,8 @@ mod_gate_ui <- function(id){
                 uiOutput(ns("gfp_bin_1")),
                 uiOutput(ns("gfp_bin_2")),
                 uiOutput(ns("gfp_bin_3")),
-                actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus")),
-                actionButton(inputId = ns("gate"), label = "Gate now")
+                actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus"), class = "btn-primary"),
+                actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary")
              ),
              
              mainPanel(
