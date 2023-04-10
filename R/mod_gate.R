@@ -26,7 +26,8 @@ mod_gate_ui <- function(id){
              mainPanel(
                # header and text description of gating ---------------------------------
                h1("How gating works."),
-               p(),
+               p(style = "text-align:justify;color
+                 :black;background-color:papayawhip;padding:15px;border-radius:10px"),
                # outputs
                textOutput(ns("test")),
                plotOutput(ns("test_plot"))
