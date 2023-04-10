@@ -71,16 +71,6 @@ mod_curate_server <- function(id,r){
       shinyjs::show(id = "Curate")
     }) |> bindEvent(input$ok)
     
-    #selectInput custom function (row argument for ROWnames, default=COLnames for choices)
-    selectInput01 <- function(id, label, n, r, row = FALSE) {
-      if (row == FALSE) {
-        selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
-      }
-      else {
-        selectInput(ns(id), label = label, choices = c("", rownames(pData(r$fs))), rownames(pData(r$fs))[n])
-      }
-    }
-    
     # Restart curation MODAL
     modal_confirm <- modalDialog(
       "Are you sure you want to continue?",
@@ -95,13 +85,13 @@ mod_curate_server <- function(id,r){
     output$input_selection <- renderUI({
       req(r$fs)
       tagList(
-        selectInput01("forward_scatter", "Forward Scatter", n = 1, r = r),
-        selectInput01("side_scatter", "Side Scatter", n = 2, r = r),
-        selectInput01("kras_channel", "KRas channel", n = 3, r = r),
-        selectInput01("myhc_channel", "Myosin channel", n = 6, r = r),
-        selectInput01("negative_control", "Negative control", n = 1, r = r, row = TRUE),
-        selectInput01("positive_control_kras", "Positive control (KRas)", n = 2, r = r, row = TRUE),
-        selectInput01("positive_control_myhc", "Positive control (MYHC)", n = 3, r = r, row = TRUE)
+        selectInput01("forward_scatter", "Forward Scatter", n = 1, r = r, ns = ns),
+        selectInput01("side_scatter", "Side Scatter", n = 2, r = r, ns = ns),
+        selectInput01("kras_channel", "KRas channel", n = 3, r = r, ns = ns),
+        selectInput01("myhc_channel", "Myosin channel", n = 6, r = r, ns = ns),
+        selectInput01("negative_control", "Negative control", n = 1, r = r, row = TRUE, ns = ns),
+        selectInput01("positive_control_kras", "Positive control (KRas)", n = 2, r = r, row = TRUE, ns = ns),
+        selectInput01("positive_control_myhc", "Positive control (MYHC)", n = 3, r = r, row = TRUE, ns = ns)
       )
     })
 
@@ -317,6 +307,19 @@ make_gate <- function(lower_limit, col_name, filterId) {
   mat <- matrix(c(lower_limit, Inf), ncol = 1)
   colnames(mat) <- col_name
   return(rectangleGate(filterId = filterId, .gate = mat))
+}
+
+#selectInput01:
+#row argument:
+#- TRUE for ROWnames in selectInput's "choices" argument
+# - FALSE (default) for COLnames in selectInput's "choices" argument
+selectInput01 <- function(id, label, n, r, row = FALSE, ns) {
+  if (row == FALSE) {
+    selectInput(ns(id), label = label, choices = c("", colnames(r$fs)), selected = colnames(r$fs)[n])
+  }
+  else {
+    selectInput(ns(id), label = label, choices = c("", rownames(pData(r$fs))), rownames(pData(r$fs))[n])
+  }
 }
 
 
