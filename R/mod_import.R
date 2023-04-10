@@ -24,7 +24,7 @@ mod_import_ui <- function(id){
                            label = "Select FCS file"),
 
                  # Submit button to start the import --------------------------------------
-                 actionButton(ns("Submit"), "Submit"),
+                 actionButton(ns("Submit"), "Submit", class = "btn-success"),
                  
                  ),
                  ),
@@ -78,6 +78,11 @@ mod_import_server <- function(id, r = NULL){
 
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    observe({
+      if (is.null(input$filename)) shinyjs::hide("Submit")
+      else shinyjs::show("Submit")
+    })
 
 # defining a reactive observer with observe() ----------------------------
     observe({
