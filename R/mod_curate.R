@@ -77,11 +77,11 @@ mod_curate_server <- function(id,r){
       tagList(
         selectInput01("forward_scatter", "Forward Scatter", n = 1, r = r, ns = ns),
         selectInput01("side_scatter", "Side Scatter", n = 2, r = r, ns = ns),
-        selectInput01("kras_channel", "KRas channel", n = 3, r = r, ns = ns),
+        selectInput01("kras_channel", "GFP channel", n = 3, r = r, ns = ns),
         selectInput01("myhc_channel", "Myosin channel", n = 6, r = r, ns = ns),
-        selectInput01("negative_control", "Negative control", n = 1, r = r, row = TRUE, ns = ns),
-        selectInput01("positive_control_kras", "Positive control (KRas)", n = 2, r = r, row = TRUE, ns = ns),
-        selectInput01("positive_control_myhc", "Positive control (MYHC)", n = 3, r = r, row = TRUE, ns = ns)
+        selectInput01("negative_control", "Unstained control", n = 1, r = r, row = TRUE, ns = ns),
+        selectInput01("positive_control_kras", "GFP-positive control", n = 2, r = r, row = TRUE, ns = ns),
+        selectInput01("positive_control_myhc", "Myosin-positive control", n = 3, r = r, row = TRUE, ns = ns)
       )
     })
 
