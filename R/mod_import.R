@@ -33,11 +33,11 @@ mod_import_ui <- function(id){
                h1("Welcome to flowFate."),
                p("You can import your FCS file by clicking on the", strong("Browse"),
                     " button on the left. Confirm your selection by clicking on
-                    the ", strong("Submit"), " button. A table with the individual datasets
+                    the ", span("Submit", style = "color:green; font-weight:bold"), " button. A table containing the individual datasets
                     of your FCS file will appear. Select one or mutliple rows to show the
                     SSC vs FSC plot of that dataset.", br(), br(), "You can always upload a
                     new FCS file but you have to confirm your selection by clicking the",
-                 strong("Submit"), " button again.", style = "text-align:justify;color
+                 span("Submit", style = "color:green; font-weight:bold"), " button again.", style = "text-align:justify;color
                  :black;background-color:papayawhip;padding:15px;border-radius:10px"),
                br(),
                uiOutput(ns("your_data")),
