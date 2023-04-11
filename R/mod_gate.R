@@ -22,6 +22,8 @@ mod_gate_ui <- function(id){
                 actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus"), class = "btn-primary"),
                 actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary"),
                 actionButton(ns("Delete"), "Restart binning", class = "btn-danger"),
+                
+                selectInput(ns("controller"), "Show", choices = c("GFP-low", "GFP-medium", "GFP-high"))
              ),
              
              mainPanel(
@@ -31,7 +33,14 @@ mod_gate_ui <- function(id){
                  :black;background-color:papayawhip;padding:15px;border-radius:10px"),
                # outputs
                textOutput(ns("test")),
-               plotOutput(ns("test_plot"))
+               
+               tabsetPanel(
+                 id = ns("switcher"),
+                 type = "hidden",
+                 tabPanelBody("GFP-low", plotOutput(ns("gfp_low_myo_plot"))),
+                 tabPanelBody("GFP-medium", plotOutput(ns("gfp_medium_myo_plot"))),
+                 tabPanelBody("GFP-high", plotOutput(ns("gfp_high_myo_plot")))
+               )
              )))}
     
 #' gate Server Functions
@@ -45,6 +54,11 @@ mod_gate_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    
+    observe({
+      updateTabsetPanel(inputId = "switcher", selected = input$controller)
+    }) |> bindEvent(input$controller)
+  
     ## SETTING UP THE GFP-BINS
     # hide/show "Add_input" button
     observe({
@@ -172,13 +186,19 @@ mod_gate_server <- function(id, r){
         gfp_high_myo_high <- getData_splitPeak(r$gs, "GFP-high")
       }
       
-      output$test_plot <- renderPlot({
-        ggcyto(r$gs, aes(x = "RED.R.HLin"), subset = "GFP-low") +
-          geom_density(fill = "pink") +
-          scale_x_flowjo_biexp() +
-          theme_bw() +
-          geom_gate(gfp_low_myo_high)
-      })
+      #need to change x_axis = "RED.R.HLin" to something like r$ch_myhc()
+      #could change also that subset = input$controller
+      if (is.null(input$gfp_range_2)) {
+        output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_low_myo_high, subset = "GFP-low")
+      }
+      else if (is.null(input$gfp_range_3)) {
+        output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_low_myo_high, subset = "GFP-low")
+        output$gfp_medium_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_medium_myo_high, subset = "GFP-medium")}
+        else {
+          output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_low_myo_high, subset = "GFP-low")
+          output$gfp_medium_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_medium_myo_high, subset = "GFP-medium")
+          output$gfp_high_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_high_myo_high, subset = "GFP-high")
+        }
     }) |> bindEvent(input$gate)
     
 
@@ -210,6 +230,18 @@ remove_null_from_list <- function(data) {
     return(data[-test])
   }
 }
+
+plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, geom_gate) {
+  renderPlot({
+    ggcyto(gs, aes(x = "RED.R.HLin"), subset = subset) +
+      geom_density(fill = density_fill) +
+      scale_x_flowjo_biexp() +
+      theme_bw() +
+      geom_gate(geom_gate)
+  })
+}
+
+ 
 
 
 #' #' @importFrom stringr str_to_upper
