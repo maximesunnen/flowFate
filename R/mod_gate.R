@@ -67,11 +67,22 @@ mod_gate_server <- function(id, r){
 
     ## SET UP A GATE ACCORDING TO THE USER-DEFINED BIN RANGE
     observe({
-      if (is.null(input$gfp_range_3)) return(NULL)
-      else {
+      if (is.null(input$gfp_range_1)) return(NULL)
+      else if (is.null(input$gfp_range_2)) {
         # set up gate limits (using user-defined ranges)
-        gate_limits <- list(low = list(input$gfp_range_1), medium = list(input$gfp_range_2), 
-                            high = list(input$gfp_range_3))
+        gate_limits <- list(low = list(input$gfp_range_1))
+      }
+      else if (is.null(input$gfp_range_3)) {
+        gate_limits <- list(low = list(input$gfp_range_1),
+                            medium = list(input$gfp_range_2))
+      }
+      
+      else {gate_limits <- list(low = list(input$gfp_range_1),
+                                medium = list(input$gfp_range_2),
+                                high = list(input$gfp_range3))
+      }
+      
+        print(gate_limits)
         # generate gates from bins
         gates <- lapply(gate_limits, function(x) {
           names(x) <- r$ch_kras()
@@ -83,7 +94,7 @@ mod_gate_server <- function(id, r){
         for (i in seq_along(gates)) {
           gates[[i]]@filterId <- filter_names[i]
         }
-      }
+      
       print(gates)
       
       # ADD GATES TO GATINGSET
@@ -100,10 +111,19 @@ mod_gate_server <- function(id, r){
         return(remove_null_from_list(x))
       }
     
-      gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
-      gfp_medium_myo_high <- getData_splitPeak(r$gs, "GFP-medium")
-      gfp_high_myo_high <- getData_splitPeak(r$gs, "GFP-high")
-
+      if (is.null(input$gfp_range_2)) {
+        gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
+      }
+      else if (is.null(input$grp_range_3)) {
+        gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
+        gfp_medium_myo_high <- getData_splitPeak(r$gs, "GFP-medium")
+      }
+      else {
+        gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
+        gfp_medium_myo_high <- getData_splitPeak(r$gs, "GFP-medium")
+        gfp_high_myo_high <- getData_splitPeak(r$gs, "GFP-high")
+      }
+      
       output$test_plot <- renderPlot({
         ggcyto(r$gs, aes(x = "RED.R.HLin"), subset = "GFP-low") +
           geom_density(fill = "pink") +
