@@ -20,7 +20,8 @@ mod_gate_ui <- function(id){
                 uiOutput(ns("gfp_bin_2")),
                 uiOutput(ns("gfp_bin_3")),
                 actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus"), class = "btn-primary"),
-                actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary")
+                actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary"),
+                actionButton(ns("Delete"), "Restart binning", class = "btn-danger"),
              ),
              
              mainPanel(
@@ -38,6 +39,7 @@ mod_gate_ui <- function(id){
 #' @importFrom shinyjs show hide useShinyjs
 #' @importFrom openCyto gate_flowclust_1d
 #' @importFrom flowCore fsApply
+#' @importFrom flowWorkspace gs_pop_remove
 
 mod_gate_server <- function(id, r){
   moduleServer( id, function(input, output, session){
@@ -49,6 +51,52 @@ mod_gate_server <- function(id, r){
       if (is.null(r$lower_limit_gfp)) {shinyjs::hide(id = "add_input")}
       else {shinyjs::show(id = "add_input")}
     })
+    
+    observe({
+      shinyjs::hide(id = "gate")
+    }) |> bindEvent(input$gate)
+    
+    observe({
+      shinyjs::show(id = "gate")
+    }) |> bindEvent(input$ok)
+    
+    modal_confirm <- modalDialog(
+      "Are you sure you want to continue?",
+      title = "Deleting gates",
+      footer = tagList(
+        actionButton(ns("cancel"), "Cancel"),
+        actionButton(ns("ok"), "Restart", class = "btn btn-danger")
+      )
+    )
+    
+    observe({
+      showModal(modal_confirm)
+    }) |> bindEvent(input$Delete)
+    
+    observe({
+      showNotification("Bins were successfully reset.")
+      removeModal()
+    }) |> bindEvent(input$ok)
+    
+    observe({
+      removeModal()
+    }) |> bindEvent(input$cancel)
+    
+    observe({
+      if (is.null(input$gfp_range_2)) {
+        gs_pop_remove(r$gs, "GFP-low")
+      }
+      else if (is.null(input$gfp_range_3)) {
+        gs_pop_remove(r$gs, "GFP-low")
+        gs_pop_remove(r$gs, "GFP-medium")
+      }
+      else {
+        gs_pop_remove(r$gs, "GFP-low")
+        gs_pop_remove(r$gs, "GFP-medium")
+        gs_pop_remove(r$gs, "GFP-high")
+      }
+    }) |> bindEvent(input$ok)
+    
     
     # render uiOutputs sequentially as the user clicks the "add_input" button
     observe({
