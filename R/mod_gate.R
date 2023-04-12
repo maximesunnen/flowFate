@@ -141,15 +141,15 @@ mod_gate_server <- function(id, r){
       
       else {gate_limits <- list(low = list(input$gfp_range_1),
                                 medium = list(input$gfp_range_2),
-                                high = list(input$gfp_range3))
+                                high = list(input$gfp_range_3))
       }
-      
-        print(gate_limits)
-        # generate gates from bins
-        gates <- lapply(gate_limits, function(x) {
-          names(x) <- r$ch_kras()
-          rectangleGate(x)
-        })
+      message("here are the values of gate_limits")
+      print(gate_limits)
+      # generate gates from bins
+      gates <- lapply(gate_limits, function(x) {
+        names(x) <- r$ch_kras()
+        rectangleGate(x)
+      })
         
         # assign filterIds to gates
         filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
@@ -172,32 +172,41 @@ mod_gate_server <- function(id, r){
         x <- fsApply(x, test_function)
         return(remove_null_from_list(x))
       }
-    
+
       if (is.null(input$gfp_range_2)) {
         gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
+        message("only computed gfp_low_myo_high")
       }
-      else if (is.null(input$grp_range_3)) {
+      else if (is.null(input$gfp_range_3)) {
         gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
-        gfp_medium_myo_high <- getData_splitPeak(r$gs, "GFP-medium")
+        gfp_medium_myo_high <- getData_splitPeak(r$gs, "GFP-medium") 
+        ## problem is here: outputs a "named list()": this only happens when all the datasets are NULL: the function remove_null_from_list then outputs a named list()
+        message("computed gfp_low_myo_high as well as gfp_medium_myo_high")
+
       }
       else {
         gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
         gfp_medium_myo_high <- getData_splitPeak(r$gs, "GFP-medium")
-        gfp_high_myo_high <- getData_splitPeak(r$gs, "GFP-high")
+        gfp_high_myo_high <- getData_splitPeak(r$gs, "GFP-high")  ## outputs also a "named list()": this only happens when all the datasets are NULL: the function remove_null_from_list then outputs a named list()
+        message("computed gfp_low_myo_high as well as gfp_high_myo_high")
+        print(gfp_low_myo_high)
+        print(gfp_medium_myo_high)
+        print(gfp_high_myo_high)
       }
       
       #need to change x_axis = "RED.R.HLin" to something like r$ch_myhc()
       #could change also that subset = input$controller
       if (is.null(input$gfp_range_2)) {
-        output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_low_myo_high, subset = "GFP-low")
+        output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_low_myo_high, subset = "GFP-low")
       }
       else if (is.null(input$gfp_range_3)) {
-        output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_low_myo_high, subset = "GFP-low")
-        output$gfp_medium_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_medium_myo_high, subset = "GFP-medium")}
+        output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_low_myo_high, subset = "GFP-low")
+        output$gfp_medium_myo_plot <-  plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_medium_myo_high, subset = "GFP-medium")
+        }
         else {
-          output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_low_myo_high, subset = "GFP-low")
-          output$gfp_medium_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_medium_myo_high, subset = "GFP-medium")
-          output$gfp_high_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", geom_gate = gfp_high_myo_high, subset = "GFP-high")
+          output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_low_myo_high, subset = "GFP-low")
+          output$gfp_medium_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_medium_myo_high, subset = "GFP-medium")
+          output$gfp_high_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_high_myo_high, subset = "GFP-high")
         }
     }) |> bindEvent(input$gate)
     
@@ -206,15 +215,12 @@ mod_gate_server <- function(id, r){
     ## EXTRACT GATED DATA (because we want to apply a mindensity function only on the data in the gate (in this case bin))
     
     output[["test"]] <- renderText(glue("Test works"))
-
-    
   })}
 
 
 render_bin_UI <- function(bin_number, value, ns, label, output , r) {
-  output[[paste0("gfp_bin_", bin_number)]] <- renderUI(numericRangeInput(ns(paste0("gfp_range_", bin_number)), label = paste0(label, "GFP bin"), value = value))
+  output[[paste0("gfp_bin_", bin_number)]] <- renderUI(numericRangeInput(ns(paste0("gfp_range_", bin_number)), label = paste0(label, " GFP bin"), value = value))
 }
-
 
 test_function <- function(fr) {
   return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density"),
@@ -231,17 +237,15 @@ remove_null_from_list <- function(data) {
   }
 }
 
-plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, geom_gate) {
+plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, gate) {
   renderPlot({
     ggcyto(gs, aes(x = "RED.R.HLin"), subset = subset) +
       geom_density(fill = density_fill) +
       scale_x_flowjo_biexp() +
       theme_bw() +
-      geom_gate(geom_gate)
+      geom_gate(gate)
   })
 }
-
- 
 
 
 #' #' @importFrom stringr str_to_upper
