@@ -25,5 +25,5 @@ b <- remove_null_from_list(a)
 data_gfp_medium <- gs_pop_get_data(gs, y = "GFP-medium") |> cytoset_to_flowSet()
 
 if (length(b) == 0) {
-  b <-list())
+  b <- list()
 }
