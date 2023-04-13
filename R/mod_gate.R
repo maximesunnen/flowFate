@@ -22,8 +22,8 @@ mod_gate_ui <- function(id){
                 actionButton(inputId = ns("add_input"), label = "Add GFP bins", icon("plus"), class = "btn-primary"),
                 actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary"),
                 actionButton(ns("Delete"), "Restart binning", class = "btn-danger"),
-                
-                selectInput(ns("controller"), "Show", choices = c("GFP-low", "GFP-medium", "GFP-high"))
+                selectInput(ns("input_controller"), "GFP bin", choices = c("GFP-low", "GFP-medium", "GFP-high")),
+                actionButton(ns("plot"), "plot")
              ),
              
              mainPanel(
@@ -34,14 +34,9 @@ mod_gate_ui <- function(id){
                # outputs
                textOutput(ns("test")),
                
-               tabsetPanel(
-                 id = ns("switcher"),
-                 type = "hidden",
-                 tabPanelBody("GFP-low", plotOutput(ns("gfp_low_myo_plot"))),
-                 tabPanelBody("GFP-medium", plotOutput(ns("gfp_medium_myo_plot"))),
-                 tabPanelBody("GFP-high", plotOutput(ns("gfp_high_myo_plot")))
-               )
-             )))}
+               plotOutput(ns("myosin_splittedPeaks")),
+             )))
+  }
     
 #' gate Server Functions
 #' @noRd 
@@ -127,8 +122,8 @@ mod_gate_server <- function(id, r){
       }
     }) |> bindEvent(input$add_input)
 
-    ## SET UP A GATE ACCORDING TO THE USER-DEFINED BIN RANGE
-    observe({
+  #   ## SET UP A GATE ACCORDING TO THE USER-DEFINED BIN RANGE
+   gate_limits <- reactive({
       if (is.null(input$gfp_range_1)) return(NULL)
       else if (is.null(input$gfp_range_2)) {
         # set up gate limits (using user-defined ranges)
@@ -138,86 +133,109 @@ mod_gate_server <- function(id, r){
         gate_limits <- list(low = list(input$gfp_range_1),
                             medium = list(input$gfp_range_2))
       }
-      
+
       else {gate_limits <- list(low = list(input$gfp_range_1),
                                 medium = list(input$gfp_range_2),
                                 high = list(input$gfp_range_3))
       }
-      message("here are the values of gate_limits")
-      print(gate_limits)
       # generate gates from bins
-      gates <- lapply(gate_limits, function(x) {
-        names(x) <- r$ch_kras()
-        rectangleGate(x)
       })
-        
-        # assign filterIds to gates
-        filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
-        for (i in seq_along(gates)) {
-          gates[[i]]@filterId <- filter_names[i]
-        }
-      
-      print(gates)
-      
-      # ADD GATES TO GATINGSET
-      for (i in seq_along(gates)) {
-        gs_pop_add(r$gs, gates[[i]], parent = "MYO+")
-      }
-      recompute(r$gs)
-      View(gs_pop_get_count_fast(r$gs))
+   message("printing gate_limits")
+   observe({print(gate_limits())})
 
-      # EXTRACT GATED DATA FOR PEAK SPLITTING
-      getData_splitPeak <- function(gs, bin) {
-        x <- gs_pop_get_data(gs, bin) |> cytoset_to_flowSet()
-        x <- fsApply(x, test_function)
-        return(remove_null_from_list(x))
-      }
+  gates <- reactive({
+    if (is.null(gate_limits())) return(NULL)
+    filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
+    y <- lapply(gate_limits(), function(x) {
+    names(x) <- r$ch_kras()
+    rectangleGate(x)})
+    for (i in seq_along(y))
+    y[[i]]@filterId <- filter_names[[i]]
+    return(y)
+    })
 
-      if (is.null(input$gfp_range_2)) {
-        gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
-        message("only computed gfp_low_myo_high")
-      }
-      else if (is.null(input$gfp_range_3)) {
-        gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
-        gfp_medium_myo_high <- getData_splitPeak(r$gs, "GFP-medium") 
-        ## problem is here: outputs a "named list()": this only happens when all the datasets are NULL: the function remove_null_from_list then outputs a named list()
-        message("computed gfp_low_myo_high as well as gfp_medium_myo_high")
+  observe(print(gates()))
 
-      }
-      else {
-        gfp_low_myo_high <- getData_splitPeak(r$gs, "GFP-low")
-        gfp_medium_myo_high <- getData_splitPeak(r$gs, "GFP-medium")
-        gfp_high_myo_high <- getData_splitPeak(r$gs, "GFP-high")  ## outputs also a "named list()": this only happens when all the datasets are NULL: the function remove_null_from_list then outputs a named list()
-        message("computed gfp_low_myo_high as well as gfp_high_myo_high")
-        print(gfp_low_myo_high)
-        print(gfp_medium_myo_high)
-        print(gfp_high_myo_high)
-      }
-      
-      #need to change x_axis = "RED.R.HLin" to something like r$ch_myhc()
-      #could change also that subset = input$controller
-      if (is.null(input$gfp_range_2)) {
-        output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_low_myo_high, subset = "GFP-low")
-      }
-      else if (is.null(input$gfp_range_3)) {
-        output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_low_myo_high, subset = "GFP-low")
-        output$gfp_medium_myo_plot <-  plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_medium_myo_high, subset = "GFP-medium")
-        }
-        else {
-          output$gfp_low_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_low_myo_high, subset = "GFP-low")
-          output$gfp_medium_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_medium_myo_high, subset = "GFP-medium")
-          output$gfp_high_myo_plot <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gfp_high_myo_high, subset = "GFP-high")
-        }
-    }) |> bindEvent(input$gate)
-    
+  #ADD GATES TO GATINGSET
+  observe({
+    for (i in seq_along(gates())) {
+      gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
+    }
+    recompute(r$gs)
+    plot(r$gs)
+  }) |> bindEvent(input$gate)
 
-      
-    ## EXTRACT GATED DATA (because we want to apply a mindensity function only on the data in the gate (in this case bin))
-    
-    output[["test"]] <- renderText(glue("Test works"))
+  #' @importFrom stringr str_detect
+  #' @importFrom flowWorkspace gs_get_pop_paths
+  # EXTRACT GATED DATA FOR PEAK SPLITTING
+gfp_low_myo_high <- reactive({
+  req(r$gs)
+  if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-low"))) {
+  getData_splitPeak(r = r, gs = r$gs, "GFP-low")
+  }
+})
+
+gfp_medium_myo_high <- reactive({
+  req(r$gs)
+  if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {
+    getData_splitPeak(r = r, gs = r$gs, "GFP-medium")
+  }
+})
+
+gfp_high_myo_high <- reactive({
+  req(r$gs)
+  if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {
+    getData_splitPeak(r = r, gs = r$gs, "GFP-high")
+  }
+})
+  ## gives an error because "GFP-low" is not yet part of r$gs when my condition equals to TRUE
+observe({print(gfp_medium_myo_high())}) |> bindEvent(input$plot)
+
+# gfp_low_myo_high <- reactive({
+#   if (!is.null(gates()[[1]])) {
+#     getData_splitPeak(r = r, gs = r$gs, "GFP-low")
+#   }
+# })
+#     if (is.null(input$gfp_range_2)) {
+#       gfp_low_myo_high <- getData_splitPeak(r = r, gs = r$gs, "GFP-low")
+#     }
+#     else if (is.null(input$gfp_range_3)) {
+#       gfp_low_myo_high <- getData_splitPeak(r = r, gs = r$gs, "GFP-low")
+#       r$gfp_low_myo_high <- gfp_low_myo_high # if I add this i have access to gfp_low_myo_high in the next observer, if not I don't
+#       message("gfp_low_myo_high created")
+#       print(gfp_low_myo_high)
+#       gfp_medium_myo_high <- getData_splitPeak(r = r, gs = r$gs, "GFP-medium")
+#       ## problem is here: outputs a "named list()": this only happens when all the datasets are NULL: the function remove_null_from_list then outputs a named list()
+#     }
+#     
+#     else {
+#       gfp_low_myo_high <- getData_splitPeak(r = r, gs = r$gs, "GFP-low")
+#       gfp_medium_myo_high <- getData_splitPeak(r = r, gs = r$gs, "GFP-medium")
+#       gfp_high_myo_high <- getData_splitPeak(r = r, gs = r$gs, "GFP-high")  ## outputs also a "named list()": this only happens when all the datasets are NULL: the function remove_null_from_list then outputs a named list()
+#     }
+#     print("blabla")
+#     gate <- reactive({
+#       switch(input$input_controller,
+#              "GFP-low" = gfp_low_myo_high,
+#              "GFP-medium" = gfp_medium_myo_high,
+#              "GFP-high" = gfp_high_myo_high)
+#     })
+#     message("gate successfully computed")
+#     print(gate())
+#     subset <- reactive(input$input_controller)
+#     print(subset())
+#     output$myosin_splittedPeaks <- plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gate(), subset = subset())
+#   }) |> bindEvent(input$plot)
+  # 
+  # 
+  #     
+  #   ## EXTRACT GATED DATA (because we want to apply a mindensity function only on the data in the gate (in this case bin))
+  #   
+  #   output[["test"]] <- renderText(glue("Test works"))
   })}
 
 
+# CUSTOM FUNCTIONS --------------------------------------------------------
 render_bin_UI <- function(bin_number, value, ns, label, output , r) {
   output[[paste0("gfp_bin_", bin_number)]] <- renderUI(numericRangeInput(ns(paste0("gfp_range_", bin_number)), label = paste0(label, " GFP bin"), value = value))
 }
@@ -245,6 +263,12 @@ plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, gate) {
       theme_bw() +
       geom_gate(gate)
   })
+}
+
+getData_splitPeak <- function(r, gs, bin) {
+  x <- gs_pop_get_data(gs, bin) |> cytoset_to_flowSet()
+  x <- fsApply(x, test_function)
+  return(remove_null_from_list(x))
 }
 
 
