@@ -418,8 +418,9 @@ gfp_high_myo_high <- fsApply(data_gfp_high,
                                                            filterId = "GFP-high-MYO-high"))
 
 # filterID should not be GFP-high-MYO-high!!!!
+# removed  filterId = "GFP-high-MYO-high"
 test_function <- function(fr) {
-  return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density", filterId = "GFP-high-MYO-high"), error = function(e) NULL))
+  return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density"), error = function(e) NULL))
   }
 
 gfp_low_myo_high <- fsApply(data_gfp_low, test_function)
@@ -459,7 +460,7 @@ ggcyto(gs[[5:8]], aes(x = "RED.R.HLin"), subset = "GFP-medium") +
 ```
 
 
-**below: out-of-data, review**
+**below: out-of-date, review**
 We add the gate to the gatingSet, plot the gating tree and recompute the gatingSet.
 ```{r}
 # add the gate to the GatingSet
