@@ -41,11 +41,8 @@ mod_gate_ui <- function(id){
              textOutput(ns("test")),
              
              plotOutput(ns("myosin_splittedPeaks")),
-             tableOutput(ns("final_table"))
-           )
-           )
-           )
-  }
+             tableOutput(ns("final_table")))))
+}
     
 #' gate Server Functions
 #' @noRd 
@@ -58,48 +55,47 @@ mod_gate_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    
-    observe({
-      updateTabsetPanel(inputId = "switcher", selected = input$controller)
-    }) |> bindEvent(input$controller)
-  
-    ## SETTING UP THE GFP-BINS
-    # hide/show "Add_input" button
+# setting up a modal to display information to the user -------------------
+    modal_confirm <- modalDialog(
+      "Are you sure you want to continue?",
+      title = "Deleting gates",
+      footer = tagList(
+        actionButton(ns("cancel"), "Cancel"),
+        actionButton(ns("ok"), "Restart", class = "btn btn-danger")))
+
+# hide/show "Add_input" button ------------------------------------------
     observe({
       if (is.null(r$lower_limit_gfp)) {shinyjs::hide(id = "add_input")}
       else {shinyjs::show(id = "add_input")}
     })
-    
+
+
+# hide/show "gate" button, removeModal(), showModal() -------------------
     observe({
       shinyjs::hide(id = "gate")
     }) |> bindEvent(input$gate)
     
     observe({
       shinyjs::show(id = "gate")
+      showNotification("Bins were successfully reset.")
+      removeModal()
     }) |> bindEvent(input$ok)
-    
-    modal_confirm <- modalDialog(
-      "Are you sure you want to continue?",
-      title = "Deleting gates",
-      footer = tagList(
-        actionButton(ns("cancel"), "Cancel"),
-        actionButton(ns("ok"), "Restart", class = "btn btn-danger")
-      )
-    )
     
     observe({
       showModal(modal_confirm)
     }) |> bindEvent(input$Delete)
     
     observe({
-      showNotification("Bins were successfully reset.")
-      removeModal()
-    }) |> bindEvent(input$ok)
-    
-    observe({
       removeModal()
     }) |> bindEvent(input$cancel)
     
+    # observe({
+    #   showNotification("Bins were successfully reset.")
+    #   removeModal()
+    # }) |> bindEvent(input$ok) #placed this modal in the one above (line 69)
+
+
+# remove gates if user decides to reset bins ------------------------------
     observe({
       if (is.null(input$gfp_range_2)) {
         gs_pop_remove(r$gs, "GFP-low")
@@ -115,22 +111,16 @@ mod_gate_server <- function(id, r){
       }
     }) |> bindEvent(input$ok)
     
-    
-    # render uiOutputs sequentially as the user clicks the "add_input" button
-    observe({
-      if (is.null(input$add_input)) return(NULL)
-      if (input$add_input == 1) {
-        render_bin_UI(1, c(signif(r$lower_limit_gfp, digits = 3), 100), ns, "First", output, r)
-      }
-      if (input$add_input == 2) {
-        render_bin_UI(2, c(101,350), ns, "Second", output, r)
-      }
-      if (input$add_input == 3) {
-        render_bin_UI(3, c(351,1000), ns, "Third", output, r)
-        shinyjs::hide(id = "add_input")
-      }
-    }) |> bindEvent(input$add_input)
+# render uiOutputs sequentially as the user clicks the "add_input" button
 
+add_input_clicks <- reactive({input$add_input})
+observe({
+  switch(add_input_clicks(),
+         render_bin_UI(1, c(signif(r$lower_limit_gfp, digits = 3), 100), ns, "First", output, r),
+         render_bin_UI(2, c(101,350), ns, "Second", output, r),
+         render_bin_UI(3, c(351,1000), ns, "Third", output, r))
+  if (add_input_clicks() == 3) shinyjs::hide(id = "add_input")
+})
 
 # SET UP A GATE ACCORDING TO THE USER-DEFINED BIN RANGE -------------------
 
