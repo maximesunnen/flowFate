@@ -189,21 +189,21 @@ mod_gate_server <- function(id, r){
 gfp_low_myo_high <- reactive({
   req(r$gs)
   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-low"))) {
-  getData_splitPeak(r = r, gs = r$gs, bin = "GFP-low")
+  getData_splitPeak(r = r, gs = r$gs, bin = "GFP-low", filter_name = "GFP-low-MYO-high")
   }
 })
 
 gfp_medium_myo_high <- reactive({
   req(r$gs)
   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {
-    getData_splitPeak(r = r, gs = r$gs, bin = "GFP-medium")
+    getData_splitPeak(r = r, gs = r$gs, bin = "GFP-medium", filter_name = "GFP-medium-MYO-high")
   }
 })
 
 gfp_high_myo_high <- reactive({
   req(r$gs)
   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {
-    getData_splitPeak(r = r, gs = r$gs, bin = "GFP-high")
+    getData_splitPeak(r = r, gs = r$gs, bin = "GFP-high", filter_name = "GFP-high-MYO-high")
   }
 })
 
@@ -280,9 +280,17 @@ plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, gate) {
       geom_gate(gate)
 }
 
-getData_splitPeak <- function(r, gs, bin) {
+# getData_splitPeak <- function(r, gs, bin) {
+#   x <- gs_pop_get_data(gs, bin) |> cytoset_to_flowSet()
+#   x <- fsApply(x, test_function)
+#   return(remove_null_from_list(x))
+# }
+
+getData_splitPeak <- function(r, gs, bin, filter_name) {
   x <- gs_pop_get_data(gs, bin) |> cytoset_to_flowSet()
-  x <- fsApply(x, test_function)
+  x <- fsApply(x, function(fr, filterId = filter_name) {
+    return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density", filterId = filterId), error = function(e) NULL))
+  })
   return(remove_null_from_list(x))
 }
 
