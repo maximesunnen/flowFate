@@ -418,14 +418,23 @@ gfp_high_myo_high <- fsApply(data_gfp_high,
                                                            filterId = "GFP-high-MYO-high"))
 
 # filterID should not be GFP-high-MYO-high!!!!
-# removed  filterId = "GFP-high-MYO-high"
-test_function <- function(fr) {
-  return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density"), error = function(e) NULL))
-  }
+# # removed  filterId = "GFP-high-MYO-high"
+# test_function <- function(fr) {
+#   return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density"), error = function(e) NULL))
+# }
 
-gfp_low_myo_high <- fsApply(data_gfp_low, test_function)
-gfp_medium_myo_high <- fsApply(data_gfp_medium, test_function)
-gfp_high_myo_high <- fsApply(data_gfp_high, test_function)
+#in .Rmd file, no r argument necessary for the function below
+getData_splitPeak <- function(gs, bin, filter_name) {
+  x <- gs_pop_get_data(gs, bin) |> cytoset_to_flowSet()
+  x <- fsApply(x, function(fr, filterId = filter_name) {
+    return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density", filterId = filterId), error = function(e) NULL))
+  })
+  return(remove_null_from_list(x))
+}
+
+gfp_low_myo_high <- getData_splitPeak(gs, bin = "GFP-low", filter_name = "GFP-low-MYO-high")
+gfp_medium_myo_high <- getData_splitPeak(gs, bin = "GFP-medium", filter_name = "GFP-medium-MYO-high")
+gfp_high_myo_high <- getData_splitPeak(gs, bin = "GFP-high", filter_name = "GFP-high-MYO-high")
 
 remove_null_from_list <- function(data) {
   test <- which(sapply(data, is.null))
@@ -436,12 +445,12 @@ remove_null_from_list <- function(data) {
     return(data[-test])
   }
 }
-gfp_low_myo_high <- remove_null_from_list(gfp_low_myo_high)
-gfp_medium_myo_high <- remove_null_from_list(gfp_medium_myo_high)
-gfp_high_myo_high <- remove_null_from_list(gfp_high_myo_high)
-# gfp_low_myo_high <- gfp_low_myo_high[-which(sapply(gfp_low_myo_high, is.null))]
-# gfp_medium_myo_high <- gfp_medium_myo_high[-which(sapply(gfp_medium_myo_high, is.null))]
-# gfp_high_myo_high <- gfp_high_myo_high[-which(sapply(gfp_high_myo_high, is.null))]
+
+#not necessary anymore, wrapped in getData_splitPeak()
+# gfp_low_myo_high <- remove_null_from_list(gfp_low_myo_high)
+# gfp_medium_myo_high <- remove_null_from_list(gfp_medium_myo_high)
+# gfp_high_myo_high <- remove_null_from_list(gfp_high_myo_high)
+
 ```
 
 ```{r, warning=FALSE}
