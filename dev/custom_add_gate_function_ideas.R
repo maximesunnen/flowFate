@@ -25,3 +25,18 @@ for (i in seq_along(gatingSet_names)) {
 
 
 add_gate(gs = gs, gate = gfp_low_myo_high, parent = "MYO+")
+
+
+
+y <- data.frame()
+for(i in seq_along(x)) {
+  df <- as.data.frame(x[[i]])
+  y <- rbind(y, df)
+}
+
+x <- list()
+for (i in seq_along(gs)) {
+  x[[i]] <- gs_pop_get_count_fast(gs[[i]])
+}
+y <- purrr::map(x, as.data.frame)
+df <- dplyr::bind_rows(y)
