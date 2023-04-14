@@ -29,17 +29,19 @@ mod_gate_ui <- function(id){
            br(),
            selectInput(ns("controller"), "GFP bin", choices = c("GFP-low", "GFP-medium", "GFP-high")),
            actionButton(ns("plot"), "plot"),
-           actionButton(ns("split"), "Split now")),
+           actionButton(ns("split"), "Split now"),
+           actionButton(ns("table"), "Table now")),
   
            mainPanel(
              # header and text description of gating ---------------------------------
              h1("How gating works."),
              p(style = "text-align:justify;color
-                 :black;background-color:papayawhip;padding:15px;border-radius:10px"),
+                 :ck;background-color:papayawhip;padding:15px;border-radius:10px"),
              # outputs
              textOutput(ns("test")),
              
              plotOutput(ns("myosin_splittedPeaks")),
+             tableOutput(ns("final_table"))
            )
            )
            )
@@ -238,14 +240,27 @@ subset <- reactive(input$controller)
       plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gate_myosin_plot(), subset = subset())
       }) |> bindEvent(input$plot)
 
-    ## NOTE: we have not added the gate that splits the two peaks to the gatingSet!!! we only visually display it to the user
+    ## NOTE: we have not added the gate that splits the two peaks to the gatingSet!!! we only visually display it to the user. We do this now.
     observe({
-      if(!is.null(gfp_low_myo_high())) {gs_pop_add(r$gs, gfp_low_myo_high(), parent = "GFP-low")}
-      if(!is.null(gfp_medium_myo_high())) {gs_pop_add(r$gs, gfp_medium_myo_high(), parent = "GFP-medium")}
-      if(!is.null(gfp_high_myo_high())) {gs_pop_add(r$gs, gfp_high_myo_high(), parent = "GFP-high")}
-      recompute(r$gs)
-      plot(r$gs)
+      if (!is.null(gfp_low_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_low_myo_high(), parent = "GFP-low")}
+      if (!is.null(gfp_medium_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_medium_myo_high(), parent = "GFP-medium")}
+      if (!is.null(gfp_high_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_high_myo_high(), parent = "GFP-high")}
+      #recompute(r$gs) # not necessary
+      #plot(r$gs) #plot r$gs does not work properly now, because it only plots the gates that are common across all samples?!
     }) |> bindEvent(input$split)
+    
+    final_output <- reactive({
+      x <- list()
+      for (i in seq_along(r$gs)) {
+        x[[i]] <- gs_pop_get_count_fast(r$gs[[i]])
+      }
+      y <- purrr::map(x, as.data.frame)
+      dplyr::bind_rows(y)
+    })
+    
+    observe({
+      output$final_table <- renderTable({final_output()})
+      }) |> bindEvent(input$table)
     
     output[["test"]] <- renderText(glue("Test works"))
   })}
@@ -292,6 +307,24 @@ getData_splitPeak <- function(r, gs, bin, filter_name) {
     return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density", filterId = filterId), error = function(e) NULL))
   })
   return(remove_null_from_list(x))
+}
+
+# custom function was needed to add these gates. Some gates are REMOVED using the remove_null_from_list() function and then the function gs_pop_add from openCyto does not work anymore! It requires that the names of the datasets in gs and the name of the gates match! e.g. if gs has dataset1 but there is no gate for dataset1 (because it was NULL and therefore removed using remove_null_from_list) the function does not work. this is a workaround
+
+add_gate <- function(r, gs, gate, parent) {
+  gate_names <- names(gate)
+  gatingSet_names <- sampleNames(gs)
+  for (i in seq_along(gatingSet_names)) {
+    if (gatingSet_names[i] %in% gate_names) {
+      x <- which(gatingSet_names[i] == gate_names) # gives the index of the name in gate_names that matches gatingSet_names
+      gs_pop_add(r$gs[[i]], gate = gate[[x]], parent = parent)
+      # print(gs[[i]])
+      # message("printed gs")
+      # print(gate[[x]])
+      # message("printed gate")
+    }
+  }
+  recompute(r$gs)
 }
 
 
