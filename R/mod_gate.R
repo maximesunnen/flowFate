@@ -271,15 +271,6 @@ remove_null_from_list <- function(data) {
   }
 }
 
-remove_null_from_list_02 <- function(data) {
-  for (i in seq_along(data)) {
-    if (sapply(data[[i]], is.null)) {
-      data <- data[-i]
-    }
-  }
-  return(data)
-}
-
 plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, gate) {
     ggcyto(gs, aes(x = "RED.R.HLin"), subset = subset) +
       geom_density(fill = density_fill) +
