@@ -111,8 +111,7 @@ mod_gate_server <- function(id, r){
       }
     }) |> bindEvent(input$ok)
     
-# render uiOutputs sequentially as the user clicks the "add_input" button
-
+# add numericRange inputs if the user clicks "Add GFP bin", see custom function
 add_input_clicks <- reactive({input$add_input})
 observe({
   switch(add_input_clicks(),
@@ -123,26 +122,23 @@ observe({
 })
 
 # SET UP A GATE ACCORDING TO THE USER-DEFINED BIN RANGE -------------------
-
-    gate_limits <- reactive({
-      if (is.null(input$gfp_range_1)) return(NULL)
-      else if (is.null(input$gfp_range_2)) {
-        # set up gate limits (using user-defined ranges)
-        gate_limits <- list(low = list(input$gfp_range_1))
-      }
-      else if (is.null(input$gfp_range_3)) {
-        gate_limits <- list(low = list(input$gfp_range_1),
-                            medium = list(input$gfp_range_2))
-      }
-      
-      else {gate_limits <- list(low = list(input$gfp_range_1),
-                                medium = list(input$gfp_range_2),
-                                high = list(input$gfp_range_3))
-      }
-    })
+gate_limits <- reactive({
+  x <- list(low = if(!is.null(input$gfp_range_1)) list(input$gfp_range_1),
+            medium = if(!is.null(input$gfp_range_2)) list(input$gfp_range_2) else {list(NA)},
+            high = if(!is.null(input$gfp_range_3)) list(input$gfp_range_3) else {list(NA)})
+  x[!sapply(x, is.na)]
+})
     
     message("printing gate_limits")
-    observe({print(gate_limits())})
+    observe({
+    if(!is.null(gate_limits())) print(gate_limits())
+    })|> bindEvent(input$gate)
+
+    ### this is not working properly: error in !: invalid argument type
+    # message("printing gate_limits")
+    # observe({
+    #   if(!is.null(gate_limits())) print(gate_limits())
+    # })
 
 # GENERATE GATES FROM BINS ------------------------------------------------
 
@@ -157,11 +153,9 @@ observe({
     return(y)
     })
 
-  observe(print(gates()))
-
+  #observe({print(gates())})
 
 # ADD GATES TO GATINGSET --------------------------------------------------
-
   observe({
     for (i in seq_along(gates())) {
       gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
@@ -275,6 +269,15 @@ remove_null_from_list <- function(data) {
   else {
     return(data[-test])
   }
+}
+
+remove_null_from_list_02 <- function(data) {
+  for (i in seq_along(data)) {
+    if (sapply(data[[i]], is.null)) {
+      data <- data[-i]
+    }
+  }
+  return(data)
 }
 
 plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, gate) {
