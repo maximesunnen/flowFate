@@ -19,7 +19,8 @@ mod_export_ui <- function(id){
              ),
              mainPanel(
                h1("How export works."),
-               textOutput(ns("test"))
+               actionButton(ns("table"), label = "Show population statistics"),
+               tableOutput(ns("population_table"))
              )
            )
   )
@@ -47,7 +48,17 @@ mod_export_server <- function(id,r){
     })
     output_test <- cars
     output$download <- downloadHandler(filename = file_name(), content = function(file) {write.csv(output_test, file)})
-    output$test <- renderText({file_name()})
+    output$population_table <- renderTable({population_table()}) |> bindEvent(input$table)
+    
+    # reactive expression computing the final table we want to obtain
+    population_table <- reactive({
+      x <- list()
+      for (i in seq_along(r$gs)) {
+        x[[i]] <- gs_pop_get_count_fast(r$gs[[i]])
+      }
+      y <- purrr::map(x, as.data.frame)
+      dplyr::bind_rows(y)
+    })
       }
     )
   }
