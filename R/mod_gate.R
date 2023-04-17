@@ -28,13 +28,13 @@ mod_gate_ui <- function(id){
                                   actionButton(ns("reset_bins"), "Reset bins", class = "btn-danger")),
                          tabPanel("Split peaks",
                                   br(),
-                                  actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary"),
+                                  actionButton(ns("split"), "Split now"),
+                                  # actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary"),
                                   actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-danger")),
                          tabPanel("Plot",
                                   br(),
                                   selectInput(ns("controller"), "GFP bin", choices = c("GFP-low", "GFP-medium", "GFP-high")),
                                   actionButton(ns("plot"), "plot"),
-                                  actionButton(ns("split"), "Split now"),
                                   actionButton(ns("table"), "Table now")))),
   
            mainPanel(
@@ -104,13 +104,13 @@ mod_gate_server <- function(id, r){
       actionButton(ns("confirm_gate_reset"), "Delete", class = "btn btn-danger")))
     
     observe({
-      shinyjs::hide(id = "gate")
+      shinyjs::hide(id = "split")
       shinyjs::show(id = "reset_gates")
-    }) |> bindEvent(input$gate)
+    }) |> bindEvent(input$split)
     
     observe({
       shinyjs::hide(id = "reset_gates")
-      shinyjs::show(id = "gate")
+      shinyjs::show(id = "split")
       showNotification("Gates were successfully reset.")
       removeModal()
     }) |> bindEvent(input$confirm_gate_reset)
@@ -122,7 +122,6 @@ mod_gate_server <- function(id, r){
     observe({
       showModal(modal_confirm_gates)
     }) |> bindEvent(input$reset_gates)
-    
     
     # observe({
     #   showNotification("Bins were successfully reset.")
@@ -164,10 +163,11 @@ gate_limits <- reactive({
   x[!sapply(x, is.na)]
 })
 
+# for debugging
 message("printing gate_limits")
 observe({
-  if(!is.null(gate_limits())) print(gate_limits())
-})|> bindEvent(input$confirm_bins)
+  if (!is.null(gate_limits())) print(gate_limits())
+}) |> bindEvent(input$confirm_bins)
 
     ### this is not working properly: error in !: invalid argument type
     # message("printing gate_limits")
@@ -198,7 +198,7 @@ observe({
     }
     recompute(r$gs)
     plot(r$gs)
-  }) |> bindEvent(input$confirm_bins)  # input$gate used here, after this the button should disappear (done in line 74)
+  }) |> bindEvent(input$confirm_bins)  # input$confirm_bins used here, after this the button should disappear (done in line 73)
   
 # EXTRACT GATED DATA AND SPLIT MYOSIN PEAKS -----------------------------------
 ## very nice: if we call any of reactive expressions below and the respective input doesn't exist (e.g gfp_range_2 when we only added the first GFP bin), expression evaluates to NULL
@@ -206,8 +206,6 @@ observe({
   
 #' @importFrom stringr str_detect
 #' @importFrom flowWorkspace gs_get_pop_paths
-
-
 
 gfp_low_myo_high <- reactive({
   req(r$gs)
@@ -268,8 +266,7 @@ output$myosin_splittedPeaks <- renderPlot({
 
 ## ADD THE PEAK-SPLITTING THRESHOLD AS A GATE TO THE GATINGSET: custom function add_gate()
 # NOTE: recompute(r$gs) not necessary, wrapped inside add_gate()
-# plot(r$gs) doesn't work properly now: I think it only plots the gates that are common across ALL samples?! However, we will add gates to INDIVIDUAL samples using add_gate() as the samples names in our gatingSet do not necessarily match those in the gates we add (we removed gates that evaluate to NULL!!!!!!).
-# for gs_get_pop_paths(), same issue: replaced it by a reactive (final_output())
+# plot(r$gs) doesn't work properly now: I think it only plots the gates that are common across ALL samples?! However, we will add gates to INDIVIDUAL samples using add_gate() as the samples names in our gatingSet do not necessarily match those in the gates we add (we removed gates that evaluate to NULL!!!!!!). For gs_get_pop_paths(), same issue: replaced it by a reactive (final_output())
 
 observe({
   if (!is.null(gfp_low_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_low_myo_high(), parent = "GFP-low")}
@@ -277,20 +274,20 @@ observe({
   if (!is.null(gfp_high_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_high_myo_high(), parent = "GFP-high")}
 }) |> bindEvent(input$split)
     
-    final_output <- reactive({
-      x <- list()
-      for (i in seq_along(r$gs)) {
-        x[[i]] <- gs_pop_get_count_fast(r$gs[[i]])
-      }
-      y <- purrr::map(x, as.data.frame)
-      dplyr::bind_rows(y)
-    })
-    
-    observe({
-      output$final_table <- renderTable({final_output()})
-      }) |> bindEvent(input$table)
-    
-    output[["test"]] <- renderText(glue("Test works"))
+final_output <- reactive({
+  x <- list()
+  for (i in seq_along(r$gs)) {
+    x[[i]] <- gs_pop_get_count_fast(r$gs[[i]])
+  }
+  y <- purrr::map(x, as.data.frame)
+  dplyr::bind_rows(y)
+})
+
+observe({
+  output$final_table <- renderTable({final_output()})
+}) |> bindEvent(input$table)
+
+output[["test"]] <- renderText(glue("Test works"))
   })}
 
 
