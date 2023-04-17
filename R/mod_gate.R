@@ -33,9 +33,12 @@ mod_gate_ui <- function(id){
                                   actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-danger")),
                          tabPanel("Plot",
                                   br(),
-                                  selectInput(ns("controller"), "GFP bin", choices = c("GFP-low", "GFP-medium", "GFP-high")),
+                                  selectInput(ns("controller"),
+                                              label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("info"))),
+                                              choices = c("GFP-low", "GFP-medium", "GFP-high")),
                                   actionButton(ns("plot"), "plot"),
-                                  actionButton(ns("table"), "Table now")))),
+                                  actionButton(ns("table"), "Table now"),
+                                  ))),
   
            mainPanel(
              # header and text description of gating ---------------------------------
@@ -55,10 +58,15 @@ mod_gate_ui <- function(id){
 #' @importFrom openCyto gate_flowclust_1d
 #' @importFrom flowCore fsApply
 #' @importFrom flowWorkspace gs_pop_remove
-
+#' 
 mod_gate_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+# help button on "plot" panel
+observe({
+  showModal(modalDialog(p("Select the GFP bin for which you want to display the myosin intensities.")))
+}) |> bindEvent(input$help)
     
 # hide/show "Add_bins" button ------------------------------------------
     observe({
