@@ -13,43 +13,40 @@ mod_gate_ui <- function(id){
   useShinyjs()
   
   tabPanel(title = "Gate",
-           # Defining a sidebarLayout in the Curate tab ------------------------------
-
+           # Defining a sidebarLayout in the Gate tab ------------------------------
            sidebarLayout(
-           sidebarPanel(
-             tabsetPanel(id = ns("tabset"),
-                         tabPanel("GFP bins",
-                                  br(),
-                                  uiOutput(ns("gfp_bin_1")),
-                                  uiOutput(ns("gfp_bin_2")),
-                                  uiOutput(ns("gfp_bin_3")),
-                                  actionButton(inputId = ns("add_bins"), label = "Add GFP bins", icon("plus")),
-                                  actionButton(inputId = ns("confirm_bins"), label = "Confirm", class = "btn-success"),
-                                  actionButton(ns("reset_bins"), "Reset bins", class = "btn-danger")),
-                         tabPanel("Split peaks",
-                                  br(),
-                                  actionButton(ns("split"), "Split now"),
-                                  # actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary"),
-                                  actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-danger")),
-                         tabPanel("Plot",
-                                  br(),
-                                  selectInput(ns("controller"),
-                                              label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("info"))),
-                                              choices = c("GFP-low", "GFP-medium", "GFP-high")),
-                                  actionButton(ns("plot"), "plot"),
-                                  actionButton(ns("table"), "Table now"),
-                                  ))),
-  
-           mainPanel(
-             # header and text description of gating ---------------------------------
-             h1("How gating works."),
-             p(style = "text-align:justify;color
-                 :ck;background-color:papayawhip;padding:15px;border-radius:10px"),
-             # outputs
-             textOutput(ns("test")),
+             sidebarPanel(
+               tabsetPanel(id = ns("tabset"),
+                           tabPanel("GFP bins",
+                                    br(),
+                                    uiOutput(ns("gfp_bin_1")),
+                                    uiOutput(ns("gfp_bin_2")),
+                                    uiOutput(ns("gfp_bin_3")),
+                                    actionButton(inputId = ns("add_bins"), label = "Add GFP bins", icon("plus")),
+                                    actionButton(inputId = ns("confirm_bins"), label = "Confirm", class = "btn-success"),
+                                    actionButton(ns("reset_bins"), "Reset bins", class = "btn-danger")),
+                           tabPanel("Split peaks",
+                                    br(),
+                                    actionButton(ns("split"), "Split now"),
+                                    # actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary"),
+                                    actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-danger")),
+                           tabPanel("Plot",
+                                    br(),
+                                    selectInput(ns("controller"),
+                                                label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("info"))),
+                                                choices = c("GFP-low", "GFP-medium", "GFP-high")),
+                                    actionButton(ns("plot"), "plot"),
+                                    actionButton(ns("table"), "Table now"),
+                           ))),
              
-             plotOutput(ns("myosin_splittedPeaks")),
-             tableOutput(ns("final_table")))))
+             mainPanel(
+               # header and text description of gating ---------------------------------
+               h1("How gating works."),
+               p(style = "text-align:justify;color:ck;background-color:papayawhip;padding:15px;border-radius:10px"),
+               # outputs
+               textOutput(ns("test")),
+               plotOutput(ns("myosin_splittedPeaks")),
+               tableOutput(ns("final_table")))))
 }
     
 #' gate Server Functions
@@ -63,24 +60,25 @@ mod_gate_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-# help button on "plot" panel
-observe({
-  showModal(modalDialog(p("Select the GFP bin for which you want to display the myosin intensities.")))
-}) |> bindEvent(input$help)
+
+# Modals, help buttons, etc. ----------------------------------------------
+    ## Plot panel: Help button
+    observe({
+      showModal(modalDialog(p("Select the GFP bin for which you want to display the myosin intensities.")))
+    }) |> bindEvent(input$help)
     
-# hide/show "Add_bins" button ------------------------------------------
+    ## "Add_bins" button
     observe({
       if (is.null(r$lower_limit_gfp)) {shinyjs::hide(id = "add_bins")}
       else {shinyjs::show(id = "add_bins")}
     })
     
-# hide/show "Confirm" and "Add GFP bins" buttons
+    # "Confirm" and "Add GFP bins" buttons
     observe({
       shinyjs::hide(id = "confirm_bins")
       shinyjs::hide(id = "add_bins")
     }) |> bindEvent(input$confirm_bins)
     
-    # setting up a modal to display information to the user -------------------
     modal_confirm_bins <- modalDialog(
       "Are you sure you want to continue?",
       title = "Deleting your GFP bins",
@@ -94,7 +92,7 @@ observe({
     
     observe({
       removeModal()
-    }) |> bindEvent(input$cancel_bin_reset) #remove modal when user decides to CANCEL the reset of the bins
+    }) |> bindEvent(input$cancel_bin_reset) #remove modal when user decides to CANCEL bin reset
     
     observe({
       shinyjs::show(id = "confirm_bins")
@@ -103,13 +101,13 @@ observe({
       removeModal()
     }) |> bindEvent(input$confirm_bin_reset)
 
-# hide/show "gate" button, removeModal(), showModal() -------------------
- modal_confirm_gates <- modalDialog(
-    "Are you sure you want to continue?",
-    title = "Deleting your gates",
-    footer = tagList(
-      actionButton(ns("cancel_gate_reset"), "Cancel"),
-      actionButton(ns("confirm_gate_reset"), "Delete", class = "btn btn-danger")))
+    # "Gate" button
+    modal_confirm_gates <- modalDialog(
+      "Are you sure you want to continue?",
+      title = "Deleting your gates",
+      footer = tagList(
+        actionButton(ns("cancel_gate_reset"), "Cancel"),
+        actionButton(ns("confirm_gate_reset"), "Delete", class = "btn btn-danger")))
     
     observe({
       shinyjs::hide(id = "split")
@@ -130,14 +128,8 @@ observe({
     observe({
       showModal(modal_confirm_gates)
     }) |> bindEvent(input$reset_gates)
-    
-    # observe({
-    #   showNotification("Bins were successfully reset.")
-    #   removeModal()
-    # }) |> bindEvent(input$confirm_bin_reset) #placed this modal in the one above (line 69)
 
-
-# remove gates if user decides to reset bins ------------------------------
+# Reset bins/gates if user clicks on the Reset button(s)
     observe({
       if (is.null(input$gfp_range_2)) {
         gs_pop_remove(r$gs, "GFP-low")
@@ -152,6 +144,17 @@ observe({
         gs_pop_remove(r$gs, "GFP-high")
       }
     }) |> bindEvent(input$confirm_bin_reset)
+    
+    observe({
+      if (!is.null(gfp_low_myo_high())) {gs_pop_remove(r$gs, "GFP-low")}
+      if (!is.null(gfp_medium_myo_high())) {gs_pop_remove(r$gs, "GFP-medium")}
+      if (!is.null(gfp_high_myo_high())) {gs_pop_remove(r$gs, "GFP-high")}
+      for (i in seq_along(gates())) {
+        gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
+      }
+      recompute(r$gs)
+      plot(r$gs)
+    }) |> bindEvent(input$confirm_gate_reset)
     
 # add numericRange inputs if the user clicks "Add GFP bin", see custom function
 add_bins_clicks <- reactive({input$add_bins})
