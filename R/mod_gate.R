@@ -29,15 +29,13 @@ mod_gate_ui <- function(id){
                                     br(),
                                     actionButton(ns("split"), "Split now"),
                                     # actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary"),
-                                    actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-danger")),
-                           tabPanel("Plot",
+                                    actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-danger"),
+                                    br(),
                                     br(),
                                     selectInput(ns("controller"),
-                                                label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("info"))),
+                                                label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("fa fa-info"))),
                                                 choices = c("GFP-low", "GFP-medium", "GFP-high")),
-                                    actionButton(ns("plot"), "plot"),
-                                    actionButton(ns("table"), "Table now"),
-                           ))),
+                                    actionButton(ns("plot"), "Plot")))),
              
              mainPanel(
                # header and text description of gating ---------------------------------
@@ -45,8 +43,7 @@ mod_gate_ui <- function(id){
                p(style = "text-align:justify;color:ck;background-color:papayawhip;padding:15px;border-radius:10px"),
                # outputs
                textOutput(ns("test")),
-               plotOutput(ns("myosin_splittedPeaks")),
-               tableOutput(ns("final_table")))))
+               plotOutput(ns("myosin_splittedPeaks")))))
 }
     
 #' gate Server Functions
@@ -156,29 +153,34 @@ mod_gate_server <- function(id, r){
       plot(r$gs)
     }) |> bindEvent(input$confirm_gate_reset)
     
-# add numericRange inputs if the user clicks "Add GFP bin", see custom function
-add_bins_clicks <- reactive({input$add_bins})
-observe({
-  switch(add_bins_clicks(),
-         render_bin_UI(1, c(signif(r$lower_limit_gfp, digits = 3), 100), ns, "First", output, r),
-         render_bin_UI(2, c(101,350), ns, "Second", output, r),
-         render_bin_UI(3, c(351,1000), ns, "Third", output, r))
-  if (add_bins_clicks() == 3) shinyjs::hide(id = "add_bins")
-})
 
-# CAPUTRE GATE RANGES (USER INPUT) IN A REACTIVE: gate_limits()
-gate_limits <- reactive({
-  x <- list(low = if(!is.null(input$gfp_range_1)) list(input$gfp_range_1),
-            medium = if(!is.null(input$gfp_range_2)) list(input$gfp_range_2) else {list(NA)},
-            high = if(!is.null(input$gfp_range_3)) list(input$gfp_range_3) else {list(NA)})
-  x[!sapply(x, is.na)]
-})
+# Computations ------------------------------------------------------------
+    # capture the number of times the button is clicked inside a reactive expression: add_bins_clicks()
+    # run the render_bin_UI function according to the value of the reactive expression
 
-# for debugging
-message("printing gate_limits")
-observe({
-  if (!is.null(gate_limits())) print(gate_limits())
-}) |> bindEvent(input$confirm_bins)
+    add_bins_clicks <- reactive({input$add_bins})
+    
+    observe({
+      switch(add_bins_clicks(),
+             render_bin_UI(1, c(signif(r$lower_limit_gfp, digits = 3), 100), ns, "First", output, r),
+             render_bin_UI(2, c(101,350), ns, "Second", output, r),
+             render_bin_UI(3, c(351,1000), ns, "Third", output, r))
+      if (add_bins_clicks() == 3) shinyjs::hide(id = "add_bins")
+    })
+    
+    # capture gate ranges (user input) inside a reactive expression: gate_limits()
+    gate_limits <- reactive({
+      x <- list(low = if(!is.null(input$gfp_range_1)) list(input$gfp_range_1),
+                medium = if(!is.null(input$gfp_range_2)) list(input$gfp_range_2) else {list(NA)},
+                high = if(!is.null(input$gfp_range_3)) list(input$gfp_range_3) else {list(NA)})
+      x[!sapply(x, is.na)]
+    })
+
+    # for debugging
+    message("printing gate_limits")
+    observe({
+      if (!is.null(gate_limits())) print(gate_limits())
+    }) |> bindEvent(input$confirm_bins)
 
     ### this is not working properly: error in !: invalid argument type
     # message("printing gate_limits")
@@ -186,35 +188,36 @@ observe({
     #   if(!is.null(gate_limits())) print(gate_limits())
     # })
 
-# USE gate_limits() TO GENERATE A GATE
-  gates <- reactive({
-    if (is.null(gate_limits())) return(NULL)
-    filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
-    y <- lapply(gate_limits(), function(x) {
-    names(x) <- r$ch_kras()
-    rectangleGate(x)})
-    for (i in seq_along(y))
-    y[[i]]@filterId <- filter_names[[i]]
-    return(y)
+    # use the gate_limits() reactive expression to create a gate
+    gates <- reactive({
+      if (is.null(gate_limits())) return(NULL)
+      filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
+      y <- lapply(gate_limits(), function(x) {
+        names(x) <- r$ch_kras()
+        rectangleGate(x)})
+      for (i in seq_along(y))
+        y[[i]]@filterId <- filter_names[[i]]
+      return(y)
     })
 
-  #observe({print(gates())}) # i guess this is not working for the same reasons the printing above does not work
+    #observe({print(gates())}) # i guess this is not working for the same reasons the printing above does not work
 
-# ADD GATES TO GATINGSET --------------------------------------------------
-## from now on, the user should not be able to add further gates as this would lead to the "gate already exists" error
-## so before, user should reset the gates
-  observe({
-    for (i in seq_along(gates())) {   # first time calling gates(), computing it. gates() depends on gate_limits() which will also be computed here
-      gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
-    }
-    recompute(r$gs)
-    plot(r$gs)
-  }) |> bindEvent(input$confirm_bins)  # input$confirm_bins used here, after this the button should disappear (done in line 73)
+    # add gates to the gatingSet
+    observe({
+      for (i in seq_along(gates())) {
+        gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
+      }
+      
+      recompute(r$gs)
+      plot(r$gs)
+    }) |> bindEvent(input$confirm_bins)  # input$confirm_bins used here, after this the button should disappear (done in line 73)
   
-# EXTRACT GATED DATA AND SPLIT MYOSIN PEAKS -----------------------------------
-## very nice: if we call any of reactive expressions below and the respective input doesn't exist (e.g gfp_range_2 when we only added the first GFP bin), expression evaluates to NULL
-## NOTE: the code below does NOT add anything to the gatingSet. This is performed in another step.
-  
+    # extract gates data and split myosin peak
+    ## nice: if any of reactive expressions below are called and the input doesn't exist (e.g gfp_range_2 when only first GFP bin added),
+    ## expression evaluates to NULL
+    ## note: below we don't add anything to the gatingSet. the reactive expressions return a gate "rectangular gate with dimensions....". We later
+    ## add this gate to the gatingSet
+    
 #' @importFrom stringr str_detect
 #' @importFrom flowWorkspace gs_get_pop_paths
 
@@ -243,23 +246,25 @@ gfp_high_myo_high <- reactive({
 observe({
   message("first printing")
   print(gfp_medium_myo_high())
-}) |> bindEvent(input$plot)
+}) |> bindEvent(input$split)
 
-# DEFINING A REACTIVE EXPRESSION FOR THE GATE INSIDE GEOM_GATE() --------
+# reactive expression to use inside geom_gate: gate_myosin_plot()
+## we want the geom_gate to contain the gate that the user chooses in the controller (a selectInput defined in the UI)
 ## ideally the controller only displays the possible options, e.g. if user adds "GFP-low" bin he can't select GFP-medium on the controller
+
 gate_myosin_plot <- reactive({
   ## first check that the right conditions are met to compute this reactive
   if (input$controller == "GFP-low") {req(gfp_low_myo_high())}
   if (input$controller == "GFP-medium") {req(gfp_medium_myo_high())}
   if (input$controller == "GFP-high") {req(gfp_high_myo_high())}
-  ## depending on the state of the controller, a different geom_gate() should be applied
+  ## depending on the state of the controller, a different gate should be assigned to this reactive expression
   switch(input$controller,
          "GFP-low" = gfp_low_myo_high(),
          "GFP-medium" = gfp_medium_myo_high(),
          "GFP-high" = gfp_high_myo_high())
 })
 
-## DEFIING A REACTIVE EXPRESSION CAPTURING THE STATE OF THE CONTROLLER
+# reactive expression capturing the state of the controlls: subset()
 subset <- reactive(input$controller)
 
 # for debugging
@@ -267,36 +272,24 @@ observe({
   message("second printing")
   print(gate_myosin_plot())
   print(subset())
-}) |> bindEvent(input$plot)
+}) |> bindEvent(input$split)
 
-## DEFINE THE OUTPUT, A PLOT SHOWING THE SPLITTED PEAKS, UNDER THE CONTROL OF THE CONTROLLER WHERE THE USER CAN SELECT THE BIN TO SHOW
-# here we call gate_myosin_plot() and subset() for the first time
-output$myosin_splittedPeaks <- renderPlot({
-  plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gate_myosin_plot(), subset = subset())
-}) |> bindEvent(input$plot)
-
-## ADD THE PEAK-SPLITTING THRESHOLD AS A GATE TO THE GATINGSET: custom function add_gate()
-# NOTE: recompute(r$gs) not necessary, wrapped inside add_gate()
-# plot(r$gs) doesn't work properly now: I think it only plots the gates that are common across ALL samples?! However, we will add gates to INDIVIDUAL samples using add_gate() as the samples names in our gatingSet do not necessarily match those in the gates we add (we removed gates that evaluate to NULL!!!!!!). For gs_get_pop_paths(), same issue: replaced it by a reactive (final_output())
+# add the gates computed by getData_splitPeak() to the gatingSet: custom function add_gate()
+## recompute(r$gs) already wrapped inside add_gate()
+## plot(r$gs) doesn't work properly now: I think it only plots the gates that are common across all samples?! However, we will add gates to individual samples using add_gate() as the sample names in our gatingSet do not necessarily match those in the gates we add. Remember that we removed gates that evaluate to NULL. Same problem with gs_get_pop_paths(): workaround using the reactive expression final_output().
+## this addition to the gatingSet is under the control of input$split: documents this properly in the mainPanel and README 
 
 observe({
   if (!is.null(gfp_low_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_low_myo_high(), parent = "GFP-low")}
   if (!is.null(gfp_medium_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_medium_myo_high(), parent = "GFP-medium")}
   if (!is.null(gfp_high_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_high_myo_high(), parent = "GFP-high")}
 }) |> bindEvent(input$split)
-    
-final_output <- reactive({
-  x <- list()
-  for (i in seq_along(r$gs)) {
-    x[[i]] <- gs_pop_get_count_fast(r$gs[[i]])
-  }
-  y <- purrr::map(x, as.data.frame)
-  dplyr::bind_rows(y)
-})
 
-observe({
-  output$final_table <- renderTable({final_output()})
-}) |> bindEvent(input$table)
+
+## output plot: a  plot showing splitted peaks for the gate chosen by the user using the controller.
+output$myosin_splittedPeaks <- renderPlot({
+  plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gate_myosin_plot(), subset = subset())
+}) |> bindEvent(input$plot)
 
 output[["test"]] <- renderText(glue("Test works"))
   })}
