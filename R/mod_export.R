@@ -14,17 +14,14 @@ mod_export_ui <- function(id){
            # Defining a sidebarLayout in the Curate tab ------------------------------
            sidebarLayout(
              sidebarPanel(
-               textInput(ns("filename"), label = "Filename", placeholder = "Type your filename here"),
-               downloadButton(ns("download"), "Download")
-             ),
+               textInput(ns("filename"), label = "Filename", placeholder = "Insert your filename here"),
+               checkboxInput(ns("add_date"), label = "Add system date to filename"),
+               downloadButton(ns("download"), "Download")),
              mainPanel(
                h1("How export works."),
                actionButton(ns("table"), label = "Show population statistics"),
-               tableOutput(ns("population_table"))
-             )
-           )
-  )
-}
+               textOutput(ns("test")),
+               tableOutput(ns("population_table")))))}
     
 #' export Server Functions
 #'
@@ -35,21 +32,29 @@ mod_export_server <- function(id,r){
     
     file_name <- reactive({
       if (isTruthy(input$filename)) {
-        if (input$filename != "Add your filename here!") {
-          paste(input$filename, ".csv", sep="")
+        if (input$add_date == TRUE) {
+          paste0(Sys.Date(), "-", input$filename,".csv")
         }
         else {
-          paste0("population_statistics.csv")
+          paste0(input$filename, ".csv", sep = "")
         }
       }
-      else {
-        paste0("population_statistics.csv")
-      }
+        else {
+          if (input$add_date == TRUE) {
+          paste0(Sys.Date(), "-", "population_statistics.csv")
+          }
+          else {
+            paste0("population_statistics.csv")
+          }
+          }
     })
-    output_test <- cars
-    output$download <- downloadHandler(filename = file_name(), content = function(file) {write.csv(output_test, file)})
+    
+    output$test <- reactive(file_name())
+    
     output$population_table <- renderTable({population_table()}) |> bindEvent(input$table)
     
+    output$download <- downloadHandler(filename = function() file_name(), content = function(file) {write.csv(population_table(), file)})
+
     # reactive expression computing the final table we want to obtain
     population_table <- reactive({
       x <- list()
