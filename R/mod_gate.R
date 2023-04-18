@@ -23,19 +23,18 @@ mod_gate_ui <- function(id){
                                     uiOutput(ns("gfp_bin_2")),
                                     uiOutput(ns("gfp_bin_3")),
                                     actionButton(inputId = ns("add_bins"), label = "Add GFP bins", icon("plus")),
-                                    actionButton(inputId = ns("confirm_bins"), label = "Confirm", class = "btn-success"),
-                                    actionButton(ns("reset_bins"), "Reset bins", class = "btn-danger")),
+                                    actionButton(inputId = ns("confirm_bins"), label = "Confirm", class = "btn-primary"),
+                                    actionButton(ns("reset_bins"), "Reset bins", class = "btn-warning")),
                            tabPanel("Split peaks",
                                     br(),
                                     actionButton(ns("split"), "Split now"),
-                                    # actionButton(inputId = ns("gate"), label = "Gate now", class = "btn-primary"),
-                                    actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-danger"),
+                                    actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-warning"),
                                     br(),
                                     br(),
                                     selectInput(ns("controller"),
                                                 label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("fa fa-info"))),
                                                 choices = c("GFP-low", "GFP-medium", "GFP-high")),
-                                    actionButton(ns("plot"), "Plot")))),
+                                    actionButton(ns("plot"), "Plot", class = "btn-light")))),
              
              mainPanel(
                # header and text description of gating ---------------------------------
@@ -142,6 +141,7 @@ mod_gate_server <- function(id, r){
       }
     }) |> bindEvent(input$confirm_bin_reset)
     
+    ### this has to be modified!!!! see issue #13
     observe({
       if (!is.null(gfp_low_myo_high())) {gs_pop_remove(r$gs, "GFP-low")}
       if (!is.null(gfp_medium_myo_high())) {gs_pop_remove(r$gs, "GFP-medium")}
@@ -242,11 +242,6 @@ gfp_high_myo_high <- reactive({
   }
 })
 
-# for debugging
-observe({
-  message("first printing")
-  print(gfp_medium_myo_high())
-}) |> bindEvent(input$split)
 
 # reactive expression to use inside geom_gate: gate_myosin_plot()
 ## we want the geom_gate to contain the gate that the user chooses in the controller (a selectInput defined in the UI)
@@ -267,12 +262,11 @@ gate_myosin_plot <- reactive({
 # reactive expression capturing the state of the controlls: subset()
 subset <- reactive(input$controller)
 
-# for debugging
-observe({
-  message("second printing")
-  print(gate_myosin_plot())
-  print(subset())
-}) |> bindEvent(input$split)
+# # for debugging
+# observe({
+#   message("second printing")
+#   # print(gate_myosin_plot())
+# }) |> bindEvent(input$split)
 
 # add the gates computed by getData_splitPeak() to the gatingSet: custom function add_gate()
 ## recompute(r$gs) already wrapped inside add_gate()
