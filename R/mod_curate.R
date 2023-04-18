@@ -13,26 +13,40 @@
 mod_curate_ui <- function(id){
   ns <- NS(id)
   useShinyjs()
-
+  
   # Defining a tabPanel layout ----------------------------------------------
   tabPanel(title = "Curate",
-
+           
            # Defining a sidebarLayout in the Curate tab ------------------------------
            sidebarLayout(
              sidebarPanel(
                # Input selections for used channels and control samples ------------------
-               uiOutput(ns("input_selection"))),
+               uiOutput(ns("input_selection")),
+             br(),
+             # Action button to start curation
+             actionButton(ns("Curate"), "Start curation", class = "btn-success"),
+             actionButton(ns("Delete"), "Restart curation", class = "btn-danger")),
              
              mainPanel(
-               # header and text description of curation ---------------------------------
                h1("How curation works."),
-               p("By curation we understand two essential steps. First, we want to focus our analysis on intact cells and not debris. We therefore need to set a gate that excludes cellular debris, which normally clusters in the lower left corner in a SSC vs FSC plot. Second, we have to define intensity thresholds in our fluorescent channels below which we cannot distinguish between a real signal and autofluorescence/background noise. We will define both the non-debris gate and the threshold using our controls", style = "text-align:justify;color
-                 :black;background-color:papayawhip;padding:15px;border-radius:10px"),
-
-               # Action button to start curation
-               actionButton(ns("Curate"), "Start curation", class = "btn-success"),
-               actionButton(ns("Delete"), "Restart curation", class = "btn-danger"),
-
+               div(p("By curation we understand two essential steps:"),
+                   p("- First, our analysis should be focused on intact cells. We exclude cellular debris – clustering on the lower left corner on an SSC vs FSC plot – by applying a rectangular gate.", style = "text-indent: 25px"),
+                   p("-	Second, FACS data is never devoid of background noise or signals from cellular autofluorescence. By applying intensity thresholds on our fluorescent channels, we essentially get rid of these undesirable signals.", style = "text-indent: 25px"),
+                   
+                   p("We will use a ", em("pre-defined"), " rectangle gate to remove debris while our controls will help us get rid of unspecific signals."), style = "text-align:justify;color:black;background-color:papayawhip;padding:15px;border-radius:10px"), br(),
+                   
+                   div(p("On the left, select the correct channels and control samples. Click the ", span("Start curation", style = "color:green; font-weight:bold"), " button to start the curation. If you later notice that you’ve selected the wrong channels and/or control samples, click the ", span("Restart curation", style = "color:red; font-weight:bold"), " button and restart the procedure. You will have to click the ", span("Start curation", style = "color:green; font-weight:bold"), " button again."),
+                   
+                   p("After curation is done, three plots will appear:"),
+                   p("1) SSC vs FSC with the rectangle gate used to remove debris (in red)", style = "text-indent: 25px"),
+                   p("2) Intensity (GFP) vs density plot for your unstained and myosin control with the intensity threshold (in red)", style = "text-indent: 25px"),
+                   p("3) Intensity (Myosin) vs density plot for your unstained and GFP control with the intensity threshold (in red)", style = "text-indent: 25px"),
+                   
+                   p("The reason why you see two plots for the intensity thresholds is that we compute a quantile gate for ", strong("two"), " control samples and average the results. The red lines correspond to this ", strong("averaged"), " value."),
+                   
+                   p("Once you have curated your data, you can proceed with to gating. Simply click on the ", strong("Gate"), " tab at the top of the page."), 
+                   style = "text-align:justify;color:black;background-color:papayawhip;padding:15px;border-radius:10px"),
+               
                # plot SSC vs FSC for control samples -------------------------------------
                plotOutput(ns("non_debris_gate")),
                plotOutput(ns("gfp_gate")),

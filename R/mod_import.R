@@ -24,22 +24,23 @@ mod_import_ui <- function(id){
                            label = "Select FCS file"),
 
                  # Submit button to start the import --------------------------------------
-                 actionButton(ns("Submit"), "Submit", class = "btn-success"),
-                 
-                 ),
-                 ),
+                 actionButton(ns("Submit"), "Submit", class = "btn-success"))),
 
              mainPanel(
                h1("Welcome to flowFate."),
-               p("You can import your FCS file by clicking on the", strong("Browse"),
-                    " button on the left. Confirm your selection by clicking on
-                    the ", span("Submit", style = "color:green; font-weight:bold"), " button. A table containing the individual datasets
-                    of your FCS file will appear. Select one or mutliple rows to show the
-                    SSC vs FSC plot of that dataset.", br(), br(), "You can always upload a
-                    new FCS file but you have to confirm your selection by clicking the",
-                 span("Submit", style = "color:green; font-weight:bold"), " button again.", style = "text-align:justify;color
-                 :black;background-color:papayawhip;padding:15px;border-radius:10px"),
+               p("To import your FCS file, click on the " , strong("Browse"), " button on the left and select your file. Confirm your selection by clicking on the ", span("Submit", style = "color:green; font-weight:bold"), " button. A table containing a description of the uploaded file as well as your FCS file’s individual datasets appears. We’ve added a “well-name” column so you can verify if you’ve uploaded the correct file. You can click on and select one (or multiple) rows to show the SSC vs FSC plot of the selected dataset(s).", br(), br(), "To upload a new FCS file, click on the " , strong("Browse"), " button and select the correct file. Don’t forget to confirm your selection again by clicking on the ", span("Submit", style = "color:green; font-weight:bold"), " button.", br(), br(), "Once the correct file has been uploaded, you can proceed with the curation of your data. Simply click on the ", strong("Curate"), " tab at the top of the page.", style = "text-align:justify;color:black;background-color:papayawhip;padding:15px;border-radius:10px"),
                br(),
+               br(),
+               # 
+               # p("You can import your FCS file by clicking on the", strong("Browse"),
+               #      " button on the left. Confirm your selection by clicking on
+               #      the ", span("Submit", style = "color:green; font-weight:bold"), " button. A table containing the individual datasets
+               #      of your FCS file will appear. Select one or mutliple rows to show the
+               #      SSC vs FSC plot of that dataset.", br(), br(), "You can always upload a
+               #      new FCS file but you have to confirm your selection by clicking the",
+               #   span("Submit", style = "color:green; font-weight:bold"), " button again.", style = "text-align:justify;color
+               #   :black;background-color:papayawhip;padding:15px;border-radius:10px"),
+               # br(),
                uiOutput(ns("your_data")),
                # Table showing the imported file -----------------------------------------
                tableOutput(ns("files")),
