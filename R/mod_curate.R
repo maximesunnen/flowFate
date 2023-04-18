@@ -28,14 +28,14 @@ mod_curate_ui <- function(id){
              actionButton(ns("Delete"), "Restart curation", class = "btn-warning")),
              
              mainPanel(
-               h1("How curation works."),
-               div(p("By curation we understand two essential steps:"),
+               h1(strong("How curation works.")),
+               div(p("By curation we understand ", strong("two essential steps:")),
                    p("- First, our analysis should be focused on intact cells. We exclude cellular debris – clustering on the lower left corner on an SSC vs FSC plot – by applying a rectangular gate.", style = "text-indent: 25px"),
                    p("-	Second, FACS data is never devoid of background noise or signals from cellular autofluorescence. By applying intensity thresholds on our fluorescent channels, we essentially get rid of these undesirable signals.", style = "text-indent: 25px"),
                    
                    p("We will use a ", em("pre-defined"), " rectangle gate to remove debris while our controls will help us get rid of unspecific signals."), style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
                    
-                   div(p("On the left, select the correct channels and control samples. Click the ", span("Start curation", style = "color:green; font-weight:bold"), " button to start the curation. If you later notice that you’ve selected the wrong channels and/or control samples, click the ", span("Restart curation", style = "color:red; font-weight:bold"), " button and restart the procedure. You will have to click the ", span("Start curation", style = "color:green; font-weight:bold"), " button again."),
+                   div(p("On the left, select the correct channels and control samples. Click the ", span("Start curation", style = "color:#008cba; font-weight:bold"), " button to start the curation. If you later notice that you’ve selected the wrong channels and/or control samples, click the ", span("Restart curation", style = "color:#e99003; font-weight:bold"), " button and restart the procedure. You will have to click the ", span("Start curation", style = "color:#008cba; font-weight:bold"), " button again."),
                    
                    p("After curation is done, three plots will appear:"),
                    p("1) SSC vs FSC with the rectangle gate used to remove debris (in red)", style = "text-indent: 25px"),

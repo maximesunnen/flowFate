@@ -27,9 +27,9 @@ mod_gate_ui <- function(id){
                                     actionButton(ns("reset_bins"), "Reset bins", class = "btn-warning")),
                            tabPanel("Split peaks",
                                     br(),
-                                    actionButton(ns("split"), "Split now"),
+                                    actionButton(ns("split"), "Split now", class = "btn-primary"),
                                     actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-warning"),
-                                    br(),
+                                    hr(),
                                     br(),
                                     selectInput(ns("controller"),
                                                 label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("fa fa-info"))),
@@ -37,9 +37,32 @@ mod_gate_ui <- function(id){
                                     actionButton(ns("plot"), "Plot", class = "btn-light")))),
              
              mainPanel(
-               # header and text description of gating ---------------------------------
-               h1("How gating works."),
-               p(style = "text-align:justify;color:ck;background-color:papayawhip;padding:15px;border-radius:10px"),
+               h1(strong("How gating works.")),
+               div(
+                 p("Gating is the most crucial and complex step in this workflow. It consists of", strong("2 essential steps"), ":"),
+                 p("1)	Defining the ", strong("number"), " of bins and the", strong("bin size"), ": these bins will become gates.", style = "text-indent: 25px"),
+                 p("2)	Inside these bins, calculate the myosin intensity distribution and find a cutoff separating two distinct myosin populations (peaks in a plot)", style = "text-indent: 25px"), style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
+               ),
+               br(),
+               div(
+                 p("On the left, click on “Add GFP bin” to add a bin, then enter the bin size. You have to add at least 1 and you are limited to a maximum of 3 bins. Once you have added the desired bins, click on ", span("Confirm", style = "color:#008cba; font-weight:bold"), ". At this point, if you want to change the bin configuration, click on ", span("Reset bins", style = "color:#e99003; font-weight:bold"), ", change the bin configuration, then click ", span("Confirm", style = "color:#008cba; font-weight:bold"), " again."),
+                 p("To proceed, click on the ", strong("Split peaks"), " tab at the top of the left side panel."),
+                 style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
+                 ),
+               br(),
+               hr(),
+               br(),
+               div(
+                 
+                 p("When we look at the myosin distribution inside the bins just created, a pattern emerges. In fact, two populations can be distinguished:"),
+                 p("-	Low myosin expression: for C2C12, these cells can be seen as", strong("progenitors"), style = "text-indent: 25px"),
+                 p("-	High myosin expression: for C2C12, these cells can be seen as", strong("differentiated myocytes"), style = "text-indent: 25px"),
+                 
+                 p("Inside the app, we can find the threshold separating these two populations by clicking on the", span("Split", style = "color:#008cba; font-weight:bold"), " button."),    
+                 p(strong("Note:"), " at this point, if you want to change the bin configuration, you have to click on", span("Reset gates", style = "color:#e99003; font-weight:bold"), ", switch to the GFP bins tab and start over."),
+                 style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
+                 ),
+               
                # outputs
                textOutput(ns("test")),
                plotOutput(ns("myosin_splittedPeaks")))))
