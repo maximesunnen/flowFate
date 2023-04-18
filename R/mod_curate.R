@@ -24,8 +24,8 @@ mod_curate_ui <- function(id){
                uiOutput(ns("input_selection")),
              br(),
              # Action button to start curation
-             actionButton(ns("Curate"), "Start curation", class = "btn-success"),
-             actionButton(ns("Delete"), "Restart curation", class = "btn-danger")),
+             actionButton(ns("Curate"), "Start curation", class = "btn-primary"),
+             actionButton(ns("Delete"), "Restart curation", class = "btn-warning")),
              
              mainPanel(
                h1("How curation works."),
@@ -33,7 +33,7 @@ mod_curate_ui <- function(id){
                    p("- First, our analysis should be focused on intact cells. We exclude cellular debris – clustering on the lower left corner on an SSC vs FSC plot – by applying a rectangular gate.", style = "text-indent: 25px"),
                    p("-	Second, FACS data is never devoid of background noise or signals from cellular autofluorescence. By applying intensity thresholds on our fluorescent channels, we essentially get rid of these undesirable signals.", style = "text-indent: 25px"),
                    
-                   p("We will use a ", em("pre-defined"), " rectangle gate to remove debris while our controls will help us get rid of unspecific signals."), style = "text-align:justify;color:black;background-color:papayawhip;padding:15px;border-radius:10px"), br(),
+                   p("We will use a ", em("pre-defined"), " rectangle gate to remove debris while our controls will help us get rid of unspecific signals."), style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
                    
                    div(p("On the left, select the correct channels and control samples. Click the ", span("Start curation", style = "color:green; font-weight:bold"), " button to start the curation. If you later notice that you’ve selected the wrong channels and/or control samples, click the ", span("Restart curation", style = "color:red; font-weight:bold"), " button and restart the procedure. You will have to click the ", span("Start curation", style = "color:green; font-weight:bold"), " button again."),
                    
@@ -45,7 +45,7 @@ mod_curate_ui <- function(id){
                    p("The reason why you see two plots for the intensity thresholds is that we compute a quantile gate for ", strong("two"), " control samples and average the results. The red lines correspond to this ", strong("averaged"), " value."),
                    
                    p("Once you have curated your data, you can proceed with to gating. Simply click on the ", strong("Gate"), " tab at the top of the page."), 
-                   style = "text-align:justify;color:black;background-color:papayawhip;padding:15px;border-radius:10px"),
+                   style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
                
                # plot SSC vs FSC for control samples -------------------------------------
                plotOutput(ns("non_debris_gate")),
