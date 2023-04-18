@@ -11,7 +11,7 @@ app_ui <- function() {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # Your application UI logic
-    fluidPage(theme = bslib::bs_theme(bootswatch = "united"),
+    fluidPage(theme = bslib::bs_theme(bootswatch = "yeti"),
               autoWaiter(),
               useShinyjs(),
               navbarPage(title = "FlowFate",
