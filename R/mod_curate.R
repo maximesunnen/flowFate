@@ -39,15 +39,14 @@ mod_curate_ui <- function(id){
                    
                    p("After curation is done, three plots will appear:"),
                    p("1) SSC vs FSC with the rectangle gate used to remove debris (in red)", style = "text-indent: 25px"),
-                   p("2) Intensity (GFP) vs density plot for your unstained and myosin control with the intensity threshold (in red)", style = "text-indent: 25px"),
-                   p("3) Intensity (Myosin) vs density plot for your unstained and GFP control with the intensity threshold (in red)", style = "text-indent: 25px"),
+                   p("2) Intensity (GFP) vs density plot for your unlabelled and myosin control with the intensity threshold (in red)", style = "text-indent: 25px"),
+                   p("3) Intensity (Myosin) vs density plot for your unlabelled and GFP control with the intensity threshold (in red)", style = "text-indent: 25px"),
                    
                    p("The reason why you see two plots for the intensity thresholds is that we compute a quantile gate for ", strong("two"), " control samples and average the results. The red lines correspond to this ", strong("averaged"), " value."),
                    
                    p("Once you have curated your data, you can proceed with to gating. Simply click on the ", strong("Gate"), " tab at the top of the page."), 
                    style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
                br(),
-               
                # plot SSC vs FSC for control samples -------------------------------------
                uiOutput(ns("header_non_debris_gate")),
                hr(),

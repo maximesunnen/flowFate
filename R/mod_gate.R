@@ -46,6 +46,8 @@ mod_gate_ui <- function(id){
                br(),
                div(
                  p("On the left, click on “Add GFP bin” to add a bin, then enter the bin size. You have to add at least 1 and you are limited to a maximum of 3 bins. Once you have added the desired bins, click on ", span("Confirm", style = "color:#008cba; font-weight:bold"), ". At this point, if you want to change the bin configuration, click on ", span("Reset bins", style = "color:#e99003; font-weight:bold"), ", change the bin configuration, then click ", span("Confirm", style = "color:#008cba; font-weight:bold"), " again."),
+                 br(),
+                 p(strong("Note:"), "The lower limit of the range of the first GFP bin is defaults to GFP intensity threshold calculated before during curation. You can lower this value, but your data has essentially already been gated to exclude such low intensities because they're unspecific and probably originate from autofluorescence."),
                  p("To proceed, click on the ", strong("Split peaks"), " tab at the top of the left side panel."),
                  style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
                  ),

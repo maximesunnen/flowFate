@@ -16,10 +16,19 @@ mod_export_ui <- function(id){
              sidebarPanel(
                textInput(ns("filename"), label = "Filename", placeholder = "Insert your filename here"),
                checkboxInput(ns("add_date"), label = "Add system date to filename"),
-               downloadButton(ns("download"), "Download")),
+               downloadButton(ns("download"), "Download", class = "btn-primary"),
+               actionButton(ns("table"), label = "Show population statistics", class = "btn-primary")),
              mainPanel(
-               h1("How export works."),
-               actionButton(ns("table"), label = "Show population statistics"),
+               h1(strong("How export works.")),
+               br(),
+               div(
+                 p("First, click on the ", span("Show population statistics", style = "color:#008cba; font-weight:bold"), " button to display a table containing statistics on the different populations seperated during this workflow."),
+                 p("To export this table, enter your filename on the left. By ticking the small checkbox below the entry field, the system date (today's data, if  set correctly on your computer) will be added automatically to your file name."),
+                 p(strong("Note:"), "The file extension will automatically be set to .csv, so you don't have to (and should not) add it manually."),
+
+                 p("Click on the ", span("Download", style = "color:#008cba; font-weight:bold"), "button to download this table as a csv file."), style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
+               ),
+               br(),
                textOutput(ns("test")),
                tableOutput(ns("population_table")))))}
     
