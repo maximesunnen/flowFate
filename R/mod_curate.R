@@ -46,10 +46,24 @@ mod_curate_ui <- function(id){
                    
                    p("Once you have curated your data, you can proceed with to gating. Simply click on the ", strong("Gate"), " tab at the top of the page."), 
                    style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
+               br(),
                
                # plot SSC vs FSC for control samples -------------------------------------
+               uiOutput(ns("header_non_debris_gate")),
+               hr(),
+               br(),
                plotOutput(ns("non_debris_gate")),
+               br(),
+               br(),
+               uiOutput(ns("header_gfp_gate")),
+               hr(),
+               br(),
                plotOutput(ns("gfp_gate")),
+               br(),
+               br(),
+               uiOutput(ns("header_myhc_gate")),
+               hr(),
+               br(),
                plotOutput(ns("myhc_gate"))
              )))}
 
@@ -65,6 +79,13 @@ mod_curate_ui <- function(id){
 mod_curate_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+
+    observe({
+      output$header_non_debris_gate <- renderUI({h3(strong("Your nonDebris gate"), style = "color:#008cba")})
+        output$header_gfp_gate <- renderUI({h3(strong("Your GFP noise threshold"), style = "color:#008cba")})
+        output$header_myhc_gate <- renderUI({h3(strong("Your MYHC noise threshold"), style = "color:#008cba")})
+    }) |> bindEvent(input$Curate)
     
     # Make the Curate button conditionally visible
     observe({
