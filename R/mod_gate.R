@@ -166,16 +166,15 @@ mod_gate_server <- function(id, r){
     
     ### this has to be modified!!!! see issue #13
     observe({
-      if (!is.null(gfp_low_myo_high())) {gs_pop_remove(r$gs, "GFP-low")}
-      if (!is.null(gfp_medium_myo_high())) {gs_pop_remove(r$gs, "GFP-medium")}
-      if (!is.null(gfp_high_myo_high())) {gs_pop_remove(r$gs, "GFP-high")}
+      if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-low"))) {gs_pop_remove(r$gs, "GFP-low")}
+      if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {gs_pop_remove(r$gs, "GFP-medium")}
+      if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {gs_pop_remove(r$gs, "GFP-high")}
       for (i in seq_along(gates())) {
         gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
       }
       recompute(r$gs)
       plot(r$gs)
     }) |> bindEvent(input$confirm_gate_reset)
-    
 
 # Computations ------------------------------------------------------------
     # capture the number of times the button is clicked inside a reactive expression: add_bins_clicks()
