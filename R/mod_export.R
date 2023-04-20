@@ -35,6 +35,7 @@ mod_export_ui <- function(id){
 #' export Server Functions
 #'
 #' @noRd 
+#' @importFrom utils write.csv
 mod_export_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -57,6 +58,7 @@ mod_export_server <- function(id,r){
           }
           }
     })
+
     
     output$test <- reactive(file_name())
     
