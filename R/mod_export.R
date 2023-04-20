@@ -70,8 +70,7 @@ mod_export_server <- function(id,r){
       for (i in seq_along(r$gs)) {
         x[[i]] <- gs_pop_get_count_fast(r$gs[[i]])
       }
-      y <- purrr::map(x, as.data.frame)
-      dplyr::bind_rows(y)
+      purrr::map_df(x, as.data.frame)
     })
       }
     )
