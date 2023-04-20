@@ -66,11 +66,7 @@ mod_export_server <- function(id,r){
 
     # reactive expression computing the final table we want to obtain
     population_table <- reactive({
-      x <- list()
-      for (i in seq_along(r$gs)) {
-        x[[i]] <- gs_pop_get_count_fast(r$gs[[i]])
-      }
-      purrr::map_df(x, as.data.frame)
+      purrr::map_df(r$gs, \(x) as.data.frame(gs_pop_get_count_fast(x)))
     })
       }
     )
