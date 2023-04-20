@@ -25,14 +25,14 @@ testServer(
     # - Testing output
     # expect_true(inherits(output$tbl$html, "html"))
 })
- 
+
 test_that("module ui works", {
   ui <- mod_export_ui(id = "test")
-  golem::expect_shinytaglist(ui)
+  golem::expect_shinytag(ui)
   # Check that formals have not been removed
   fmls <- formals(mod_export_ui)
-  for (i in c("id")){
+  for (i in c("id")) {
     expect_true(i %in% names(fmls))
   }
 })
- 
+

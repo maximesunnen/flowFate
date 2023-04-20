@@ -13,10 +13,10 @@
 mod_curate_ui <- function(id){
   ns <- NS(id)
   useShinyjs()
-  
+
   # Defining a tabPanel layout ----------------------------------------------
   tabPanel(title = "Curate",
-           
+
            # Defining a sidebarLayout in the Curate tab ------------------------------
            sidebarLayout(
              sidebarPanel(
@@ -26,25 +26,25 @@ mod_curate_ui <- function(id){
              # Action button to start curation
              actionButton(ns("Curate"), "Start curation", class = "btn-primary"),
              actionButton(ns("Delete"), "Restart curation", class = "btn-warning")),
-             
+
              mainPanel(
                h1(strong("How curation works.")),
                div(p("By curation we understand ", strong("two essential steps:")),
                    p("- First, our analysis should be focused on intact cells. We exclude cellular debris – clustering on the lower left corner on an SSC vs FSC plot – by applying a rectangular gate.", style = "text-indent: 25px"),
                    p("-	Second, FACS data is never devoid of background noise or signals from cellular autofluorescence. By applying intensity thresholds on our fluorescent channels, we essentially get rid of these undesirable signals.", style = "text-indent: 25px"),
-                   
+
                    p("We will use a ", em("pre-defined"), " rectangle gate to remove debris while our controls will help us get rid of unspecific signals."), style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
-                   
+
                    div(p("On the left, select the correct channels and control samples. Click the ", span("Start curation", style = "color:#008cba; font-weight:bold"), " button to start the curation. If you later notice that you’ve selected the wrong channels and/or control samples, click the ", span("Restart curation", style = "color:#e99003; font-weight:bold"), " button and restart the procedure. You will have to click the ", span("Start curation", style = "color:#008cba; font-weight:bold"), " button again."),
-                   
+
                    p("After curation is done, three plots will appear:"),
                    p("1) SSC vs FSC with the rectangle gate used to remove debris (in red)", style = "text-indent: 25px"),
                    p("2) Intensity (GFP) vs density plot for your unlabelled and myosin control with the intensity threshold (in red)", style = "text-indent: 25px"),
                    p("3) Intensity (Myosin) vs density plot for your unlabelled and GFP control with the intensity threshold (in red)", style = "text-indent: 25px"),
-                   
+
                    p("The reason why you see two plots for the intensity thresholds is that we compute a quantile gate for ", strong("two"), " control samples and average the results. The red lines correspond to this ", strong("averaged"), " value."),
-                   
-                   p("Once you have curated your data, you can proceed with to gating. Simply click on the ", strong("Gate"), " tab at the top of the page."), 
+
+                   p("Once you have curated your data, you can proceed with to gating. Simply click on the ", strong("Gate"), " tab at the top of the page."),
                    style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
                br(),
                # plot SSC vs FSC for control samples -------------------------------------
@@ -74,27 +74,27 @@ mod_curate_ui <- function(id){
 #' @importFrom ggcyto ggcyto geom_gate geom_stats scale_x_flowjo_biexp
 #' @rawNamespace import(flowWorkspace, except = show)
 #' @importFrom shinyjs show hide useShinyjs
-#' 
-mod_curate_server <- function(id,r){
+#'
+mod_curate_server <- function(id, r = NULL){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
+
 
     observe({
       output$header_non_debris_gate <- renderUI({h3(strong("Your nonDebris gate"), style = "color:#008cba")})
         output$header_gfp_gate <- renderUI({h3(strong("Your GFP noise threshold"), style = "color:#008cba")})
         output$header_myhc_gate <- renderUI({h3(strong("Your MYHC noise threshold"), style = "color:#008cba")})
     }) |> bindEvent(input$Curate)
-    
+
     # Make the Curate button conditionally visible
     observe({
       shinyjs::hide(id = "Curate")
     }) |> bindEvent(input$Curate)
-    
+
     observe({
       shinyjs::show(id = "Curate")
     }) |> bindEvent(input$ok)
-    
+
     # Restart curation MODAL
     modal_confirm <- modalDialog(
       "Are you sure you want to continue?",
@@ -124,22 +124,22 @@ mod_curate_server <- function(id,r){
     ### in fact, assigning only to r$XXX is sufficient, but then need to change this everywhere e.g. fsc() was used to r$fsc()
     fsc <- reactive(input$forward_scatter)
     r$fsc <- reactive(input$forward_scatter)
-    
+
     ssc <- reactive(input$side_scatter)
     r$ssc <- reactive(input$side_scatter)
-    
+
     ch_kras <- reactive(input$kras_channel)
     r$ch_kras <- reactive(input$kras_channel)
-    
+
     ch_myhc <- reactive(input$myhc_channel)
     r$ch_myhc <- reactive(input$myhc_channel)
 
     ctrl_kras <- reactive(input$positive_control_kras)
     r$ctrl_kras <- reactive(input$positive_control_kras)
-    
+
     ctrl_myhc <- reactive(input$positive_control_myhc)
     r$ctrl_myhc <- reactive(input$positive_control_myhc)
-    
+
     ctrl_negative <- reactive(input$negative_control)
     r$ctrl_negative <- reactive(input$negative_control)
 
@@ -188,7 +188,7 @@ mod_curate_server <- function(id,r){
 
       recompute(r$gs)
       message("Recomputed the gatingSet")
-      
+
       output$non_debris_gate <- renderPlot({
         ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_kras(),ctrl_myhc())]]),
                aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
@@ -203,10 +203,10 @@ mod_curate_server <- function(id,r){
     # Curate background noise: KRas channel -----------------------------------
     observe({
       # custom function: see end of document for details
-      lower_limit_gfp_gate <- get_lowerLimit(gs = r$gs, 
+      lower_limit_gfp_gate <- get_lowerLimit(gs = r$gs,
                                              datasets = c(ctrl_negative(), ctrl_myhc()),
-                                             node = "NonDebris", 
-                                             ch_gate = ch_kras(), 
+                                             node = "NonDebris",
+                                             ch_gate = ch_kras(),
                                              r = r)
       # For testing/debugging
       message("lower_limit_gfp_gate successfully computed")
@@ -245,9 +245,9 @@ mod_curate_server <- function(id,r){
     # Curate background noise: MYHC channel -----------------------------------
     observe({
       # custom function: see end of document for details
-      lower_limit_myhc_gate <- get_lowerLimit(gs = r$gs, 
+      lower_limit_myhc_gate <- get_lowerLimit(gs = r$gs,
                                              datasets = c(ctrl_negative(), ctrl_kras()),
-                                             node = "NonDebris", 
+                                             node = "NonDebris",
                                              ch_gate = ch_myhc(),
                                              r = r)
 

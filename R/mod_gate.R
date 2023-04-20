@@ -4,14 +4,14 @@
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @noRd
 #'
-#' @importFrom shiny NS tagList 
+#' @importFrom shiny NS tagList
 #' @importFrom shinyWidgets numericRangeInput
 mod_gate_ui <- function(id){
   ns <- NS(id)
   useShinyjs()
-  
+
   tabPanel(title = "Gate",
            # Defining a sidebarLayout in the Gate tab ------------------------------
            sidebarLayout(
@@ -32,10 +32,10 @@ mod_gate_ui <- function(id){
                                     hr(),
                                     br(),
                                     selectInput(ns("controller"),
-                                                label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("fa fa-info"))),
+                                                label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("info"))),
                                                 choices = c("GFP-low", "GFP-medium", "GFP-high")),
                                     actionButton(ns("plot"), "Plot", class = "btn-light")))),
-             
+
              mainPanel(
                h1(strong("How gating works.")),
                div(
@@ -55,66 +55,66 @@ mod_gate_ui <- function(id){
                hr(),
                br(),
                div(
-                 
+
                  p("When we look at the myosin distribution inside the bins just created, a pattern emerges. In fact, two populations can be distinguished:"),
                  p("-	Low myosin expression: for C2C12, these cells can be seen as", strong("progenitors"), style = "text-indent: 25px"),
                  p("-	High myosin expression: for C2C12, these cells can be seen as", strong("differentiated myocytes"), style = "text-indent: 25px"),
-                 
-                 p("Inside the app, we can find the threshold separating these two populations by clicking on the", span("Split", style = "color:#008cba; font-weight:bold"), " button."),    
+
+                 p("Inside the app, we can find the threshold separating these two populations by clicking on the", span("Split", style = "color:#008cba; font-weight:bold"), " button."),
                  p(strong("Note:"), " at this point, if you want to change the bin configuration, you have to click on", span("Reset gates", style = "color:#e99003; font-weight:bold"), ", switch to the GFP bins tab and start over."),
                  style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
                  ),
-               
+
                # outputs
                textOutput(ns("test")),
                plotOutput(ns("myosin_splittedPeaks")))))
 }
-    
+
 #' gate Server Functions
-#' @noRd 
+#' @noRd
 #' @importFrom shinyjs show hide useShinyjs
 #' @importFrom openCyto gate_flowclust_1d
 #' @importFrom flowCore fsApply
 #' @importFrom flowWorkspace gs_pop_remove
-#' 
+#'
 mod_gate_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
+
 
 # Modals, help buttons, etc. ----------------------------------------------
     ## Plot panel: Help button
     observe({
       showModal(modalDialog(p("Select the GFP bin for which you want to display the myosin intensities.")))
     }) |> bindEvent(input$help)
-    
+
     ## "Add_bins" button
     observe({
       if (is.null(r$lower_limit_gfp)) {shinyjs::hide(id = "add_bins")}
       else {shinyjs::show(id = "add_bins")}
     })
-    
+
     # "Confirm" and "Add GFP bins" buttons
     observe({
       shinyjs::hide(id = "confirm_bins")
       shinyjs::hide(id = "add_bins")
     }) |> bindEvent(input$confirm_bins)
-    
+
     modal_confirm_bins <- modalDialog(
       "Are you sure you want to continue?",
       title = "Deleting your GFP bins",
       footer = tagList(
         actionButton(ns("cancel_bin_reset"), "Cancel"),
         actionButton(ns("confirm_bin_reset"), "Delete", class = "btn btn-danger")))
-    
+
     observe({
       showModal(modal_confirm_bins)
     }) |> bindEvent(input$reset_bins) #show modal when user clicks reset_bins button
-    
+
     observe({
       removeModal()
     }) |> bindEvent(input$cancel_bin_reset) #remove modal when user decides to CANCEL bin reset
-    
+
     observe({
       shinyjs::show(id = "confirm_bins")
       shinyjs::show(id = "add_bins")
@@ -129,23 +129,23 @@ mod_gate_server <- function(id, r){
       footer = tagList(
         actionButton(ns("cancel_gate_reset"), "Cancel"),
         actionButton(ns("confirm_gate_reset"), "Delete", class = "btn btn-danger")))
-    
+
     observe({
       shinyjs::hide(id = "split")
       shinyjs::show(id = "reset_gates")
     }) |> bindEvent(input$split)
-    
+
     observe({
       shinyjs::hide(id = "reset_gates")
       shinyjs::show(id = "split")
       showNotification("Gates were successfully reset.")
       removeModal()
     }) |> bindEvent(input$confirm_gate_reset)
-    
+
     observe({
       removeModal()
     }) |> bindEvent(input$cancel_gate_reset)
-    
+
     observe({
       showModal(modal_confirm_gates)
     }) |> bindEvent(input$reset_gates)
@@ -165,7 +165,7 @@ mod_gate_server <- function(id, r){
         gs_pop_remove(r$gs, "GFP-high")
       }
     }) |> bindEvent(input$confirm_bin_reset)
-    
+
     ### this has to be modified!!!! see issue #13
     observe({
       if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-low"))) {gs_pop_remove(r$gs, "GFP-low")}
@@ -183,7 +183,7 @@ mod_gate_server <- function(id, r){
     # run the render_bin_UI function according to the value of the reactive expression
 
     add_bins_clicks <- reactive({input$add_bins})
-    
+
     observe({
       switch(add_bins_clicks(),
              render_bin_UI(1, c(signif(r$lower_limit_gfp, digits = 3), 100), ns, "First", output, r),
@@ -191,7 +191,7 @@ mod_gate_server <- function(id, r){
              render_bin_UI(3, c(351,1000), ns, "Third", output, r))
       if (add_bins_clicks() == 3) shinyjs::hide(id = "add_bins")
     })
-    
+
     # capture gate ranges (user input) inside a reactive expression: gate_limits()
     gate_limits <- reactive({
       x <- list(low = if(!is.null(input$gfp_range_1)) list(input$gfp_range_1),
@@ -231,17 +231,17 @@ mod_gate_server <- function(id, r){
       for (i in seq_along(gates())) {
         gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
       }
-      
+
       recompute(r$gs)
       plot(r$gs)
     }) |> bindEvent(input$confirm_bins)  # input$confirm_bins used here, after this the button should disappear (done in line 73)
-  
+
     # extract gates data and split myosin peak
     ## nice: if any of reactive expressions below are called and the input doesn't exist (e.g gfp_range_2 when only first GFP bin added),
     ## expression evaluates to NULL
     ## note: below we don't add anything to the gatingSet. the reactive expressions return a gate "rectangular gate with dimensions....". We later
     ## add this gate to the gatingSet
-    
+
 #' @importFrom stringr str_detect
 #' @importFrom flowWorkspace gs_get_pop_paths
 
@@ -295,7 +295,7 @@ subset <- reactive(input$controller)
 # add the gates computed by getData_splitPeak() to the gatingSet: custom function add_gate()
 ## recompute(r$gs) already wrapped inside add_gate()
 ## plot(r$gs) doesn't work properly now: I think it only plots the gates that are common across all samples?! However, we will add gates to individual samples using add_gate() as the sample names in our gatingSet do not necessarily match those in the gates we add. Remember that we removed gates that evaluate to NULL. Same problem with gs_get_pop_paths(): workaround using the reactive expression final_output().
-## this addition to the gatingSet is under the control of input$split: documents this properly in the mainPanel and README 
+## this addition to the gatingSet is under the control of input$split: documents this properly in the mainPanel and README
 
 observe({
   if (!is.null(gfp_low_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_low_myo_high(), parent = "GFP-low")}
@@ -387,22 +387,22 @@ add_gate <- function(r, gs, gate, parent) {
 #'   if (channel == "gfp") {
 #'     if (bin_number == 1) {
 #'     conditionalPanel(condition = paste0("input.add_bins >= ", bin_number),
-#'                      ns = ns, 
-#'                      numericRangeInput(ns(paste0(channel, "_range_", bin_number)), 
+#'                      ns = ns,
+#'                      numericRangeInput(ns(paste0(channel, "_range_", bin_number)),
 #'                                        label = paste0(label," ", str_to_upper(channel), " ", "bin"),
 #'                                        value = c(signif(lower_limit, digits = 3),100)))
 #'     }
 #'     else if (bin_number == 2) {
 #'       conditionalPanel(condition = paste0("input.add_bins >= ", bin_number),
-#'                        ns = ns, 
-#'                        numericRangeInput(ns(paste0(channel, "_range_", bin_number)), 
+#'                        ns = ns,
+#'                        numericRangeInput(ns(paste0(channel, "_range_", bin_number)),
 #'                                          label = paste0(label," ", str_to_upper(channel), " ", "bin"),
 #'                                          value = c(101,350)))
 #'     }
 #'     else if (bin_number == 3) {
 #'       conditionalPanel(condition = paste0("input.add_bins >= ", bin_number),
-#'                        ns = ns, 
-#'                        numericRangeInput(ns(paste0(channel, "_range_", bin_number)), 
+#'                        ns = ns,
+#'                        numericRangeInput(ns(paste0(channel, "_range_", bin_number)),
 #'                                          label = paste0(label," ", str_to_upper(channel), " ", "bin"),
 #'                                          value = c(351,1000)))
 #'     }
@@ -412,14 +412,14 @@ add_gate <- function(r, gs, gate, parent) {
 # # illustration how conditionalPanel works
 # conditionalPanel(
 #   # still a JS expression
-#   condition = "input.add_bins == 1", 
+#   condition = "input.add_bins == 1",
 #   #make sure that input.<input> reacts to (and only to) to input from this module
-#   ns = ns, 
+#   ns = ns,
 #   #what should happen if condition is met
 #   checkboxInput(ns("headsonly"), "This text should...."))
 
 ## To be copied in the UI
 # mod_gate_ui("gate_1")
-    
+
 ## To be copied in the server
 # mod_gate_server("gate_1")
