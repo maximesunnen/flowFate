@@ -28,19 +28,26 @@ mod_import_ui <- function(id){
 
              mainPanel(
                h1(strong("Welcome to flowFate.")),
-               p("To import your FCS file, click on the " , strong("Browse"), " button on the left and select your file. Confirm your selection by clicking on the ", span("Submit", style = "color:#008cba; font-weight:bold"), " button. A table containing a description of the uploaded file as well as your FCS file’s individual datasets appears. We’ve added a “well-name” column so you can verify if you’ve uploaded the correct file. You can click on and select one (or multiple) rows to show the SSC vs FSC plot of the selected dataset(s).", br(), br(), "To upload a new FCS file, click on the " , strong("Browse"), " button and select the correct file. Don’t forget to confirm your selection again by clicking on the ", span("Submit", style = "color:#008cba; font-weight:bold"), " button.", br(), br(), "Once the correct file has been uploaded, you can proceed with the curation of your data. Simply click on the ", strong("Curate"), " tab at the top of the page.", style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
+               p("To import your FCS file, click on the " , strong("Browse"),
+                 " button on the left and select your file. Confirm your selection by clicking on the ",
+                 span("Submit", style = "color:#008cba; font-weight:bold"),
+                 " button. A table containing a description of the uploaded file as well as your FCS file's individual datasets appears. We've added a 'well-name' column so you can verify if you've uploaded the correct file. You can click on and select one (or multiple) rows to show the SSC vs FSC plot of the selected dataset(s).", br(), br(),
+                 "To upload a new FCS file, click on the " , strong("Browse"), " button and select the correct file. Don't forget to confirm your selection again by clicking on the ", span("Submit", style = "color:#008cba; font-weight:bold"), " button.", br(), br(),
+                 "Once the correct file has been uploaded, you can proceed with the curation of your data. Simply click on the ",
+                 strong("Curate"), " tab at the top of the page.",
+                 style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
                br(),
                uiOutput(ns("your_data")),
                hr(),
                br(),
                # Table showing the imported file -----------------------------------------
                tableOutput(ns("files")),
-               
+
                # Text indicating the number of datasets ----------------------------------
                textOutput(ns("datasets")),
                br(),
                br(),
-               
+
                # Header over ind. FCS but printed only after submit ----------------------
                uiOutput(ns("your_datasets")),
                hr(),
@@ -72,7 +79,7 @@ mod_import_server <- function(id, r = NULL){
 
   moduleServer(id, function(input, output, session){
     ns <- session$ns
-    
+
     observe({
       if (is.null(input$filename)) shinyjs::hide("Submit")
       else shinyjs::show("Submit")
@@ -139,7 +146,7 @@ mod_import_server <- function(id, r = NULL){
         # create a gatingSet ------------------------------------------------------
         gs <- GatingSet(fs)
 
-        # stratégie du petit R: variables to be shared across modules ---------------------
+        # strategie du petit R: variables to be shared across modules ---------------------
         r$nb_ds <- nb_ds
         r$gs <- gs
         r$fs <- fs
