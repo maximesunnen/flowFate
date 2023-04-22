@@ -175,7 +175,7 @@ mod_gate_server <- function(id, r){
         gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
       }
       recompute(r$gs)
-      plot(r$gs)
+      #plot(r$gs)
     }) |> bindEvent(input$confirm_gate_reset)
 
 # Computations ------------------------------------------------------------
@@ -233,7 +233,7 @@ mod_gate_server <- function(id, r){
       }
 
       recompute(r$gs)
-      plot(r$gs)
+      #plot(r$gs)
     }) |> bindEvent(input$confirm_bins)  # input$confirm_bins used here, after this the button should disappear (done in line 73)
 
     # extract gates data and split myosin peak
