@@ -92,19 +92,22 @@ mod_import_server <- function(id, r = NULL){
     
     nb_ds <- reactive({
       req(input$filename$datapath)
-      n_datasets(input$filename$datapath)
+      withProgress(message = "Counting datasets...",
+      n_datasets(input$filename$datapath))
       }) |> bindEvent(input$Submit)
     
     individual_fcs <- reactive({
       req(input$filename$datapath)
-      split_1_fcs(nb_ds(), input$filename$datapath)
+      withProgress(message = "Splitting datasets...",
+      split_1_fcs(nb_ds(), input$filename$datapath))
     }) |> bindEvent(input$Submit)
     
     fs <- reactive({
+      withProgress(message = "Reading datasets...",
       read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"),
                    truncate_max_range = FALSE,
                    alter.names = TRUE,
-                   transformation = FALSE)
+                   transformation = FALSE))
     }) |> bindEvent(input$Submit)
     
     flowSet_pData <- reactive({pData(fs())}) |> bindEvent(input$Submit)
