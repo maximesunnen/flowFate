@@ -27,6 +27,8 @@ mod_import_ui <- function(id){
                  actionButton(ns("Submit"), "Submit", class = "btn-primary"))),
 
              mainPanel(
+               tabsetPanel(
+                 tabPanel("Information", icon = icon("info"),
                h1(strong("Welcome to flowFate.")),
                p("To import your FCS file, click on the " , strong("Browse"),
                  " button on the left and select your file. Confirm your selection by clicking on the ",
@@ -36,28 +38,21 @@ mod_import_ui <- function(id){
                  "Once the correct file has been uploaded, you can proceed with the curation of your data. Simply click on the ",
                  strong("Curate"), " tab at the top of the page.",
                  style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
-               br(),
-               uiOutput(ns("your_data")),
-               hr(),
+               br()),
+               tabPanel("Uploaded FCS file",
                br(),
                # Table showing the imported file -----------------------------------------
                tableOutput(ns("files")),
-
                # Text indicating the number of datasets ----------------------------------
-               textOutput(ns("datasets")),
-               br(),
-               br(),
-
-               # Header over ind. FCS but printed only after submit ----------------------
-               uiOutput(ns("your_datasets")),
-               hr(),
+               textOutput(ns("datasets"))),
+               
+               tabPanel("Your datasets",
                br(),
                # Table showing individual FCS (interactive because DT) -------------------
                DTOutput(ns("individual_FCS")),
                br(),
                # Plot the dataset selected in the DT table above -------------------------
-               plotOutput(ns("overview_SSC_FSC")),
-               textOutput(ns("test"))
+               plotOutput(ns("overview_SSC_FSC"))))
     )))
 
 }
@@ -121,11 +116,6 @@ mod_import_server <- function(id, r = NULL){
     
     selected_rows <- reactive(input$individual_FCS_rows_selected)
     
-
-    output$your_data <- renderUI({
-      h3(strong("Uploaded FCS file"), style = "color:#008cba")
-    })
-    
     output$datasets <- renderText({
       #req(input$filename)
       paste0("Your FCS file contains ", nb_ds(), " datasets.")
@@ -134,10 +124,6 @@ mod_import_server <- function(id, r = NULL){
     output$files <- renderTable({
       req(input$Submit)
       filename()
-    })
-    
-    output$your_datasets <- renderUI({
-      h3(strong("Your datasets"), style = "color:#008cba")
     })
     
     output$individual_FCS <- renderDT({flowSet_pData()},
