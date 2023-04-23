@@ -37,6 +37,8 @@ mod_gate_ui <- function(id){
                                     actionButton(ns("plot"), "Plot", class = "btn-light")))),
 
              mainPanel(
+               tabsetPanel(
+                 tabPanel("Information", icon = icon("info"),
                h1(strong("How gating works.")),
                div(
                  p("Gating is the most crucial and complex step in this workflow. It consists of", strong("2 essential steps"), ":"),
@@ -63,12 +65,12 @@ mod_gate_ui <- function(id){
                  p("Inside the app, we can find the threshold separating these two populations by clicking on the", span("Split", style = "color:#008cba; font-weight:bold"), " button."),
                  p(strong("Note:"), " at this point, if you want to change the bin configuration, you have to click on", span("Reset gates", style = "color:#e99003; font-weight:bold"), ", switch to the GFP bins tab and start over."),
                  style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
-                 ),
-
-               # outputs
+                 )),
+               
+               tabPanel("Plot",
                textOutput(ns("test")),
-               plotOutput(ns("myosin_splittedPeaks")))))
-}
+               plotOutput(ns("myosin_splittedPeaks"))))
+)))}
 
 #' gate Server Functions
 #' @noRd
