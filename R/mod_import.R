@@ -85,59 +85,62 @@ mod_import_server <- function(id, r = NULL){
       else shinyjs::show("Submit")
     })
     
+    filename <- reactive({
+      req(input$filename)
+      input$filename
+    }) |> bindEvent(input$Submit)
+    
     nb_ds <- reactive({
       req(input$filename$datapath)
       n_datasets(input$filename$datapath)
-      })
+      }) |> bindEvent(input$Submit)
     
     individual_fcs <- reactive({
       req(input$filename$datapath)
       split_1_fcs(nb_ds(), input$filename$datapath)
-    })
+    }) |> bindEvent(input$Submit)
     
     fs <- reactive({
       read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"),
                    truncate_max_range = FALSE,
                    alter.names = TRUE,
                    transformation = FALSE)
-    })
+    }) |> bindEvent(input$Submit)
+    
+    flowSet_pData <- reactive({pData(fs())}) |> bindEvent(input$Submit)
     
     #not sure where to put this now
     # pData(fs())$well <- str_extract(pData(fs())$name, "[A-Z]\\d{2}")
     
     gs <- reactive({
       GatingSet(fs())
-      })
+      }) |> bindEvent(input$Submit)
     
     selected_rows <- reactive(input$individual_FCS_rows_selected)
     
-    observe({
-      output$your_data <- renderUI({
-        h3(strong("Uploaded FCS file"), style = "color:#008cba")
-      })
-      
-      output$datasets <- renderText({
-        req(input$filename)
-        paste0("Your FCS file contains ", nb_ds(), " datasets.")
-      })
-      
-      output$files <- renderTable({
-        req(input$filename)
-        input$filename
-      })
-      
-      output$your_datasets <- renderUI({
-        h3(strong("Your datasets"), style = "color:#008cba")
-      })
-      
-      output$individual_FCS <- renderDT({pData(fs())},
-                                        rownames = FALSE,
-                                        class = "cell-border stripe")
-    }) |> bindEvent(input$Submit)
 
-        # add a well column to pData of flowSet -----------------------------------
-
+    output$your_data <- renderUI({
+      h3(strong("Uploaded FCS file"), style = "color:#008cba")
+    })
     
+    output$datasets <- renderText({
+      #req(input$filename)
+      paste0("Your FCS file contains ", nb_ds(), " datasets.")
+    })
+    
+    output$files <- renderTable({
+      req(input$Submit)
+      filename()
+    })
+    
+    output$your_datasets <- renderUI({
+      h3(strong("Your datasets"), style = "color:#008cba")
+    })
+    
+    output$individual_FCS <- renderDT({flowSet_pData()},
+                                      rownames = FALSE,
+                                      class = "cell-border stripe")
+
     # stratégie du petit R: variables to be shared across modules ---------------------
     
     observe({
@@ -155,13 +158,9 @@ mod_import_server <- function(id, r = NULL){
           theme_bw()
       }
     })
-    
-    #technically not necessary since i changed the plot to the first page/module
-    r$Submit <- reactive(input$Submit)
+
   })
 }
-
-
 
 #' @description Count how many datasets are in a FCS file
 #'
