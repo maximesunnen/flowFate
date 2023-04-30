@@ -24,6 +24,7 @@ golem::add_module(name = "import", with_test = TRUE) # Name of the module
 golem::add_module(name = "curate", with_test = TRUE)# Name of the module
 golem::add_module(name = "gate", with_test = TRUE)# Name of the module
 golem::add_module(name = "export", with_test = TRUE)# Name of the module
+golem::add_module(name = "explore", with_test = TRUE)# Name of the module
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
