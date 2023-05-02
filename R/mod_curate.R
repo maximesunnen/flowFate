@@ -163,7 +163,7 @@ mod_curate_server <- function(id, r = NULL){
     # Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate".
 
     observe({
-      pgn_cut <- matrix(c(0, 12500, 99000, 99000,0,6250, 6250, 6250, 99000, 99000),
+      pgn_cut <- matrix(c(12500, 99000, 99000,0,0,6250, 6250, 99000, 99000,12500),
                         ncol = 2,
                         nrow = 5)
       colnames(pgn_cut) <- c(ssc(), fsc())
