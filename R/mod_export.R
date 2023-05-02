@@ -29,6 +29,14 @@ mod_export_ui <- function(id){
                  p("Click on the ", span("Download", style = "color:#008cba; font-weight:bold"), "button to download this table as a csv file."), style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
                ),
                br(),
+               div(
+                 p("The exported population statistics table contains 5 columns:"),
+                 p("-  ", strong("name"), ": indicates the dataset and defaults to \"dataset_well-number\"", style = "text-indent: 25px"),
+                 p("-  ", strong("Population"), ": indicates the population created after applying a gate i.e /NonDebris contains all the events that are not debris, /NonDebris/GFP+ contains all the events that are not debris and are GFP-positive, etc. The population and gate names are identical.", style = "text-indent: 25px"),
+                 p("-  ", strong("Count"), ": indicates the number of events in the respective population", style = "text-indent: 25px"),
+                 p("-  ", strong("ParentCount"), ": indicates the number of events in a parent population i.e. for the Population /NonDebris/GFP+, the ParentCount corresponds to the number of events in the NonDebris population.", style = "text-indent: 25px"),
+                 p("-  ", strong("Percentage"), ": (Count/ParentCount) x 100", style = "text-indent: 25px"), style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"),
+               br(),
                textOutput(ns("test")),
                tableOutput(ns("population_table")))))}
     
@@ -36,6 +44,7 @@ mod_export_ui <- function(id){
 #'
 #' @noRd 
 #' @importFrom utils write.csv
+#' @importFrom dplyr mutate lag
 mod_export_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -67,13 +76,15 @@ mod_export_server <- function(id,r){
     output$download <- downloadHandler(filename = function() file_name(), content = function(file) {write.csv(population_table(), file)})
 
     # reactive expression computing the final table we want to obtain
+    # old version : population_table <- reactive({ purrr::map_df(r$gs, \(x) as.data.frame(gs_pop_get_count_fast(x)))})
+
     population_table <- reactive({
-      purrr::map_df(r$gs, \(x) as.data.frame(gs_pop_get_count_fast(x)))
+      purrr::map_df(r$gs, \(x) as.data.frame(gs_pop_get_stats(x)) |>  mutate("Percentage" = ifelse(is.na(count / lag(count)), (count / count) * 100, (count / lag(count)) * 100)))
     })
       }
     )
   }
-    
+
 ## To be copied in the UI
 # mod_export_ui("export_1")
     
