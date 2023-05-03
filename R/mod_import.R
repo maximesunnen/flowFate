@@ -38,7 +38,8 @@ mod_import_ui <- function(id){
                  "Once the correct file has been uploaded, you can proceed with the curation of your data. Simply click on the ",
                  strong("Curate"), " tab at the top of the page.",
                  style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
-               br()),
+               br(),
+               actionButton(ns("demo_fs"), label = "Import demo data")),
                tabPanel("Uploaded FCS file",
                br(),
                # Table showing the imported file -----------------------------------------
@@ -74,11 +75,50 @@ mod_import_server <- function(id, r = NULL){
 
   moduleServer(id, function(input, output, session){
     ns <- session$ns
-
-    observe({
-      if (is.null(input$filename)) shinyjs::hide("Submit")
-      else shinyjs::show("Submit")
+    
+observe({
+  demo_filename <- system.file("demo_fcs_file/demo.fcs", package = "flowFate")
+  
+  withProgress(message = "Counting number of datasets...",
+  demo_nb_ds <- n_datasets(demo_filename))
+  withProgress(message = "Splitting .fcs file...",
+  individual_demo_fcs <- split_1_fcs(demo_nb_ds, input_file = demo_filename))
+  withProgress(message = "Reading flowSet...",
+  demo_fs <- read.flowSet(fs::dir_ls(individual_demo_fcs, glob = "*.fcs"),
+                              truncate_max_range = FALSE,
+                              alter.names = TRUE,
+                              transformation = FALSE))
+  demo_flowSet_pData <- pData(demo_fs)
+  
+  output$datasets <- renderText({
+    paste0("Your FCS file contains ", demo_nb_ds, " datasets.")
+  })
+    
+    output$files <- renderTable({
+      demo_filename
     })
+
+    output$individual_FCS <- renderDT({demo_flowSet_pData},
+                                      rownames = FALSE,
+                                      class = "cell-border stripe")
+    r$gs <- GatingSet(demo_fs)
+    r$fs <- demo_fs
+    output$overview_SSC_FSC <- renderPlot({
+      if (!is_null(selected_rows())) {
+        ggcyto(r$gs[[selected_rows()]], aes(x = "SSC.HLin", y = "FSC.HLin"), subset = "root") +
+          geom_hex(bins = 150) +
+          theme_bw()
+      }
+    })
+    
+  }) |> bindEvent(input$demo_fs)
+  
+  
+
+  observe({
+    if (is.null(input$filename)) shinyjs::hide("Submit")
+    else shinyjs::show("Submit")
+  })
     
     filename <- reactive({
       req(input$filename)
@@ -141,13 +181,13 @@ mod_import_server <- function(id, r = NULL){
     # overview SSC vs FSC plot to inspect data --------------------------------
 
     output$overview_SSC_FSC <- renderPlot({
+      req(gs())
       if (!is_null(selected_rows())) {
         ggcyto(gs()[[selected_rows()]], aes(x = "SSC.HLin", y = "FSC.HLin"), subset = "root") +
           geom_hex(bins = 150) +
           theme_bw()
       }
     })
-
   })
 }
 
