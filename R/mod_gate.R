@@ -341,7 +341,7 @@ remove_null_from_list <- function(data) {
 
 plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, gate) {
     ggcyto(gs, aes(x = "RED.R.HLin"), subset = subset) +
-      geom_density(fill = density_fill) +
+      geom_histogram(bins = 50, fill = density_fill, color = "black") +
       scale_x_flowjo_biexp() +
       theme_bw() +
       geom_gate(gate)

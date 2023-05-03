@@ -225,7 +225,7 @@ mod_curate_server <- function(id, r = NULL){
         ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_myhc())]]),
                aes(x = .data[[ch_kras()]]),
                subset = "NonDebris") +
-          geom_density(fill = "forestgreen") +
+          geom_histogram(bins = 50, fill = "palegreen1", color = "black") +
           theme_bw() +
           geom_gate(gfp_gate) +
           geom_stats() +
@@ -263,7 +263,7 @@ mod_curate_server <- function(id, r = NULL){
         ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_kras())]]),
                aes(x = .data[[ch_myhc()]]),
                subset = "NonDebris") +
-          geom_density(fill = "pink") +
+          geom_histogram(bins = 50, fill = "pink", color = "black") +
           theme_bw() +
           geom_gate(myhc_gate) +
           geom_stats() +

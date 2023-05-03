@@ -166,7 +166,7 @@ observe({
       filename()
     })
     
-    output$individual_FCS <- renderDT({flowSet_pData()},
+    output$individual_FCS <- renderDT({flowSet_pData()}, selection = list(target = "row", selected = 1, mode = "single"),
                                       rownames = FALSE,
                                       class = "cell-border stripe")
 
@@ -187,7 +187,7 @@ observe({
           geom_hex(bins = 150) +
           theme_bw()
       }
-    })
+    }, res = 120)
   })
 }
 
