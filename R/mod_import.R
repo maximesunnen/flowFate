@@ -109,7 +109,7 @@ observe({
           geom_hex(bins = 150) +
           theme_bw()
       }
-    })
+    }, res = 120)
     
   }) |> bindEvent(input$demo_fs)
   

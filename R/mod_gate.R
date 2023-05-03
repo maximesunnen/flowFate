@@ -309,7 +309,7 @@ observe({
 ## output plot: a  plot showing splitted peaks for the gate chosen by the user using the controller.
 output$myosin_splittedPeaks <- renderPlot({
   plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gate_myosin_plot(), subset = subset())
-}) |> bindEvent(input$plot)
+}, res = 120) |> bindEvent(input$plot)
 
 output[["test"]] <- renderText(glue("Test works"))
   })}

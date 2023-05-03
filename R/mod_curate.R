@@ -187,7 +187,7 @@ mod_curate_server <- function(id, r = NULL){
           theme_bw() +
           geom_gate(gate_non_debris) +
           geom_stats()
-      })
+      }, res = 120)
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
     # Curate background noise: KRas channel -----------------------------------
@@ -230,7 +230,7 @@ mod_curate_server <- function(id, r = NULL){
           geom_gate(gfp_gate) +
           geom_stats() +
           scale_x_flowjo_biexp()
-      })}) |> bindEvent(input$Curate, ignoreInit = TRUE)
+      }, res = 120)}) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
     # Curate background noise: MYHC channel -----------------------------------
     observe({
@@ -268,7 +268,7 @@ mod_curate_server <- function(id, r = NULL){
           geom_gate(myhc_gate) +
           geom_stats() +
           scale_x_flowjo_biexp()
-      })
+      }, res = 120)
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
     observe({
