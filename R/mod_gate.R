@@ -69,6 +69,7 @@ mod_gate_ui <- function(id){
                
                tabPanel("Plot",
                textOutput(ns("test")),
+               DTOutput(ns("individual_FCS")),
                plotOutput(ns("myosin_splittedPeaks"))))
 )))}
 
@@ -308,8 +309,9 @@ observe({
 
 ## output plot: a  plot showing splitted peaks for the gate chosen by the user using the controller.
 output$myosin_splittedPeaks <- renderPlot({
-  plot_myosin_splittedPeaks(r = r, gs = r$gs, density_fill = "pink", gate = gate_myosin_plot(), subset = subset())
-}, res = 120) |> bindEvent(input$plot)
+  req(r$gs, selected_rows(), gate_myosin_plot(), subset())
+  plot_myosin_splittedPeaks(r = r, gs = r$gs[[selected_rows()]], density_fill = "pink", gate = gate_myosin_plot(), subset = subset())
+}, res = 120)
 
 output[["test"]] <- renderText(glue("Test works"))
 
@@ -322,6 +324,16 @@ observe({
   updateTabsetPanel(inputId = "tabset", selected = "Split peaks")
 }) |> bindEvent(input$confirm_bins)
 
+flowSet_pData <- reactive({
+  req(r$fs)
+  pData(r$fs)
+  })
+
+selected_rows <- reactive(input$individual_FCS_rows_selected)
+
+output$individual_FCS <- renderDT({flowSet_pData()},
+                                  rownames = FALSE,
+                                  class = "cell-border stripe")
   })}
 
 
