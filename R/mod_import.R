@@ -76,6 +76,8 @@ mod_import_server <- function(id, r = NULL){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
+    ## WRAP DEMO_FCS STUFF INSIDE OBSERVE: a bit ugly
+    
 observe({
   demo_filename <- system.file("demo_fcs_file/demo.fcs", package = "flowFate")
   
@@ -113,7 +115,7 @@ observe({
     
   }) |> bindEvent(input$demo_fs)
   
-  
+  ## HERE EVERYTHING NOT RELATED TO DEMO FCS STARTS
 
   observe({
     if (is.null(input$filename)) shinyjs::hide("Submit")
