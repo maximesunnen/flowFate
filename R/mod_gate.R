@@ -312,7 +312,19 @@ output$myosin_splittedPeaks <- renderPlot({
 }, res = 120) |> bindEvent(input$plot)
 
 output[["test"]] <- renderText(glue("Test works"))
+
+observe({
+  modal_confirm_bins <- modalDialog(
+    p("Your bins have been successfully added! Click on ", span("Split now", style = "color:#008cba; font-weight:bold"), " to split your MyHC peaks."),
+    title = "Done!"
+  )
+  showModal(modal_confirm_bins)
+  updateTabsetPanel(inputId = "tabset", selected = "Split peaks")
+}) |> bindEvent(input$confirm_bins)
+
   })}
+
+
 
 
 # CUSTOM FUNCTIONS --------------------------------------------------------
