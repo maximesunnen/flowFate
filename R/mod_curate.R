@@ -228,7 +228,6 @@ mod_curate_server <- function(id, r = NULL){
           geom_histogram(bins = 50, fill = "palegreen1", color = "black") +
           theme_bw() +
           geom_gate(gfp_gate) +
-          geom_stats() +
           scale_x_flowjo_biexp()
       }, res = 120)}) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
@@ -266,7 +265,6 @@ mod_curate_server <- function(id, r = NULL){
           geom_histogram(bins = 50, fill = "pink", color = "black") +
           theme_bw() +
           geom_gate(myhc_gate) +
-          geom_stats() +
           scale_x_flowjo_biexp()
       }, res = 120)
     }) |> bindEvent(input$Curate, ignoreInit = TRUE)
