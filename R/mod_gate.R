@@ -34,10 +34,10 @@ mod_gate_ui <- function(id){
                                     selectInput(ns("controller"),
                                                 label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("info"))),
                                                 choices = c("GFP-low", "GFP-medium", "GFP-high")),
-                                    actionButton(ns("plot"), "Plot", class = "btn-light")))),
+                                    ))),
 
              mainPanel(
-               tabsetPanel(
+               tabsetPanel(id = ns("tabset-mainPanel"),
                  tabPanel("Information", icon = icon("info"),
                h1(strong("How gating works.")),
                div(
@@ -197,10 +197,11 @@ mod_gate_server <- function(id, r){
 
     # capture gate ranges (user input) inside a reactive expression: gate_limits()
     gate_limits <- reactive({
+      withProgress(message = "Calculating gate limits...", {
       x <- list(low = if(!is.null(input$gfp_range_1)) list(input$gfp_range_1),
                 medium = if(!is.null(input$gfp_range_2)) list(input$gfp_range_2) else {list(NA)},
                 high = if(!is.null(input$gfp_range_3)) list(input$gfp_range_3) else {list(NA)})
-      x[!sapply(x, is.na)]
+      x[!sapply(x, is.na)]})
     })
 
     # for debugging
@@ -217,6 +218,7 @@ mod_gate_server <- function(id, r){
 
     # use the gate_limits() reactive expression to create a gate
     gates <- reactive({
+      withProgress(message = "Creating gates...", {
       if (is.null(gate_limits())) return(NULL)
       filter_names <- c("GFP-low", "GFP-medium", "GFP-high")
       y <- lapply(gate_limits(), function(x) {
@@ -224,7 +226,7 @@ mod_gate_server <- function(id, r){
         rectangleGate(x)})
       for (i in seq_along(y))
         y[[i]]@filterId <- filter_names[[i]]
-      return(y)
+      return(y)})
     })
 
     #observe({print(gates())}) # i guess this is not working for the same reasons the printing above does not work
@@ -250,23 +252,26 @@ mod_gate_server <- function(id, r){
 
 gfp_low_myo_high <- reactive({
   req(r$gs)
+  withProgress(message = "Retrieving data from GFP-low bin...", {
   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-low"))) {       # this is to make sure that GFP-low gate exists!
   getData_splitPeak(r = r, gs = r$gs, bin = "GFP-low", filter_name = "GFP-low-MYO-high")
-  }
+  }})
 })
 
 gfp_medium_myo_high <- reactive({
   req(r$gs)
+  withProgress(message = "Retrieving data from GFP-low bin...", {
   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {        # this is to make sure that GFP-medium gate exists!
     getData_splitPeak(r = r, gs = r$gs, bin = "GFP-medium", filter_name = "GFP-medium-MYO-high")
-  }
+  }})
 })
 
 gfp_high_myo_high <- reactive({
   req(r$gs)
+  withProgress(message = "Retrieving data from GFP-high bin...", {
   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {        # this is to make sure that GFP-high gate exists!
     getData_splitPeak(r = r, gs = r$gs, bin = "GFP-high", filter_name = "GFP-high-MYO-high")
-  }
+  }})
 })
 
 
@@ -310,7 +315,8 @@ observe({
 ## output plot: a  plot showing splitted peaks for the gate chosen by the user using the controller.
 output$myosin_splittedPeaks <- renderPlot({
   req(r$gs, selected_rows(), gate_myosin_plot(), subset())
-  plot_myosin_splittedPeaks(r = r, gs = r$gs[[selected_rows()]], density_fill = "pink", gate = gate_myosin_plot(), subset = subset())
+  withProgress(message = "Plotting your data...", {
+  plot_myosin_splittedPeaks(r = r, gs = r$gs[[selected_rows()]], density_fill = "pink", gate = gate_myosin_plot(), subset = subset())})
 }, res = 120)
 
 output[["test"]] <- renderText(glue("Test works"))
@@ -331,9 +337,13 @@ flowSet_pData <- reactive({
 
 selected_rows <- reactive(input$individual_FCS_rows_selected)
 
-output$individual_FCS <- renderDT({flowSet_pData()},
+output$individual_FCS <- renderDT({flowSet_pData()}, selection = list(target = "row", selected = 1, mode = "multiple"),
                                   rownames = FALSE,
                                   class = "cell-border stripe")
+
+observe({
+  updateTabsetPanel(inputId = "tabset-mainPanel", selected = "Plot")
+}) |> bindEvent(input$split)
   })}
 
 
@@ -371,13 +381,6 @@ plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, gate) {
       geom_gate(gate)
 }
 
-## this is outdated, added the test_function function directly to the getData_splitPeak function
-# getData_splitPeak <- function(r, gs, bin) {
-#   x <- gs_pop_get_data(gs, bin) |> cytoset_to_flowSet()
-#   x <- fsApply(x, test_function)
-#   return(remove_null_from_list(x))
-# }
-
 getData_splitPeak <- function(r, gs, bin, filter_name) {
   ## fetch the data we need: bin = name of the gate from which we want the data. We use it to access "GFP-low", "GFP-medium" and "GFP-high" gates
   x <- gs_pop_get_data(gs, bin) |> cytoset_to_flowSet()
@@ -398,10 +401,6 @@ add_gate <- function(r, gs, gate, parent) {
     if (gatingSet_names[i] %in% gate_names) {
       x <- which(gatingSet_names[i] == gate_names) # gives the index of the name in gate_names that matches gatingSet_names
       gs_pop_add(r$gs[[i]], gate = gate[[x]], parent = parent)
-      # print(gs[[i]])
-      # message("printed gs")
-      # print(gate[[x]])
-      # message("printed gate")
     }
   }
   recompute(r$gs)
