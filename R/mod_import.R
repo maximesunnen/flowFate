@@ -182,16 +182,18 @@ observe({
 
     # overview SSC vs FSC plot to inspect data --------------------------------
 
-    output$overview_SSC_FSC <- renderPlot({
+    overview_plot <- reactive({
       req(gs())
       if (!is_null(selected_rows())) {
         ggcyto(gs()[[selected_rows()]], aes(x = "SSC.HLin", y = "FSC.HLin"), subset = "root") +
           geom_hex(bins = 150) +
           theme_bw()
       }
-    }, res = 120)
-  })
-}
+    })
+
+    output$overview_SSC_FSC <- renderPlot({overview_plot()}, res = 120)
+  })}
+    
 
 #' @description Count how many datasets are in a FCS file
 #'
