@@ -53,6 +53,11 @@ mod_import_ui <- function(id){
                DTOutput(ns("individual_FCS")),
                br(),
                # Plot the dataset selected in the DT table above -------------------------
+               fluidRow(
+                 column(4,
+               textInput(ns("download.filename"), label = NULL, placeholder = "Enter filename")),
+               column(3,
+               downloadButton(ns("download"), label = "Download .svg"))),
                plotOutput(ns("overview_SSC_FSC"))))
     )))
 
@@ -192,6 +197,17 @@ observe({
     })
 
     output$overview_SSC_FSC <- renderPlot({overview_plot()}, res = 120)
+    
+    download_filename <-reactive({
+      if (isTruthy(input$download.filename)) {
+          paste0(input$download.filename, ".svg", sep = "")
+        }
+    })
+    
+    output$download <- downloadHandler(filename = function() download_filename(),
+                                       content = function(file) {ggsave(file, plot = overview_plot(), device = "svg")
+                                          }
+    )
   })}
     
 
