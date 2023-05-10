@@ -66,3 +66,16 @@ adding something like:
 
 5. In `/home/aurelien.ginolhac/deploiement/`, run `./relance_machinerie` so the new app is linked.
 
+## Installation
+
+To run the app in R, install R and R Studio [here](https://posit.co/download/rstudio-desktop/), then run the commands below in your R Studio console.
+
+``` r 
+# install the flowFate package
+install.packages("flowFate")
+
+# open the app
+XXXXXXXX
+```
+
+Alternatively, if you don't want to install R, go to [link_to_server]() to use the app.
