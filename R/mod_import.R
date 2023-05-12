@@ -57,7 +57,9 @@ mod_import_ui <- function(id){
                  column(4,
                textInput(ns("download.filename"), label = NULL, placeholder = "Enter filename")),
                column(3,
-               downloadButton(ns("download"), label = "Download .svg"))),
+               downloadButton(ns("download"), label = "Download .svg")),
+               column(3, 
+                      downloadButton(ns("download.all"), label = "Download all .svgs"))),
                plotOutput(ns("overview_SSC_FSC"))))
     )))
 
@@ -204,10 +206,12 @@ observe({
         }
     })
     
-    output$download <- downloadHandler(filename = function() download_filename(),
-                                       content = function(file) {ggsave(file, plot = overview_plot(), device = "svg")
-                                          }
-    )
+    output$download <- downloadHandler(filename = function() download_filename(), content = function(file) {ggsave(file, plot = overview_plot(), device = "svg")})
+    
+    # output$download.all <- downloadHandler(filename = "test.zip",
+    #                                        content = function(file) {
+    #                                          ggsave()
+    #                                        })
   })}
     
 
