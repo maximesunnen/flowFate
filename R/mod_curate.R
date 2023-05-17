@@ -107,36 +107,23 @@ mod_curate_server <- function(id, r = NULL){
         selectInput01("myhc_channel", "MyHC channel", n = 6, r = r, ns = ns),
         
         selectInput01("negative_control", "Unlabeled control", n = 1, r = r, row = TRUE, ns = ns),
-        selectInput01("positive_control_kras", "GFP-positive control", n = 2, r = r, row = TRUE, ns = ns),
-        selectInput01("positive_control_myhc", "MyHC-positive control", n = 3, r = r, row = TRUE, ns = ns))
+        # selectInput01("positive_control_kras", "GFP-positive control", n = 2, r = r, row = TRUE, ns = ns),
+        selectInput01("positive_control_myhc", "Single-dye MyHC control", n = 3, r = r, row = TRUE, ns = ns))
     })
 
     # create reactive expressions of the inputs above to avoid typing input$XXX every time
     # in fact, assigning only to r$XXX is sufficient, but then need to change this everywhere e.g. fsc() was used to r$fsc()
-    fsc <- reactive(input$forward_scatter)
+
     r$fsc <- reactive(input$forward_scatter)
-
-    ssc <- reactive(input$side_scatter)
     r$ssc <- reactive(input$side_scatter)
-
-    ch_kras <- reactive(input$kras_channel)
     r$ch_kras <- reactive(input$kras_channel)
-
-    ch_myhc <- reactive(input$myhc_channel)
     r$ch_myhc <- reactive(input$myhc_channel)
-
-    ctrl_kras <- reactive(input$positive_control_kras)
     r$ctrl_kras <- reactive(input$positive_control_kras)
-
-    ctrl_myhc <- reactive(input$positive_control_myhc)
     r$ctrl_myhc <- reactive(input$positive_control_myhc)
-
-    ctrl_negative <- reactive(input$negative_control)
     r$ctrl_negative <- reactive(input$negative_control)
-
     
     input_list <- reactive({
-      list(fsc(), ssc(), ch_kras(), ch_myhc(), ctrl_negative(), ctrl_kras(), ctrl_myhc())
+      list(input$forward_scatter, input$side_scatter, input$kras_channel, input$myhc_channel, input$negative_control, input$positive_control_kras, input$positive_control_myhc)
     })
     
     # alterts if non-unique inputs
@@ -175,21 +162,12 @@ mod_curate_server <- function(id, r = NULL){
     
     gate_non_debris <- reactive({
       req(r$gs)
-      colnames(pgn_cut) <- c(ssc(), fsc())
+      colnames(pgn_cut) <- c(input$side_scatter, input$forward_scatter)
       polygonGate(filterId = "NonDebris", .gate = pgn_cut)
     })
     
     # add the gate to the gatingSet
     observe({
-      # pgn_cut <- matrix(c(12500, 99000, 99000,0,0,6250, 6250, 99000, 99000,12500),
-      #                   ncol = 2,
-      #                   nrow = 5)
-      # colnames(pgn_cut) <- c(ssc(), fsc())
-      # message("Renamed the columns of pgn_cut")
-      # # create a polygonGate
-      # gate_non_debris <- polygonGate(filterId = "NonDebris", .gate = pgn_cut)
-      # message("Created the gate")
-      # if (is.null(gate_non_debris)) return(NULL) #useless now because never NULL?
       gs_pop_add(r$gs, gate_non_debris(), parent = "root")
       message("Added the non_debris gate to the gatingSet")
       recompute(r$gs)
@@ -199,8 +177,8 @@ mod_curate_server <- function(id, r = NULL){
     # output plot of the nonDebris gate: we still need a bindEvent, because if not the default channel names are taken, which is not always right
     # if a user different from us uses it
     output$non_debris_gate <- renderPlot({
-      ggcyto(r$gs[[c(ctrl_negative(),ctrl_kras(),ctrl_myhc())]],
-             aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
+      ggcyto(r$gs[[c(input$negative_control, input$positive_control_kras, input$positive_control_myhc)]],
+             aes(x = .data[[input$side_scatter]] , y = .data[[input$forward_scatter]]),
              subset = "root") +
         geom_hex(bins = 150) +
         theme_bw() +
@@ -211,55 +189,31 @@ mod_curate_server <- function(id, r = NULL){
     # Curate background noise: KRas channel -----------------------------------
     # get_lowerLimit is a custom function: see end of document for details
     lower_limit_gfp_gate <- reactive({
-      get_lowerLimit(gs = r$gs, datasets = c(ctrl_negative(), ctrl_myhc()), node = "NonDebris", ch_gate = ch_kras(), r = r)
+      get_lowerLimit(gs = r$gs, datasets = c(input$negative_control, input$positive_control_myhc), node = "NonDebris", ch_gate = input$kras_channel, r = r)
     })
     
-    lower_limit_myhc_gate <- reactive({
-      get_lowerLimit(gs = r$gs, datasets = c(ctrl_negative(), ctrl_kras()), node = "NonDebris", ch_gate = ch_myhc(), r = r)
-    })
-    
-    observe({
-      message("Test")
-      print(lower_limit_gfp_gate())
-    }) |> bindEvent(input$Curate)
-    
-    # observe({
-    #   # lower_limit_gfp_gate <- get_lowerLimit(gs = r$gs,
-    #   #                                        datasets = c(ctrl_negative(), ctrl_myhc()),
-    #   #                                        node = "NonDebris",
-    #   #                                        ch_gate = ch_kras(),
-    #   #                                        r = r)
-    #   # For testing/debugging
-    #   # message("lower_limit_gfp_gate successfully computed")
-    #   
-    #   r$lower_limit_gfp <- lower_limit_gfp_gate()
-    #   # message("Now printing r$lower_limit_gfp")
-    #   # print(r$lower_limit_gfp)
-    # }) |> bindEvent(input$Curate)
-    
+    ## this we don't need anymore, as we want to INCLUDE the MyHC- population (meeting BP/RC/DA: 15.05)
+    # lower_limit_myhc_gate <- reactive({
+    #   get_lowerLimit(gs = r$gs, datasets = c(input$negative_control, input$positive_control_kras), node = "NonDebris", ch_gate = input$myhc_channel, r = r)
+    # })
+
     # create the final gfp gate
     # this will only be called when gfp_gate() is called, so the computation is only performed when necessary (not before input$Curate clicked)
     gfp_gate <- reactive({
-      make_gate(lower_limit_gfp_gate(), ch_kras(), filterId = "GFP+")
+      make_gate(lower_limit_gfp_gate(), input$kras_channel, filterId = "GFP+")
     })
     
-    myhc_gate <- reactive({
-      make_gate(lower_limit_myhc_gate(), ch_myhc(),filterId = "MyHC+")
-    })
-    
-      # # create the final gfp gate
-      # gfp_gate <- make_gate(lower_limit_gfp_gate(), ch_kras(),filterId = "GFP+")
-
-      # For testing/debugging
-      # print(gfp_gate)
-      # message("GFP gate created")
+    ## this we don't need anymore (meeting 15.05)
+    # myhc_gate <- reactive({
+    #   make_gate(lower_limit_myhc_gate(), input$myhc_channel,filterId = "MyHC+")
+    # })
 
       observe({
         # add gate to the gatingSet: parent should be NonDebris
         gs_pop_add(r$gs, gfp_gate(), parent = "NonDebris")
         message("Added gfp_gate to the gatingSet")
-        gs_pop_add(r$gs, myhc_gate(), parent = "GFP+")
-        message("Added myhc_gate to the gatingSet")
+        # gs_pop_add(r$gs, myhc_gate(), parent = "GFP+")
+        # message("Added myhc_gate to the gatingSet")
         # recompute the GatingSet
         recompute(r$gs)
         # For testing/debugging
@@ -267,66 +221,31 @@ mod_curate_server <- function(id, r = NULL){
       }) |> bindEvent(input$Curate)
 
       # plot the gate
+      # ATTENTION: is it in theory possible that this plot is evaluated BEFORE the observer in line 177? because below, the subset "NonDebris" only exists after this observer is executed --> potential crashing source!!!
       output$gfp_gate <- renderPlot({
-        ggcyto((r$gs[[c(ctrl_negative(),ctrl_myhc())]]),
-               aes(x = .data[[ch_kras()]]),
+        ggcyto((r$gs[[c(input$negative_control, input$positive_control_myhc)]]),
+               aes(x = .data[[input$kras_channel]]),
                subset = "NonDebris") +
           geom_histogram(bins = 50, fill = "palegreen1", color = "black") +
           theme_bw() +
           geom_gate(gfp_gate()) +
           scale_x_flowjo_biexp()
       }, res = 120) |> bindEvent(input$Curate)
-
-    # Curate background noise: MYHC channel -----------------------------------
-    # lower_limit_myhc_gate <- reactive({
-    #   get_lowerLimit(gs = r$gs, datasets = c(ctrl_negative(), ctrl_kras()), node = "NonDebris", ch_gate = ch_myhc(), r = r)
-    # })
       
-#     observe({
-#       # # custom function: see end of document for details
-#       # lower_limit_myhc_gate <- get_lowerLimit(gs = r$gs,
-#       #                                        datasets = c(ctrl_negative(), ctrl_kras()),
-#       #                                        node = "NonDebris",
-#       #                                        ch_gate = ch_myhc(),
-#       #                                        r = r)
-# # 
-# #       print(lower_limit_myhc_gate)
-#       r$lower_limit_myhc <- lower_limit_myhc_gate()
-
-      # create the final myhc gate
-      # myhc_gate <- reactive({
-      #   make_gate(lower_limit_myhc_gate, ch_myhc(),filterId = "MYO+")
-      # })
-      
-      # 
-      # print(myhc_gate)
-      # message("MYHC gate created")
-
-      # observe({
-      # # add gate to the gatingSet: parent should be GFP+ (!)
-      # gs_pop_add(r$gs, myhc_gate, parent = "GFP+")
-      # message("Added myhc_gate to the gatingSet")
-
-      # # recompute the GatingSet
-      # recompute(r$gs)
-      # message("Recomputed the gatingSet")
-      # }) |> bindEvent(input$Curate)
-
-      # plot the gate
-      output$myhc_gate <- renderPlot({
-        ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_kras())]]),
-               aes(x = .data[[ch_myhc()]]),
-               subset = "NonDebris") +
-          geom_histogram(bins = 50, fill = "pink", color = "black") +
-          theme_bw() +
-          geom_gate(myhc_gate()) +
-          scale_x_flowjo_biexp()
-      }, res = 120) |> bindEvent(input$Curate)
+      ## this we don't need anymore: meeting 15.05
+      # output$myhc_gate <- renderPlot({
+      #   ggcyto(isolate(r$gs[[c(input$negative_control, input$positive_control_kras)]]),
+      #          aes(x = .data[[input$myhc_channel]]),
+      #          subset = "NonDebris") +
+      #     geom_histogram(bins = 50, fill = "pink", color = "black") +
+      #     theme_bw() +
+      #     geom_gate(myhc_gate()) +
+      #     scale_x_flowjo_biexp()
+      # }, res = 120) |> bindEvent(input$Curate)
     
-    observe({
-      r$lower_limit_gfp <- lower_limit_gfp_gate()
-      r$lower_limit_myhc <- lower_limit_myhc_gate()
-    }) |> bindEvent(input$Curate)
+      observe({
+        r$lower_limit_gfp <- lower_limit_gfp_gate() 
+      })|> bindEvent(input$Curate)
 
     observe({
       showModal(modal_confirm)
@@ -373,7 +292,6 @@ get_lowerLimit <- function(gs, datasets, node, ch_gate, r) {
 }
 
 ### make_gate:
-#
 make_gate <- function(lower_limit, col_name, filterId) {
   mat <- matrix(c(lower_limit, Inf), ncol = 1)
   colnames(mat) <- col_name
