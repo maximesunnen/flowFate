@@ -18,6 +18,7 @@ mod_explore_ui <- function(id){
                  selectInput(ns("plot.type"), label = "Select plot type", choices = c("","scatter", "density", "histogram")),
                  radioButtons(ns("scale"), label = NULL, choices = c("linear", "biexponential")),
                  uiOutput(ns("x.channel")),
+                 colourInput(ns("x.channel.colour"), label = NULL, value = "grey60", closeOnClick = TRUE),
                  uiOutput(ns("y.channel")),
                  DTOutput(ns("individual_FCS"))
                  # uiOutput(ns("datasets"))
@@ -60,45 +61,55 @@ output$y.channel <- renderUI({
 
 selected_rows <- reactive(input$individual_FCS_rows_selected)
 
-output$explore.plot <- renderPlot({explore_plot()}, res = 120)
-
 #' @importFrom ggcyto scale_y_flowjo_biexp scale_x_flowjo_biexp
+#' @importFrom colourpicker colourInput
 
-explore_plot <- reactive({
+colour_x <- reactive({input$x.channel.colour})
+
+explore_plot_scatter <- reactive({
    req(selected_rows())
-   if(input$plot.type == "scatter") {
      req(input$x.axis, input$y.axis)
      if (input$scale == "biexponential"){
        ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]], y = .data[[input$y.axis]]), subset = "root")+
-         geom_hex(bins = 200)+
          scale_x_flowjo_biexp() +
          scale_y_flowjo_biexp() +
          theme_bw()
      }
      else {
        ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]], y = .data[[input$y.axis]]), subset = "root")+
-       geom_hex(bins = 200)+
-       # scale_x_flowjo_biexp() +
        theme_bw()
      }
-   }
-   else if (input$plot.type == "histogram"){
-     req(input$x.axis)
-     # why exactly do we need this .data[[...]]? can't remember
-     ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root")+
-       geom_histogram()+
-       scale_x_flowjo_biexp() +
-       theme_bw()
-   }
-   else if (input$plot.type == "density") {
-     req(input$x.axis)
-     ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root")+
-       geom_density()+
-       scale_x_flowjo_biexp() +
-       theme_bw()
-   }
- })
+   })
+
+explore_plot_histogram_density <- reactive({
+  req(input$x.axis)
+  if (input$scale == "biexponential"){
+    # why exactly do we need this .data[[...]]? can't remember
+    ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root")+
+      scale_x_flowjo_biexp() +
+      theme_bw()
+  }
+  else {
+    ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root")+
+      theme_bw()
+  }
+})
  
+output$explore.plot <- renderPlot({
+  if (input$plot.type == "scatter"){
+    req(input$x.axis, input$y.axis)
+    explore_plot_scatter()+geom_hex(bins = 200)
+  }
+  else if (input$plot.type == "histogram"){
+    req(input$x.axis)
+    explore_plot_histogram_density()+geom_histogram(bins = 50, fill = colour_x(), colour = "black")
+  }
+  else if (input$plot.type == "density"){
+    req(input$x.axis)
+    explore_plot_histogram_density()+geom_density(bins = 50, fill = colour_x(), colour = "black")
+  }
+  }, res = 120)
+
  output$individual_FCS <- renderDT({r$flowSet_pData()}, selection = list(target = "row", selected = 1, mode = "single"), rownames = FALSE, class = "cell-border stripe", options = list(paging = FALSE, scrollY = "200px"))
  
  download_filename <-reactive({
