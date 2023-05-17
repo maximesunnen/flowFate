@@ -41,8 +41,8 @@ mod_curate_ui <- function(id){
 
                    p("After curation is done, three plots will appear:"),
                    p("1) SSC vs FSC with the rectangle gate used to remove debris (in red)", style = "text-indent: 25px"),
-                   p("2) Intensity (GFP) vs density plot for your unlabelled and myosin control with the intensity threshold (in red)", style = "text-indent: 25px"),
-                   p("3) Intensity (Myosin) vs density plot for your unlabelled and GFP control with the intensity threshold (in red)", style = "text-indent: 25px"),
+                   p("2) Intensity (GFP) vs density plot for your unlabelled and myosin heavy-chain (MyHC) control with the intensity threshold (in red)", style = "text-indent: 25px"),
+                   p("3) Intensity (MyHC) vs density plot for your unlabelled and GFP control with the intensity threshold (in red)", style = "text-indent: 25px"),
 
                    p("The reason why you see two plots for the intensity thresholds is that we compute a quantile gate for ", strong("two"), " control samples and average the results. The red lines correspond to this ", strong("averaged"), " value."),
 
@@ -58,7 +58,7 @@ mod_curate_ui <- function(id){
                br(),
                plotOutput(ns("gfp_gate"))),
                
-               tabPanel("Myosin threshold",
+               tabPanel("MyHC threshold",
                br(),
                plotOutput(ns("myhc_gate"))))
              )))}
@@ -76,42 +76,44 @@ mod_curate_server <- function(id, r = NULL){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
-    # Make the Curate button conditionally visible
+    # Hide the Curate button when Curate is clicked
     observe({
       shinyjs::hide(id = "Curate")
     }) |> bindEvent(input$Curate)
-
+    
+    # Show the Curate button when ok is clicked (ok button appears when users reset the curation)
     observe({
       shinyjs::show(id = "Curate")
     }) |> bindEvent(input$ok)
 
-    # Restart curation MODAL
+    # Restart curation modal: show when users reset the curation
     modal_confirm <- modalDialog(
       "Are you sure you want to continue?",
       title = "Deleting files",
       footer = tagList(
         actionButton(ns("cancel"), "Cancel"),
-        actionButton(ns("ok"), "Restart", class = "btn btn-danger")
+        actionButton(ns("ok"), "Restart", class = "btn btn-danger") # resets the curation
       )
     )
 
     # Sidebar selections/inputs (control datasets and channels) -----------
+    # selectInput01 is a custom function: in the selection I need to access r$gs/r$fs so a selectInput in the UI was not possible
+    # see custom functions for details on this function
     output$input_selection <- renderUI({
       req(r$fs)
-      tagList(
+      tagList( #not sure if tagList necessary
         selectInput01("forward_scatter", "Forward Scatter", n = 1, r = r, ns = ns),
         selectInput01("side_scatter", "Side Scatter", n = 2, r = r, ns = ns),
         selectInput01("kras_channel", "GFP channel", n = 3, r = r, ns = ns),
-        selectInput01("myhc_channel", "Myosin channel", n = 6, r = r, ns = ns),
-        selectInput01("negative_control", "Unstained control", n = 1, r = r, row = TRUE, ns = ns),
+        selectInput01("myhc_channel", "MyHC channel", n = 6, r = r, ns = ns),
+        selectInput01("negative_control", "Unlabeled control", n = 1, r = r, row = TRUE, ns = ns),
         selectInput01("positive_control_kras", "GFP-positive control", n = 2, r = r, row = TRUE, ns = ns),
-        selectInput01("positive_control_myhc", "Myosin-positive control", n = 3, r = r, row = TRUE, ns = ns)
+        selectInput01("positive_control_myhc", "MyHC-positive control", n = 3, r = r, row = TRUE, ns = ns)
       )
     })
 
-    # Alerts if non-unique channels/control datasets
-    ## create reactive expressions to avoid typing input$XXX every time
-    ### in fact, assigning only to r$XXX is sufficient, but then need to change this everywhere e.g. fsc() was used to r$fsc()
+    # create reactive expressions of the inputs above to avoid typing input$XXX every time
+    # in fact, assigning only to r$XXX is sufficient, but then need to change this everywhere e.g. fsc() was used to r$fsc()
     fsc <- reactive(input$forward_scatter)
     r$fsc <- reactive(input$forward_scatter)
 
@@ -133,20 +135,27 @@ mod_curate_server <- function(id, r = NULL){
     ctrl_negative <- reactive(input$negative_control)
     r$ctrl_negative <- reactive(input$negative_control)
 
+    
+    input_list <- reactive({
+      list(fsc(), ssc(), ch_kras(), ch_myhc(),
+           ctrl_negative(),ctrl_kras(), ctrl_myhc())
+    })
+    
+    # alterts if non-unique inputs
+    # (1) initially, return NULL if any of the inputs are NULL (inputs inexistant)
+    # (2) then check for duplications, anyDuplicated() returns :
+    #     - index i of first duplicated entry x[i] if there are any
+    #     -  0 otherwise --> > 0 is therefore a good condition.
+
     observe({
-      input_list <- list(fsc(), ssc(), ch_kras(), ch_myhc(),
-                         ctrl_negative(),ctrl_kras(), ctrl_myhc())
-      if (any(sapply(input_list, is.null))) return(NULL)
-      else if (anyDuplicated(input_list) > 0) {
+      # input_list <- list(fsc(), ssc(), ch_kras(), ch_myhc(),
+      #                    ctrl_negative(),ctrl_kras(), ctrl_myhc())
+      if (any(sapply(input_list(), is.null))) return(NULL)
+      else if (anyDuplicated(input_list()) > 0) {
         showModal(modalDialog("Inputs have to be unique.", title = "Warning.",
           footer = modalButton("Dismiss")))
       }
     })
-  # Comments on the function above:
-  # (1) initially, return NULL if any of the inputs are NULL (inputs inexistant)
-  # (2) then check for duplications, anyDuplicated() returns :
-  #     - index i of first duplicated entry x[i] if there are any
-  #     -  0 otherwise --> > 0 is therefore a good condition.
 
     # if user wants to reset curation (input$ok), create new gs from initial fs
     observe({
@@ -162,100 +171,148 @@ mod_curate_server <- function(id, r = NULL){
 
     # Question 1: The code below create a reactive expression that creates the first gate. I don't know why this does not give an error of the type "can't find function side_scatter()", because side_scatter does not exist before the user clicks "Curate".
 
-    observe({
-      pgn_cut <- matrix(c(12500, 99000, 99000,0,0,6250, 6250, 99000, 99000,12500),
-                        ncol = 2,
-                        nrow = 5)
+    pgn_cut <- matrix(c(12500, 99000, 99000,0,0,6250, 6250, 99000, 99000,12500),
+                      ncol = 2,
+                      nrow = 5)
+    
+    gate_non_debris <- reactive({
+      req(r$gs)
       colnames(pgn_cut) <- c(ssc(), fsc())
-      message("Renamed the columns of pgn_cut")
-      # create a polygonGate
-      gate_non_debris <- polygonGate(filterId = "NonDebris", .gate = pgn_cut)
-      message("Created the gate")
-
-      if (is.null(gate_non_debris)) return(NULL)
-      gs_pop_add(r$gs, gate_non_debris, parent = "root")
+      polygonGate(filterId = "NonDebris", .gate = pgn_cut)
+    })
+    
+    # add the gate to the gatingSet
+    observe({
+      # pgn_cut <- matrix(c(12500, 99000, 99000,0,0,6250, 6250, 99000, 99000,12500),
+      #                   ncol = 2,
+      #                   nrow = 5)
+      # colnames(pgn_cut) <- c(ssc(), fsc())
+      # message("Renamed the columns of pgn_cut")
+      # # create a polygonGate
+      # gate_non_debris <- polygonGate(filterId = "NonDebris", .gate = pgn_cut)
+      # message("Created the gate")
+      # if (is.null(gate_non_debris)) return(NULL) #useless now because never NULL?
+      gs_pop_add(r$gs, gate_non_debris(), parent = "root")
       message("Added the non_debris gate to the gatingSet")
-
       recompute(r$gs)
       message("Recomputed the gatingSet")
+      }) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
-      output$non_debris_gate <- renderPlot({
-        ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_kras(),ctrl_myhc())]]),
-               aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
-               subset = "root") +
-          geom_hex(bins = 150) +
-          theme_bw() +
-          geom_gate(gate_non_debris) +
-          geom_stats()
-      }, res = 120)
-    }) |> bindEvent(input$Curate, ignoreInit = TRUE)
+    # output plot of the nonDebris gate: we still need a bindEvent, because if not the default channel names are taken, which is not always right
+    # if a user different from us uses it
+    output$non_debris_gate <- renderPlot({
+      ggcyto(r$gs[[c(ctrl_negative(),ctrl_kras(),ctrl_myhc())]],
+             aes(x = .data[[ssc()]] , y = .data[[fsc()]]),
+             subset = "root") +
+        geom_hex(bins = 150) +
+        theme_bw() +
+        geom_gate(gate_non_debris()) +
+        geom_stats()
+    }, res = 120) |> bindEvent(input$Curate)
 
     # Curate background noise: KRas channel -----------------------------------
+    # get_lowerLimit is a custom function: see end of document for details
+    lower_limit_gfp_gate <- reactive({
+      get_lowerLimit(gs = r$gs, datasets = c(ctrl_negative(), ctrl_myhc()), node = "NonDebris", ch_gate = ch_kras(), r = r)
+    })
+    
+    lower_limit_myhc_gate <- reactive({
+      get_lowerLimit(gs = r$gs, datasets = c(ctrl_negative(), ctrl_kras()), node = "NonDebris", ch_gate = ch_myhc(), r = r)
+    })
+    
     observe({
-      # custom function: see end of document for details
-      lower_limit_gfp_gate <- get_lowerLimit(gs = r$gs,
-                                             datasets = c(ctrl_negative(), ctrl_myhc()),
-                                             node = "NonDebris",
-                                             ch_gate = ch_kras(),
-                                             r = r)
-      # For testing/debugging
-      message("lower_limit_gfp_gate successfully computed")
-      r$lower_limit_gfp <- lower_limit_gfp_gate
-      print(r$lower_limit_gfp)
+      message("Test")
+      print(lower_limit_gfp_gate())
+    }) |> bindEvent(input$Curate)
+    
+    # observe({
+    #   # lower_limit_gfp_gate <- get_lowerLimit(gs = r$gs,
+    #   #                                        datasets = c(ctrl_negative(), ctrl_myhc()),
+    #   #                                        node = "NonDebris",
+    #   #                                        ch_gate = ch_kras(),
+    #   #                                        r = r)
+    #   # For testing/debugging
+    #   # message("lower_limit_gfp_gate successfully computed")
+    #   
+    #   r$lower_limit_gfp <- lower_limit_gfp_gate()
+    #   # message("Now printing r$lower_limit_gfp")
+    #   # print(r$lower_limit_gfp)
+    # }) |> bindEvent(input$Curate)
+    
+    # create the final gfp gate
+    # this will only be called when gfp_gate() is called, so the computation is only performed when necessary (not before input$Curate clicked)
+    gfp_gate <- reactive({
+      make_gate(lower_limit_gfp_gate(), ch_kras(), filterId = "GFP+")
+    })
+    
+    myhc_gate <- reactive({
+      make_gate(lower_limit_myhc_gate(), ch_myhc(),filterId = "MyHC+")
+    })
+    
+      # # create the final gfp gate
+      # gfp_gate <- make_gate(lower_limit_gfp_gate(), ch_kras(),filterId = "GFP+")
 
-      # create the final gfp gate
-      gfp_gate <- make_gate(lower_limit_gfp_gate, ch_kras(),filterId = "GFP+")
-
       # For testing/debugging
-      print(gfp_gate)
-      message("GFP gate created")
+      # print(gfp_gate)
+      # message("GFP gate created")
 
-      # add gate to the gatingSet: parent should be NonDebris
-      gs_pop_add(r$gs, gfp_gate, parent = "NonDebris")
-      # For testing/debugging
-      message("Added gfp_gate to the gatingSet")
-
-      # recompute the GatingSet
-      recompute(r$gs)
-      # For testing/debugging
-      message("Recomputed the gatingSet")
+      observe({
+        # add gate to the gatingSet: parent should be NonDebris
+        gs_pop_add(r$gs, gfp_gate(), parent = "NonDebris")
+        message("Added gfp_gate to the gatingSet")
+        gs_pop_add(r$gs, myhc_gate(), parent = "GFP+")
+        message("Added myhc_gate to the gatingSet")
+        # recompute the GatingSet
+        recompute(r$gs)
+        # For testing/debugging
+        message("Recomputed the gatingSet")
+      }) |> bindEvent(input$Curate)
 
       # plot the gate
       output$gfp_gate <- renderPlot({
-        ggcyto(isolate(r$gs[[c(ctrl_negative(),ctrl_myhc())]]),
+        ggcyto((r$gs[[c(ctrl_negative(),ctrl_myhc())]]),
                aes(x = .data[[ch_kras()]]),
                subset = "NonDebris") +
           geom_histogram(bins = 50, fill = "palegreen1", color = "black") +
           theme_bw() +
-          geom_gate(gfp_gate) +
+          geom_gate(gfp_gate()) +
           scale_x_flowjo_biexp()
-      }, res = 120)}) |> bindEvent(input$Curate, ignoreInit = TRUE)
+      }, res = 120) |> bindEvent(input$Curate)
 
     # Curate background noise: MYHC channel -----------------------------------
-    observe({
-      # custom function: see end of document for details
-      lower_limit_myhc_gate <- get_lowerLimit(gs = r$gs,
-                                             datasets = c(ctrl_negative(), ctrl_kras()),
-                                             node = "NonDebris",
-                                             ch_gate = ch_myhc(),
-                                             r = r)
-
-      print(lower_limit_myhc_gate)
-      r$lower_limit_myhc <- lower_limit_myhc_gate
+    # lower_limit_myhc_gate <- reactive({
+    #   get_lowerLimit(gs = r$gs, datasets = c(ctrl_negative(), ctrl_kras()), node = "NonDebris", ch_gate = ch_myhc(), r = r)
+    # })
+      
+#     observe({
+#       # # custom function: see end of document for details
+#       # lower_limit_myhc_gate <- get_lowerLimit(gs = r$gs,
+#       #                                        datasets = c(ctrl_negative(), ctrl_kras()),
+#       #                                        node = "NonDebris",
+#       #                                        ch_gate = ch_myhc(),
+#       #                                        r = r)
+# # 
+# #       print(lower_limit_myhc_gate)
+#       r$lower_limit_myhc <- lower_limit_myhc_gate()
 
       # create the final myhc gate
-      myhc_gate <- make_gate(lower_limit_myhc_gate, ch_myhc(),filterId = "MYO+")
+      # myhc_gate <- reactive({
+      #   make_gate(lower_limit_myhc_gate, ch_myhc(),filterId = "MYO+")
+      # })
+      
+      # 
+      # print(myhc_gate)
+      # message("MYHC gate created")
 
-      print(myhc_gate)
-      message("MYHC gate created")
+      # observe({
+      # # add gate to the gatingSet: parent should be GFP+ (!)
+      # gs_pop_add(r$gs, myhc_gate, parent = "GFP+")
+      # message("Added myhc_gate to the gatingSet")
 
-      # add gate to the gatingSet: parent should be GFP+ (!)
-      gs_pop_add(r$gs, myhc_gate, parent = "GFP+")
-      message("Added myhc_gate to the gatingSet")
-
-      # recompute the GatingSet
-      recompute(r$gs)
-      message("Recomputed the gatingSet")
+      # # recompute the GatingSet
+      # recompute(r$gs)
+      # message("Recomputed the gatingSet")
+      # }) |> bindEvent(input$Curate)
 
       # plot the gate
       output$myhc_gate <- renderPlot({
@@ -264,10 +321,14 @@ mod_curate_server <- function(id, r = NULL){
                subset = "NonDebris") +
           geom_histogram(bins = 50, fill = "pink", color = "black") +
           theme_bw() +
-          geom_gate(myhc_gate) +
+          geom_gate(myhc_gate()) +
           scale_x_flowjo_biexp()
-      }, res = 120)
-    }) |> bindEvent(input$Curate, ignoreInit = TRUE)
+      }, res = 120) |> bindEvent(input$Curate)
+    
+    observe({
+      r$lower_limit_gfp <- lower_limit_gfp_gate()
+      r$lower_limit_myhc <- lower_limit_myhc_gate()
+    }) |> bindEvent(input$Curate)
 
     observe({
       showModal(modal_confirm)
@@ -307,7 +368,7 @@ create_quantile_gate <- function(samples, gate_channel) {
 get_lowerLimit <- function(gs, datasets, node, ch_gate, r) {
   # extract the data as a flowSet
   x <- gs_pop_get_data(r$gs[[datasets]], node) |> cytoset_to_flowSet()
-  # create a quantile get using extracted data and the respective channel name
+  # create a quantile gate using extracted data and the respective channel name
   y <- create_quantile_gate(x, gate_channel = ch_gate)
   # average the minimum values from the respective quantile gateS(!)
   z <- mean(c(y[[1]]@min, y[[2]]@min))
