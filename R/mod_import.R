@@ -19,51 +19,26 @@ mod_import_ui <- function(id){
              sidebarPanel(
                tagList(
                  # File input container in the sidebar ------------------------------------
-                 fileInput(inputId = ns("filename"),
-                           accept = ".fcs",
-                           label = "Select FCS file"),
-
+                 fileInput(inputId = ns("filename"), accept = ".fcs", label = "Select FCS file"),
                  # Submit button to start the import --------------------------------------
-                 actionButton(ns("Submit"), "Submit", class = "btn-primary"))),
+                 actionButton(ns("Submit"), "Submit", class = "btn-primary"),
+                 actionButton(ns("demo_fs"), label = "Import demo data")
+                 )),
 
              mainPanel(
-               tabsetPanel(
-                 tabPanel("Information", icon = icon("info"),
                h1(strong("Welcome to flowFate.")),
-               p("To import your FCS file, click on the " , strong("Browse"),
-                 " button on the left and select your file. Confirm your selection by clicking on the ",
+               p("To start your analysis, import your FCS file by clicking on the " , strong("Browse"),
+                 " button (on the left), then select your file. Confirm your selection by clicking on the ",
                  span("Submit", style = "color:#008cba; font-weight:bold"),
-                 " button. A table containing a description of the uploaded file as well as your FCS file's individual datasets appears. We've added a 'well-name' column so you can verify if you've uploaded the correct file. You can click on and select one (or multiple) rows to show the SSC vs FSC plot of the selected dataset(s).", br(), br(),
-                 "To upload a new FCS file, click on the " , strong("Browse"), " button and select the correct file. Don't forget to confirm your selection again by clicking on the ", span("Submit", style = "color:#008cba; font-weight:bold"), " button.", br(), br(),
-                 "Once the correct file has been uploaded, you can proceed with the curation of your data. Simply click on the ",
-                 strong("Curate"), " tab at the top of the page.",
-                 style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
-               br(),
-               actionButton(ns("demo_fs"), label = "Import demo data")),
-               tabPanel("Uploaded FCS file",
-               br(),
+                 " button that appears after file selection. A description of your uploaded file will be displayed. To upload a new FCS file, click " , strong("Browse"), ", select the correct file and confirm again.", br(), br(), "Once the correct file has been uploaded, you have two options:", br(), br(),
+                 "- switch to the ", strong("‘Explore‘"), " tab in the menu bar and explore your data", br(), br(),
+                 "- switch to the ", strong("‘Explore‘"), " tab in the menu bar and start curating your data",
+                 style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(), br(),
                # Table showing the imported file -----------------------------------------
-               tableOutput(ns("files")),
+               tableOutput(ns("files")), br(),
                # Text indicating the number of datasets ----------------------------------
-               textOutput(ns("datasets"))),
-               
-               tabPanel("Your datasets",
-               br(),
-               # Table showing individual FCS (interactive because DT) -------------------
-               DTOutput(ns("individual_FCS")),
-               br(),
-               # Plot the dataset selected in the DT table above -------------------------
-               fluidRow(
-                 column(4,
-               textInput(ns("download.filename"), label = NULL, placeholder = "Enter filename")),
-               column(3,
-               downloadButton(ns("download"), label = "Download .svg")),
-               column(3, 
-                      downloadButton(ns("download.all"), label = "Download all .svgs"))),
-               plotOutput(ns("overview_SSC_FSC"))))
-    )))
-
-}
+               textOutput(ns("datasets"))
+           )))}
 
 #' my_module Server Functions
 #'
@@ -169,7 +144,7 @@ observe({
     
     output$datasets <- renderText({
       #req(input$filename)
-      paste0("Your FCS file contains ", nb_ds(), " datasets.")
+      paste0("Your FCS file contains ", nb_ds(), " dataset(s).")
     })
     
     output$files <- renderTable({
