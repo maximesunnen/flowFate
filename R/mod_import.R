@@ -156,6 +156,8 @@ observe({
     
     flowSet_pData <- reactive({pData(fs())}) |> bindEvent(input$Submit)
     
+    r$flowSet_pData <- reactive({flowSet_pData()})
+    
     #not sure where to put this now
     # pData(fs())$well <- str_extract(pData(fs())$name, "[A-Z]\\d{2}")
     
