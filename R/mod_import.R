@@ -32,8 +32,8 @@ mod_import_ui <- function(id){
                  span("Submit", style = "color:#008cba; font-weight:bold"),
                  " button that appears after file selection. A description of your uploaded file will be displayed. To upload a new FCS file, click " , strong("Browse"), ", select the correct file and confirm again.", br(), br(), "Once the correct file has been uploaded, you have two options:", br(), br(),
                  "- switch to the ", strong("‘Explore‘"), " tab in the menu bar and explore your data", br(), br(),
-                 "- switch to the ", strong("‘Explore‘"), " tab in the menu bar and start curating your data",
-                 style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(), br(),
+                 "- switch to the ", strong("‘Curate‘"), " tab in the menu bar and start curating your data",
+                 style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
                # Table showing the imported file -----------------------------------------
                tableOutput(ns("files")), br(),
                # Text indicating the number of datasets ----------------------------------
