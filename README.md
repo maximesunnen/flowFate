@@ -1,9 +1,11 @@
 # flowFate
 
-Project to build a [`shiny`](https://shiny.rstudio.com/) app for the analysis of flow cytometry data using the flowCore and flowWorkspace framework.
+FlowFate is a free, interactive [Shiny](https://shiny.rstudio.com/) web application developed to automate the analysis of cell differentiation data obtained by flow cytometry. We developed flowFate by combining existing R packages ([flowCore](https://www.bioconductor.org/packages/devel/bioc/vignettes/flowCore/inst/doc/HowTo-flowCore.pdf) and [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) for FCS file import, data manipulation and gating; [ggcyto](https://www.bioconductor.org/packages/release/bioc/html/ggcyto.html) for visualization) into a customized workflow tailored to the analysis of differentiation data. We were able to automate a crucial and time-consuming process of data analysis using [openCyto's](https://www.bioconductor.org/packages/release/bioc/html/openCyto.html) data-driven gating functions.
 
-Build with [{golem}](https://github.com/ThinkR-open/golem).
+Built with [{golem}](https://github.com/ThinkR-open/golem).
 
+## Background
+FlowFate is tailored to analyze cell differentiation data obtained according to [Chippalkatti et al](). Briefly, C2C12 are a special type of cells that can turn into muscle cells at some point but are not fully mature yet. Scientists use the term "undifferentiated" for these cells and once they've turned into muscle cells, they're called "differentiated".  Muscle cells can be characterised by the expression of a specific muscle protein called myosin. Therefore
 
 
 ## Dockerized the app
