@@ -175,7 +175,7 @@ mod_gate_server <- function(id, r){
       if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {gs_pop_remove(r$gs, "GFP-medium")}
       if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {gs_pop_remove(r$gs, "GFP-high")}
       for (i in seq_along(gates())) {
-        gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
+        gs_pop_add(r$gs, gates()[[i]], parent = "MyHC+")
       }
       recompute(r$gs)
       #plot(r$gs)
@@ -234,7 +234,7 @@ mod_gate_server <- function(id, r){
     # add gates to the gatingSet
     observe({
       for (i in seq_along(gates())) {
-        gs_pop_add(r$gs, gates()[[i]], parent = "MYO+")
+        gs_pop_add(r$gs, gates()[[i]], parent = "MyHC+")
       }
 
       recompute(r$gs)
