@@ -22,18 +22,19 @@ mod_gate_ui <- function(id){
                                     uiOutput(ns("gfp_bin_1")),
                                     uiOutput(ns("gfp_bin_2")),
                                     uiOutput(ns("gfp_bin_3")),
-                                    actionButton(inputId = ns("add_bins"), label = "Add GFP bins", icon("plus")),
+                                    actionButton(inputId = ns("add_bins"), label = "Add GFP bin", icon("plus")),
                                     actionButton(inputId = ns("confirm_bins"), label = "Confirm", class = "btn-primary"),
                                     actionButton(ns("reset_bins"), "Reset bins", class = "btn-warning")),
                            tabPanel("Split peaks",
                                     br(),
-                                    actionButton(ns("split"), "Split now", class = "btn-primary"),
+                                    actionButton(ns("split"), "Split", class = "btn-primary"),
                                     actionButton(inputId = ns("reset_gates"), label = "Reset gates", class = "btn-warning"),
                                     hr(),
                                     br(),
                                     selectInput(ns("controller"),
                                                 label = tags$span("Select GFP bin", actionButton(ns("help"), "", icon = icon("info"))),
                                                 choices = c("GFP-low", "GFP-medium", "GFP-high")),
+                                    DTOutput(ns("individual_FCS"))
                                     ))),
 
              mainPanel(
@@ -42,35 +43,32 @@ mod_gate_ui <- function(id){
                h1(strong("How gating works.")),
                div(
                  p("Gating is the most crucial and complex step in this workflow. It consists of", strong("2 essential steps"), ":"),
-                 p("1)	Defining the ", strong("number"), " of bins and the", strong("bin size"), ": these bins will become gates.", style = "text-indent: 25px"),
-                 p("2)	Inside these bins, calculate the myosin intensity distribution and find a cutoff separating two distinct myosin populations (peaks in a plot)", style = "text-indent: 25px"), style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
+                 p("1)	Defining bin ", strong("number"), " and bin ", strong("size"), ": these bins will become gates.", style = "text-indent: 25px"),
+                 p("2)	For each bin, find a threshold separating two distinct myosin populations (identified as separate peaks)", style = "text-indent: 25px"), style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
                ),
                br(),
                div(
-                 p("On the left, click on 'Add GFP bin' to add a bin, then enter the bin size. You have to add at least 1 and you are limited to a maximum of 3 bins. Once you have added the desired bins, click on ", span("Confirm", style = "color:#008cba; font-weight:bold"), ". At this point, if you want to change the bin configuration, click on ", span("Reset bins", style = "color:#e99003; font-weight:bold"), ", change the bin configuration, then click ", span("Confirm", style = "color:#008cba; font-weight:bold"), " again."),
-                 br(),
-                 p(strong("Note:"), "The lower limit of the range of the first GFP bin is defaults to GFP intensity threshold calculated before during curation. You can lower this value, but your data has essentially already been gated to exclude such low intensities because they're unspecific and probably originate from autofluorescence."),
-                 p("To proceed, click on the ", strong("Split peaks"), " tab at the top of the left side panel."),
-                 style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
-                 ),
+                 p("On the left, click ", strong("'Add GFP bin'"), ", then enter the bin size. The maximum number of bins you can add is three and you need to add at least one. Once bins have been added, click ", span("Confirm", style = "color:#008cba; font-weight:bold"), ". A pop-up window appears indicating that binning was successful and the active tab in the sidebar will automatically be updated from ‘GFP bins‘ to ‘Split peaks‘."),
+                 p(strong("Note 1:"), "If you want to change the bin configuration, click ", span("Reset bins", style = "color:#e99003; font-weight:bold"), ", change the bin configuration, then click ", span("Confirm", style = "color:#008cba; font-weight:bold"), " again."),
+                 p(strong("Note 2:"), "The lower limit of the ‘GFP low‘ bin defaults to the intensity threshold calculated during curation. Lowering this value does not change anything as cells with such low GFP intensities have essentially already been removed by gating."),
+                 style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"),
                br(),
                hr(),
                br(),
                div(
 
-                 p("When we look at the myosin distribution inside the bins just created, a pattern emerges. In fact, two populations can be distinguished:"),
-                 p("-	Low myosin expression: for C2C12, these cells can be seen as", strong("progenitors"), style = "text-indent: 25px"),
-                 p("-	High myosin expression: for C2C12, these cells can be seen as", strong("differentiated myocytes"), style = "text-indent: 25px"),
+                 p("The presence of two peaks in the MyHC intensity distribution suggests the presence of two distinct populations:"),
+                 p("-	Low myosin expression: for C2C12, these are proliferating", strong("progenitors"), style = "text-indent: 25px"),
+                 p("-	High myosin expression: for C2C12, these are ", strong("differentiated myocytes"), style = "text-indent: 25px"),
 
-                 p("Inside the app, we can find the threshold separating these two populations by clicking on the", span("Split", style = "color:#008cba; font-weight:bold"), " button."),
-                 p(strong("Note:"), " at this point, if you want to change the bin configuration, you have to click on", span("Reset gates", style = "color:#e99003; font-weight:bold"), ", switch to the GFP bins tab and start over."),
+                 p("The exact threshold separating these two peaks can change from sample to sample. Click ", span("Split", style = "color:#008cba; font-weight:bold"), " to apply a data-driven gating function that determines this threshold for each sample individually."),
+                 p(strong("Note:"), " If you want to change the bin configuration, you need to click ", span("Reset gates", style = "color:#e99003; font-weight:bold"), ", switch to the ‘GFP bins‘ tab and start again."),
                  style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
                  )),
                
                tabPanel("Plot",
-               textOutput(ns("test")),
-               DTOutput(ns("individual_FCS")),
-               plotOutput(ns("myosin_splittedPeaks"))))
+                        br(),
+                        plotOutput(ns("myosin_splittedPeaks"))))
 )))}
 
 #' gate Server Functions
@@ -189,9 +187,9 @@ mod_gate_server <- function(id, r){
 
     observe({
       switch(add_bins_clicks(),
-             render_bin_UI(1, c(signif(r$lower_limit_gfp, digits = 3), 100), ns, "First", output, r),
-             render_bin_UI(2, c(101,350), ns, "Second", output, r),
-             render_bin_UI(3, c(351,1000), ns, "Third", output, r))
+             render_bin_UI(1, c(signif(r$lower_limit_gfp, digits = 3), 100), ns, "low", output, r),
+             render_bin_UI(2, c(101,350), ns, "medium", output, r),
+             render_bin_UI(3, c(351,1000), ns, "high", output, r))
       if (add_bins_clicks() == 3) shinyjs::hide(id = "add_bins")
     })
 
@@ -319,11 +317,9 @@ output$myosin_splittedPeaks <- renderPlot({
   plot_myosin_splittedPeaks(r = r, gs = r$gs[[selected_rows()]], density_fill = "pink", gate = gate_myosin_plot(), subset = subset())})
 }, res = 120)
 
-output[["test"]] <- renderText(glue("Test works"))
-
 observe({
   modal_confirm_bins <- modalDialog(
-    p("Your bins have been successfully added! Click on ", span("Split now", style = "color:#008cba; font-weight:bold"), " to split your MyHC peaks."),
+    p("Your bins have been successfully added! Click ", span("Split", style = "color:#008cba; font-weight:bold"), " to split your MyHC peaks."),
     title = "Done!"
   )
   showModal(modal_confirm_bins)
@@ -337,9 +333,7 @@ flowSet_pData <- reactive({
 
 selected_rows <- reactive(input$individual_FCS_rows_selected)
 
-output$individual_FCS <- renderDT({flowSet_pData()}, selection = list(target = "row", selected = 1, mode = "multiple"),
-                                  rownames = FALSE,
-                                  class = "cell-border stripe")
+output$individual_FCS <- renderDT({flowSet_pData()}, selection = list(target = "row", selected = 1, mode = "multiple"), rownames = FALSE, class = "cell-border stripe", options = list(paging = FALSE, scrollY = "200px"))
 
 observe({
   updateTabsetPanel(inputId = "tabset-mainPanel", selected = "Plot")
@@ -351,7 +345,7 @@ observe({
 
 # CUSTOM FUNCTIONS --------------------------------------------------------
 render_bin_UI <- function(bin_number, value, ns, label, output , r) {
-  output[[paste0("gfp_bin_", bin_number)]] <- renderUI(numericRangeInput(ns(paste0("gfp_range_", bin_number)), label = paste0(label, " GFP bin"), value = value))
+  output[[paste0("gfp_bin_", bin_number)]] <- renderUI(numericRangeInput(ns(paste0("gfp_range_", bin_number)), label = paste0("GFP ", label), value = value))
 }
 
 # here we might need to provide a filterId, not sure if it works if we provide it in the "higher-order" function in which this function is called because of environments
