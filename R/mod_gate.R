@@ -61,7 +61,8 @@ mod_gate_ui <- function(id){
                  p("-	Low myosin expression: for C2C12, these are proliferating", strong("progenitors"), style = "text-indent: 25px"),
                  p("-	High myosin expression: for C2C12, these are ", strong("differentiated myocytes"), style = "text-indent: 25px"),
 
-                 p("The exact threshold separating these two peaks can change from sample to sample. Click ", span("Split", style = "color:#008cba; font-weight:bold"), " to apply a data-driven gating function that determines this threshold for each sample individually."),
+                 p("The exact threshold separating these two peaks can change from sample to sample. Click ", span("Split", style = "color:#008cba; font-weight:bold"), " to apply a data-driven gating function that determines this threshold for each sample individually. You will automatically be redirected from the ‘Information‘ tab to the ‘Plot‘ tab."),
+                 p("On the left, under ‘Select GFP bin‘, select the GFP bin you're interested in. Then select the appropriate dataset in the table. The appearing plot displays the MyHC distribution with the peak-splitting threshold in red. Multiple dataset selections are allowed to facilitate comparisons."),
                  p(strong("Note:"), " If you want to change the bin configuration, you need to click ", span("Reset gates", style = "color:#e99003; font-weight:bold"), ", switch to the ‘GFP bins‘ tab and start again."),
                  style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
                  )),
@@ -86,7 +87,7 @@ mod_gate_server <- function(id, r){
 # Modals, help buttons, etc. ----------------------------------------------
     ## Plot panel: Help button
     observe({
-      showModal(modalDialog(p("Select the GFP bin for which you want to display the myosin intensities.")))
+      showModal(modalDialog(p("Select the GFP bin for which you want to display the MyHC intensitiy distribution.")))
     }) |> bindEvent(input$help)
 
     ## "Add_bins" button
@@ -173,7 +174,7 @@ mod_gate_server <- function(id, r){
       if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {gs_pop_remove(r$gs, "GFP-medium")}
       if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {gs_pop_remove(r$gs, "GFP-high")}
       for (i in seq_along(gates())) {
-        gs_pop_add(r$gs, gates()[[i]], parent = "MyHC+")
+        gs_pop_add(r$gs, gates()[[i]], parent = "GFP+")
       }
       recompute(r$gs)
       #plot(r$gs)
@@ -232,7 +233,7 @@ mod_gate_server <- function(id, r){
     # add gates to the gatingSet
     observe({
       for (i in seq_along(gates())) {
-        gs_pop_add(r$gs, gates()[[i]], parent = "MyHC+")
+        gs_pop_add(r$gs, gates()[[i]], parent = "GFP+")
       }
 
       recompute(r$gs)
