@@ -31,37 +31,36 @@ mod_curate_ui <- function(id){
                tabsetPanel(
                  tabPanel("Information", icon = icon("info"),
                h1(strong("How curation works.")),
-               div(p("By curation we understand ", strong("two essential steps:")),
-                   p("- First, our analysis should be focused on intact cells. We exclude cellular debris - clustering on the lower left corner on an SSC vs FSC plot - by applying a rectangular gate.", style = "text-indent: 25px"),
-                   p("-	Second, FACS data is never devoid of background noise or signals from cellular autofluorescence. By applying intensity thresholds on our fluorescent channels, we essentially get rid of these undesirable signals.", style = "text-indent: 25px"),
+               
+               div(
+                 p("By curation we understand ", strong("two essential steps:")),
+                 p("- Exclusion of cellular debris using a pre-defined gate", style = "text-indent: 25px"),
+                 p("-	Removal of background noise and signals from cellular autofluorescence in the GFP channel by applying an intensity threshold based on the underlying data.", style = "text-indent: 25px"),
+                 p("On the left, select the correct channels and control samples. Click the ", span("Start curation", style = "color:#008cba; font-weight:bold"), " button to start the curation.", br(), strong("Note:"), " In case you started curation with the wrong channel/sample selections, click", span("Restart curation", style = "color:#e99003; font-weight:bold"), " select the correct channels/samples, then click", span("Start curation", style = "color:#008cba; font-weight:bold"), " again."),
+                 p("After curation is done, you can navigate between the two tabs at the top:"),
+                 p("1) ‘NonDebris gate‘ displays the SSC vs FSC plot of your unlabeled control. The gate used to exclude debris is colored in red.", style = "text-indent: 25px"),
+                 p("2) ‘GFP gate‘ displays a histogram of GFP intensities of your unlabeled control. The red line indicates the threshold used to remove unspecific GFP intensity values.", style = "text-indent: 25px"),
+                   
+                   # p("3) Intensity (MyHC) vs density plot for your unlabelled and GFP control with the intensity threshold (in red)", style = "text-indent: 25px"),
 
-                   p("We will use a ", em("pre-defined"), " rectangle gate to remove debris while our controls will help us get rid of unspecific signals."), style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
+                   # p("The reason why you see two plots for the intensity thresholds is that we compute a quantile gate for ", strong("two"), " control samples and average the results. The red lines correspond to this ", strong("averaged"), " value."),
 
-                   div(p("On the left, select the correct channels and control samples. Click the ", span("Start curation", style = "color:#008cba; font-weight:bold"), " button to start the curation. If you later notice that you've selected the wrong channels and/or control samples, click the ", span("Restart curation", style = "color:#e99003; font-weight:bold"), " button and restart the procedure. You will have to click the ", span("Start curation", style = "color:#008cba; font-weight:bold"), " button again."),
-
-                   p("After curation is done, three plots will appear:"),
-                   p("1) SSC vs FSC with the rectangle gate used to remove debris (in red)", style = "text-indent: 25px"),
-                   p("2) Intensity (GFP) vs density plot for your unlabelled and myosin heavy-chain (MyHC) control with the intensity threshold (in red)", style = "text-indent: 25px"),
-                   p("3) Intensity (MyHC) vs density plot for your unlabelled and GFP control with the intensity threshold (in red)", style = "text-indent: 25px"),
-
-                   p("The reason why you see two plots for the intensity thresholds is that we compute a quantile gate for ", strong("two"), " control samples and average the results. The red lines correspond to this ", strong("averaged"), " value."),
-
-                   p("Once you have curated your data, you can proceed with to gating. Simply click on the ", strong("Gate"), " tab at the top of the page."),
-                   style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"),
-               br()),
+               p("You can now switch to ", strong("‘Gate‘"), " in the menu bar."),
+               style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px")),
+               
                tabPanel("NonDebris gate",
                # plot SSC vs FSC for control samples -------------------------------------
                br(),
                plotOutput(ns("non_debris_gate"))),
                
-               tabPanel("GFP threshold",
+               tabPanel("GFP gate",
                br(),
-               plotOutput(ns("gfp_gate"))),
-               
-               tabPanel("MyHC threshold",
-               br(),
-               plotOutput(ns("myhc_gate"))))
-             )))}
+               plotOutput(ns("gfp_gate"))))),
+               # 
+               # tabPanel("MyHC threshold",
+               # br(),
+               # plotOutput(ns("myhc_gate")))
+             ))}
 
 #' curate Server Functions
 #'
@@ -106,10 +105,10 @@ mod_curate_server <- function(id, r = NULL){
         selectInput01("side_scatter", "Side Scatter", n = 2, r = r, ns = ns),
         selectInput01("kras_channel", "GFP channel", n = 3, r = r, ns = ns),
         selectInput01("myhc_channel", "MyHC channel", n = 6, r = r, ns = ns),
+        
         selectInput01("negative_control", "Unlabeled control", n = 1, r = r, row = TRUE, ns = ns),
         selectInput01("positive_control_kras", "GFP-positive control", n = 2, r = r, row = TRUE, ns = ns),
-        selectInput01("positive_control_myhc", "MyHC-positive control", n = 3, r = r, row = TRUE, ns = ns)
-      )
+        selectInput01("positive_control_myhc", "MyHC-positive control", n = 3, r = r, row = TRUE, ns = ns))
     })
 
     # create reactive expressions of the inputs above to avoid typing input$XXX every time
@@ -137,8 +136,7 @@ mod_curate_server <- function(id, r = NULL){
 
     
     input_list <- reactive({
-      list(fsc(), ssc(), ch_kras(), ch_myhc(),
-           ctrl_negative(),ctrl_kras(), ctrl_myhc())
+      list(fsc(), ssc(), ch_kras(), ch_myhc(), ctrl_negative(), ctrl_kras(), ctrl_myhc())
     })
     
     # alterts if non-unique inputs
