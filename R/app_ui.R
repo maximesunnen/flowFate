@@ -16,10 +16,10 @@ app_ui <- function() {
               useShinyjs(),
               navbarPage(title = "FlowFate",
                          mod_import_ui("import_1"),
+                         mod_explore_ui("explore_1"),
                          mod_curate_ui("curate_1"),
                          mod_gate_ui("gate_1"),
-                         mod_export_ui("export_1"),
-                         mod_explore_ui("explore_1")
+                         mod_export_ui("export_1")
               )
     )
   )
