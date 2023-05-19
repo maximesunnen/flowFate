@@ -253,7 +253,7 @@ gfp_low_myo_high <- reactive({
   req(r$gs)
   withProgress(message = "Retrieving data from GFP-low bin...", {
   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-low"))) {       # this is to make sure that GFP-low gate exists!
-  getData_splitPeak(r = r, gs = r$gs, bin = "GFP-low", filter_name = "GFP-low-MYO-high")
+  getData_splitPeak(r = r, gs = r$gs, bin = "GFP-low", filter_name = "MyHC+")
   }})
 })
 
@@ -261,7 +261,7 @@ gfp_medium_myo_high <- reactive({
   req(r$gs)
   withProgress(message = "Retrieving data from GFP-low bin...", {
   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {        # this is to make sure that GFP-medium gate exists!
-    getData_splitPeak(r = r, gs = r$gs, bin = "GFP-medium", filter_name = "GFP-medium-MYO-high")
+    getData_splitPeak(r = r, gs = r$gs, bin = "GFP-medium", filter_name = "MyHC+")
   }})
 })
 
@@ -269,7 +269,7 @@ gfp_high_myo_high <- reactive({
   req(r$gs)
   withProgress(message = "Retrieving data from GFP-high bin...", {
   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {        # this is to make sure that GFP-high gate exists!
-    getData_splitPeak(r = r, gs = r$gs, bin = "GFP-high", filter_name = "GFP-high-MYO-high")
+    getData_splitPeak(r = r, gs = r$gs, bin = "GFP-high", filter_name = "MyHC+")
   }})
 })
 
