@@ -18,6 +18,7 @@ mod_explore_ui <- function(id){
                  selectInput(ns("plot.type"), label = "Select plot type", choices = c("","scatter", "density", "histogram")),
                  radioButtons(ns("scale"), label = NULL, choices = c("linear", "biexponential")),
                  uiOutput(ns("x.channel")),
+                 sliderInput(ns("bin.number"),label = "Select bin number", min = 25, max = 100, value = 50, step = 5),
                  colourInput(ns("x.channel.colour"), label = NULL, value = "grey60", closeOnClick = TRUE),
                  uiOutput(ns("y.channel")),
                  DTOutput(ns("individual_FCS"))
@@ -60,55 +61,112 @@ output$y.channel <- renderUI({
 # dataset <- reactive(input$dataset)
 
 selected_rows <- reactive(input$individual_FCS_rows_selected)
+bin_number <- reactive(input$bin.number)
 
 #' @importFrom ggcyto scale_y_flowjo_biexp scale_x_flowjo_biexp
 #' @importFrom colourpicker colourInput
 
 colour_x <- reactive({input$x.channel.colour})
 
-explore_plot_scatter <- reactive({
-   req(selected_rows())
-     req(input$x.axis, input$y.axis)
-     if (input$scale == "biexponential"){
-       ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]], y = .data[[input$y.axis]]), subset = "root")+
-         scale_x_flowjo_biexp() +
-         scale_y_flowjo_biexp() +
-         theme_bw()
-     }
-     else {
-       ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]], y = .data[[input$y.axis]]), subset = "root")+
-       theme_bw()
-     }
-   })
-
-explore_plot_histogram_density <- reactive({
-  req(input$x.axis)
-  if (input$scale == "biexponential"){
-    # why exactly do we need this .data[[...]]? can't remember
-    ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root")+
-      scale_x_flowjo_biexp() +
-      theme_bw()
-  }
-  else {
-    ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root")+
-      theme_bw()
-  }
-})
- 
-output$explore.plot <- renderPlot({
-  if (input$plot.type == "scatter"){
+explore_plot.base <- reactive({
+  if (input$plot.type == "scatter") {
+    req(selected_rows())
     req(input$x.axis, input$y.axis)
-    explore_plot_scatter()+geom_hex(bins = 200)
+    if (input$scale == "biexponential") {
+      ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]], y = .data[[input$y.axis]]), subset = "root") +
+        scale_x_flowjo_biexp() +
+        scale_y_flowjo_biexp() +
+        theme_bw()
+    }
+    else {
+      ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]], y = .data[[input$y.axis]]), subset = "root") +
+        theme_bw()
+    }
+  }
+  else if (input$plot.type == "density") {
+    req(input$x.axis)
+    if (input$scale == "biexponential") {
+      ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root") +
+        scale_x_flowjo_biexp() +
+        theme_bw()
+    }
+    else {
+      ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root") +
+        theme_bw()
+    }
   }
   else if (input$plot.type == "histogram"){
     req(input$x.axis)
-    explore_plot_histogram_density()+geom_histogram(bins = 50, fill = colour_x(), colour = "black")
+    if (input$scale == "biexponential"){
+      ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root") +
+        scale_x_flowjo_biexp() +
+        theme_bw()
+    }
+    else {
+      ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root") +
+        theme_bw()
+    }
   }
-  else if (input$plot.type == "density"){
-    req(input$x.axis)
-    explore_plot_histogram_density()+geom_density(bins = 50, fill = colour_x(), colour = "black")
+})
+
+explore_plot <- reactive({
+  if (input$plot.type == "scatter") {
+    explore_plot.base() + geom_hex(bins = 200)
   }
-  }, res = 120)
+  else if (input$plot.type == "density") {
+    explore_plot.base() + geom_density(fill = colour_x(), color = "black")
+  }
+  else if (input$plot.type == "histogram") {
+    explore_plot.base() + geom_histogram(bins = bin_number(), fill = colour_x(), color = "black")
+  }
+})
+
+# explore_plot_scatter <- reactive({
+#   req(selected_rows())
+#   req(input$x.axis, input$y.axis)
+#   if (input$scale == "biexponential"){
+#     ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]], y = .data[[input$y.axis]]), subset = "root")+
+#       geom_hex(bins = 200)
+#     scale_x_flowjo_biexp() +
+#       scale_y_flowjo_biexp() +
+#       theme_bw()
+#   }
+#   else {
+#     ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]], y = .data[[input$y.axis]]), subset = "root")+
+#       geom_hex(bins = 200)+
+#       theme_bw()
+#   }
+# })
+# 
+# explore_plot_histogram_density <- reactive({
+#   req(input$x.axis)
+#   if (input$scale == "biexponential"){
+#     # why exactly do we need this .data[[...]]? can't remember
+#     ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root")+
+#       scale_x_flowjo_biexp() +
+#       theme_bw()
+#   }
+#   else {
+#     ggcyto(data = r$gs[[selected_rows()]], aes(x = .data[[input$x.axis]]), subset = "root")+
+#       theme_bw()
+#   }
+# })
+ 
+output$explore.plot <- renderPlot({
+  explore_plot()}, res = 120)
+  # if (input$plot.type == "scatter"){
+  #   req(input$x.axis, input$y.axis)
+  #   explore_plot_scatter()+geom_hex(bins = 200)
+  # }
+  # else if (input$plot.type == "histogram"){
+  #   req(input$x.axis)
+  #   explore_plot_histogram_density()+geom_histogram(bins = bin_number(), fill = colour_x(), colour = "black")
+  # }
+  # else if (input$plot.type == "density"){
+  #   req(input$x.axis)
+  #   explore_plot_histogram_density()+geom_density(fill = colour_x(), colour = "black")
+  # }
+  # }, res = 120)
 
  output$individual_FCS <- renderDT({r$flowSet_pData()}, selection = list(target = "row", selected = 1, mode = "single"), rownames = FALSE, class = "cell-border stripe", options = list(paging = FALSE, scrollY = "200px"))
  
@@ -118,7 +176,17 @@ output$explore.plot <- renderPlot({
    }
  })
  
- output$download <- downloadHandler(filename = function() download_filename(), content = function(file) {ggsave(file, plot = explore_plot(), device = "svg")})
+ output$download <- downloadHandler(filename = function() download_filename(),
+                                    content = function(file) {ggsave(file,  plot = explore_plot(), device = "svg")})
+ 
+ observe({
+   if(input$plot.type =="histogram"){
+     shinyjs::show("bin.number")
+   }
+   else {
+     shinyjs::hide("bin.number")
+   }
+ })
   })
 }
     
