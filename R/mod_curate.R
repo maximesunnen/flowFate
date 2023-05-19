@@ -55,7 +55,9 @@ mod_curate_ui <- function(id){
                
                tabPanel("GFP gate",
                br(),
-               plotOutput(ns("gfp_gate"))))),
+               plotOutput(ns("gfp_gate")),
+               br(),
+               textOutput(ns("gfp_gate_numeric"))))),
                # 
                # tabPanel("MyHC threshold",
                # br(),
@@ -177,7 +179,7 @@ mod_curate_server <- function(id, r = NULL){
     # output plot of the nonDebris gate: we still need a bindEvent, because if not the default channel names are taken, which is not always right
     # if a user different from us uses it
     output$non_debris_gate <- renderPlot({
-      ggcyto(r$gs[[c(input$negative_control, input$positive_control_kras, input$positive_control_myhc)]],
+      ggcyto(r$gs[[c(input$negative_control, input$positive_control_myhc)]],
              aes(x = .data[[input$side_scatter]] , y = .data[[input$forward_scatter]]),
              subset = "root") +
         geom_hex(bins = 150) +
@@ -231,6 +233,8 @@ mod_curate_server <- function(id, r = NULL){
           geom_gate(gfp_gate()) +
           scale_x_flowjo_biexp()
       }, res = 120) |> bindEvent(input$Curate)
+      
+      output$gfp_gate_numeric <- renderText(paste0("The GFP-cutoff separating your GFP- and GFP+ population is set to ", round(lower_limit_gfp_gate(), digits = 1), ". Thus, cells with GFP intensities below this value are excluded from your analysis as they most likely correspond to untransfected, autofluorescent cells."))
       
       ## this we don't need anymore: meeting 15.05
       # output$myhc_gate <- renderPlot({
