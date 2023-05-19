@@ -19,6 +19,8 @@ mod_export_ui <- function(id){
                downloadButton(ns("download"), "Download", class = "btn-primary"),
                actionButton(ns("table"), label = "Show population statistics", class = "btn-primary")),
              mainPanel(
+               tabsetPanel(id = ns("tabset"),
+                 tabPanel("Information", icon = icon("info"),
                h1(strong("How export works.")),
                br(),
                div(
@@ -37,9 +39,11 @@ mod_export_ui <- function(id){
                  # p("-  ", strong("ParentCount"), ": indicates the number of events in a parent population i.e. for the Population /NonDebris/GFP+, the ParentCount corresponds to the number of events in the NonDebris population.", style = "text-indent: 25px"),
                  # p("-  ", strong("Percentage"), ": (Count/ParentCount) x 100", style = "text-indent: 25px"), 
                  style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"),
-               br(),
-               textOutput(ns("test")),
-               tableOutput(ns("population_table")))))}
+               br()),
+               tabPanel("Population statistics", 
+                        br(),
+                        tableOutput(ns("population_table"))
+                        )))))}
     
 #' export Server Functions
 #'
@@ -68,9 +72,6 @@ mod_export_server <- function(id,r){
           }
           }
     })
-
-    
-    output$test <- reactive(file_name())
     
     output$population_table <- renderTable({population_table()}) |> bindEvent(input$table)
     
@@ -84,9 +85,12 @@ mod_export_server <- function(id,r){
                     # |>  mutate("Percentage" = ifelse(is.na(count / lag(count)), (count / count) * 100, (count / lag(count)) * 100))
                     )
     })
-      }
-    )
-  }
+    
+    observe({
+      updateTabsetPanel(inputId = "tabset", selected = "Population statistics")
+    }) |> bindEvent(input$table)
+    
+    })}
 
 ## To be copied in the UI
 # mod_export_ui("export_1")
