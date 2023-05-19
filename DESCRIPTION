@@ -30,6 +30,7 @@ Imports:
     shinyjs,
     shinyWidgets,
     stringr,
+    svglite,
     tibble,
     utils,
     waiter
