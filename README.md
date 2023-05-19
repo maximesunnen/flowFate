@@ -72,12 +72,21 @@ adding something like:
 
 To run the app in R, install R and R Studio [here](https://posit.co/download/rstudio-desktop/), then run the commands below in your R Studio console.
 
+This package has many dependencies, expect an installation time of roughly 30 minutes if you have none of those dependencies.
+
+The app can be accessed inside the University of Luxembourg network at this URL: https://shiny-server.uni.lu/app/flowfate
+
 ``` r 
 # install the flowFate package
-install.packages("flowFate")
 
+install.packages(c("remotes", "BiocManager"))
+
+# install dependencies from Bioconductor
+BiocManager::install(c("openCyto", "ggcyto", "flowWorkspace", "flowCore"))
+
+install.packages("flowFate")
+remotes::install_github("maximesunnen/flowFate")
 # open the app
-XXXXXXXX
+flowFate::run_app()
 ```
 
-Alternatively, if you don't want to install R, go to [link_to_server]() to use the app.
