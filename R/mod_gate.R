@@ -316,7 +316,7 @@ output$myosin_splittedPeaks <- renderPlot({
   req(r$gs, selected_rows(), gate_myosin_plot(), subset())
   withProgress(message = "Plotting your data...", {
   plot_myosin_splittedPeaks(r = r, gs = r$gs[[selected_rows()]], density_fill = "pink", gate = gate_myosin_plot(), subset = subset())})
-}, res = 120)
+}, res = 120) |> bindEvent(input$split)
 
 observe({
   modal_confirm_bins <- modalDialog(
