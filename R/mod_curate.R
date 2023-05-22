@@ -114,9 +114,9 @@ mod_curate_server <- function(id, r = NULL){
         selectInput01("kras_channel", "GFP channel", n = 3, r = r, ns = ns),
         selectInput01("myhc_channel", "MyHC channel", n = 6, r = r, ns = ns),
         
-        selectInput01("negative_control", "Unlabeled control", n = 1, r = r, row = TRUE, ns = ns),
+        selectInput01("negative_control", "double-negative control", n = 1, r = r, row = TRUE, ns = ns),
         # selectInput01("positive_control_kras", "GFP-positive control", n = 2, r = r, row = TRUE, ns = ns),
-        selectInput01("positive_control_myhc", "Single-dye MyHC control", n = 3, r = r, row = TRUE, ns = ns))
+        selectInput01("positive_control_myhc", "MyHC+ control", n = 3, r = r, row = TRUE, ns = ns))
     })
 
     # create reactive expressions of the inputs above to avoid typing input$XXX every time
