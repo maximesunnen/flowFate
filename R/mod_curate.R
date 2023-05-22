@@ -86,6 +86,12 @@ mod_curate_server <- function(id, r = NULL){
     observe({
       shinyjs::show(id = "Curate")
     }) |> bindEvent(input$ok)
+    
+    # Job finished modal: show to users when curation is done
+    modal_finished <- modalDialog(
+      p("Your data has been successfully curated. Click on the ", strong("`NonDebris`"), " or ", strong("`Gate`"), " tabs to see the results." , br(), br(), "Select ", strong("`Gate`"), " in the menu bar to proceed your analysis.", br(), br(), "Click ", span("Restart curation", style = "color:#e99003; font-weight:bold"), "to select different channels/control samples and restart your curation."),
+      title = "Done!"
+    )
 
     # Restart curation modal: show when users reset the curation
     modal_confirm <- modalDialog(
@@ -173,7 +179,11 @@ mod_curate_server <- function(id, r = NULL){
       gs_pop_add(r$gs, gate_non_debris(), parent = "root")
       message("Added the non_debris gate to the gatingSet")
       recompute(r$gs)
+      gs_pop_add(r$gs, gfp_gate(), parent = "NonDebris")
+      message("Added gfp_gate to the gatingSet")
+      recompute(r$gs)
       message("Recomputed the gatingSet")
+      showModal(modal_finished)
       }) |> bindEvent(input$Curate, ignoreInit = TRUE)
 
     # output plot of the nonDebris gate: we still need a bindEvent, because if not the default channel names are taken, which is not always right
@@ -210,17 +220,17 @@ mod_curate_server <- function(id, r = NULL){
     #   make_gate(lower_limit_myhc_gate(), input$myhc_channel,filterId = "MyHC+")
     # })
 
-      observe({
-        # add gate to the gatingSet: parent should be NonDebris
-        gs_pop_add(r$gs, gfp_gate(), parent = "NonDebris")
-        message("Added gfp_gate to the gatingSet")
-        # gs_pop_add(r$gs, myhc_gate(), parent = "GFP+")
-        # message("Added myhc_gate to the gatingSet")
-        # recompute the GatingSet
-        recompute(r$gs)
-        # For testing/debugging
-        message("Recomputed the gatingSet")
-      }) |> bindEvent(input$Curate)
+      # observe({
+      #   # add gate to the gatingSet: parent should be NonDebris
+      #   gs_pop_add(r$gs, gfp_gate(), parent = "NonDebris")
+      #   message("Added gfp_gate to the gatingSet")
+      #   # gs_pop_add(r$gs, myhc_gate(), parent = "GFP+")
+      #   # message("Added myhc_gate to the gatingSet")
+      #   # recompute the GatingSet
+      #   recompute(r$gs)
+      #   # For testing/debugging
+      #   message("Recomputed the gatingSet")
+      # }) |> bindEvent(input$Curate)
 
       # plot the gate
       # ATTENTION: is it in theory possible that this plot is evaluated BEFORE the observer in line 177? because below, the subset "NonDebris" only exists after this observer is executed --> potential crashing source!!!
@@ -234,7 +244,7 @@ mod_curate_server <- function(id, r = NULL){
           scale_x_flowjo_biexp()
       }, res = 120) |> bindEvent(input$Curate)
       
-      output$gfp_gate_numeric <- renderText(paste0("The GFP-cutoff separating your GFP- and GFP+ population is set to ", round(lower_limit_gfp_gate(), digits = 1), ". Thus, cells with GFP intensities below this value are excluded from your analysis as they most likely correspond to untransfected, autofluorescent cells."))
+      output$gfp_gate_numeric <- renderText(paste0("The GFP-cutoff separating your GFP- and GFP+ population is ", round(lower_limit_gfp_gate(), digits = 1), ". Thus, cells with GFP intensities below this value are excluded from your analysis as they most likely correspond to untransfected, autofluorescent cells."))
       
       ## this we don't need anymore: meeting 15.05
       # output$myhc_gate <- renderPlot({
