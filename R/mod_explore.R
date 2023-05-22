@@ -174,6 +174,9 @@ output$explore.plot <- renderPlot({
    if (isTruthy(input$download.filename)) {
      paste0(input$download.filename, ".svg", sep = "")
    }
+   else {
+     paste0("plot.svg")
+   }
  })
  
  output$download <- downloadHandler(filename = function() download_filename(),
