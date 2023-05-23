@@ -11,32 +11,33 @@
 mod_import_ui <- function(id){
   ns <- NS(id)
 
-
   # Defining a tabPanel layout ----------------------------------------------
   tabPanel(title = "Import",
            # Defining a sidebarlayout in the import tab ------------------------------
            sidebarLayout(
+             # Defining the sidebarPanel
              sidebarPanel(
                tagList(
                  # File input container in the sidebar ------------------------------------
                  fileInput(inputId = ns("filename"), accept = ".fcs", label = "Select FCS file"),
                  # Submit button to start the import --------------------------------------
-                 actionButton(ns("Submit"), "Submit", class = "btn-primary"),
-                 actionButton(ns("demo_fs"), label = "Import demo data")
-                 )),
-
+                 actionButton(ns("submit"), "Submit", class = "btn-primary"),
+                 actionButton(ns("demo_fs"), label = "Import demo data"))),
+             
+             # Defining the mainPanel
              mainPanel(
-               h1(strong("Welcome to flowFate.")),
-               p("To start your analysis, import your FCS file by clicking on the " , strong("Browse"),
+               h1(strong("Welcome to FlowFate.")),
+               p("To start your analysis, import your FCS file by clicking on the ", strong("Browse"),
                  " button (on the left), then select your file. Confirm your selection by clicking on the ",
                  span("Submit", style = "color:#008cba; font-weight:bold"),
-                 " button that appears after file selection. A description of your uploaded file will be displayed. To upload a new FCS file, click " , strong("Browse"), ", select the correct file and confirm again.", br(), br(), "Once the correct file has been uploaded, you have two options:", br(), br(),
+                 " button that appears after file selection. A description of your uploaded file will be displayed. To upload a new FCS file, click ", strong("Browse"), ", select the correct file and confirm again.", br(), br(), "Once the correct file has been uploaded, you have two options:", br(), br(),
                  "- switch to the ", strong("‘Explore‘"), " tab in the menu bar and explore your data", br(), br(),
                  "- switch to the ", strong("‘Curate‘"), " tab in the menu bar and start curating your data",
                  style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
-               # Table showing the imported file -----------------------------------------
-               tableOutput(ns("files")), br(),
-               # Text indicating the number of datasets ----------------------------------
+               
+               # Table output showing the datasets(individual) FCS files -----------------------------------------
+               DTOutput(ns("individual_fcs")), br(),
+               # Text output indicating the number of datasets ----------------------------------
                textOutput(ns("datasets"))
            )))}
 
@@ -58,139 +59,89 @@ mod_import_server <- function(id, r = NULL){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    ## WRAP DEMO_FCS STUFF INSIDE OBSERVE: a bit ugly
-    
-observe({
-  demo_filename <- system.file("demo_fcs_file/demo.fcs", package = "flowFate")
+    # demo_fcs: wrapped inside a large observer
+    observe({
+      # file name: a file integrated into the package (needs to be reduced to a few datasets only to reduce size)
+      demo_filename <- system.file("demo_fcs_file/demo.fcs", package = "flowFate")
+      withProgress(message = "Counting number of datasets...",
+                   demo_nb_ds <- n_datasets(demo_filename))
+      withProgress(message = "Splitting .fcs file...",
+                   individual_demo_fcs <- split_1_fcs(demo_nb_ds, input_file = demo_filename))
+      withProgress(message = "Reading flowSet...",
+                   demo_fs <- read.flowSet(fs::dir_ls(individual_demo_fcs, glob = "*.fcs"),
+                                           truncate_max_range = FALSE,
+                                           alter.names = TRUE,
+                                           transformation = FALSE))
+      demo_flowSet_pData <- pData(demo_fs)
+      
+      output$datasets <- renderText({
+        paste0("Your FCS file contains ", demo_nb_ds, " datasets.")
+      })
+      
+      output$individual_FCS <- renderDT({demo_flowSet_pData}, rownames = FALSE, class = "cell-border stripe")
+      
+      # stratégie du petit r: we need to use demo_fs and GatingSet(demo_fs) in other modules
+      r$fs <- demo_fs
+      r$gs <- GatingSet(demo_fs)
+      r$flowSet_pData <- pData(demo_fs)
+    }) |> bindEvent(input$demo_fs)
   
-  withProgress(message = "Counting number of datasets...",
-  demo_nb_ds <- n_datasets(demo_filename))
-  withProgress(message = "Splitting .fcs file...",
-  individual_demo_fcs <- split_1_fcs(demo_nb_ds, input_file = demo_filename))
-  withProgress(message = "Reading flowSet...",
-  demo_fs <- read.flowSet(fs::dir_ls(individual_demo_fcs, glob = "*.fcs"),
-                              truncate_max_range = FALSE,
-                              alter.names = TRUE,
-                              transformation = FALSE))
-  demo_flowSet_pData <- pData(demo_fs)
-  
-  output$datasets <- renderText({
-    paste0("Your FCS file contains ", demo_nb_ds, " datasets.")
-  })
-    
-    output$files <- renderTable({
-      demo_filename
+# user-submitted file
+
+    ## hide the submit button when no file has been uploaded (input$filename only exists when a file is selected by the user)
+    observe({
+      if (is.null(input$filename)) shinyjs::hide("submit")
+      else shinyjs::show("submit")
     })
-
-    output$individual_FCS <- renderDT({demo_flowSet_pData},
-                                      rownames = FALSE,
-                                      class = "cell-border stripe")
-    r$gs <- GatingSet(demo_fs)
-    r$fs <- demo_fs
-    output$overview_SSC_FSC <- renderPlot({
-      if (!is_null(selected_rows())) {
-        ggcyto(r$gs[[selected_rows()]], aes(x = "SSC.HLin", y = "FSC.HLin"), subset = "root") +
-          geom_hex(bins = 150) +
-          theme_bw()
-      }
-    }, res = 120)
     
-  }) |> bindEvent(input$demo_fs)
-  
-  ## HERE EVERYTHING NOT RELATED TO DEMO FCS STARTS
-
-  observe({
-    if (is.null(input$filename)) shinyjs::hide("Submit")
-    else shinyjs::show("Submit")
-  })
-    
+    # make a reactive expression filename() evaluating to the name of the file uploaded by the user
     filename <- reactive({
       req(input$filename)
       input$filename
-    }) |> bindEvent(input$Submit)
+      }) |> bindEvent(input$submit)
     
+    # make a reactive expression nb_ds() [for "number of datadaset"] evaluating the number of datasets in the file uploaded by the user
     nb_ds <- reactive({
       req(input$filename$datapath)
-      withProgress(message = "Counting datasets...",
+      withProgress(message = "Couting datasets",
       n_datasets(input$filename$datapath))
-      }) |> bindEvent(input$Submit)
+      }) |> bindEvent(input$submit)
     
+    # make a reactive expression individual_fcs(), which writes individual datasets to individual FCS files [see split_1_fcs custom function]
+    ## the name of these datasets also contains the WELLID keyword
     individual_fcs <- reactive({
-      req(input$filename$datapath)
       withProgress(message = "Splitting datasets...",
       split_1_fcs(nb_ds(), input$filename$datapath))
-    }) |> bindEvent(input$Submit)
+    }) |> bindEvent(input$submit)
     
+    # make a reactive expression fs() [for "flowSet"], which reads the individual fcs files into a single flowSet
     fs <- reactive({
       withProgress(message = "Reading datasets...",
-      read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"),
-                   truncate_max_range = FALSE,
-                   alter.names = TRUE,
-                   transformation = FALSE))
-    }) |> bindEvent(input$Submit)
+      read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE))
+    }) |> bindEvent(input$submit)
     
-    flowSet_pData <- reactive({pData(fs())}) |> bindEvent(input$Submit)
+    # make a reactive expression flowSet_pData() [for "flowSet phenotypic data"], which corresponds to the name of the individual datasets
+    flowSet_pData <- reactive({pData(fs())}) |> bindEvent(input$submit)
+    ## we need this variable in other modules, so we need to use the stratégie du petit r to share it across modules
+    ## since I need to read a reactive value (flowSet_pData()), I need to wrap it into reactive. Not sure if r$flowSet_pData then needs to be called as a reactive expression too, and if this does not potentially lead to unexpected reactivity that will be hard to debug
     
-    r$flowSet_pData <- reactive({flowSet_pData()})
+    # make a reactive expression gs() [for "gatingSet"], which creates a gatingSet from the flowSet
+    gs <- reactive({GatingSet(fs())}) |> bindEvent(input$submit)
     
-    #not sure where to put this now
-    # pData(fs())$well <- str_extract(pData(fs())$name, "[A-Z]\\d{2}")
+    # individual_fcs output: individual FCS files (datasets) displayed as a table
+    output$individual_fcs <- renderDT({flowSet_pData()}, rownames = FALSE)
     
-    gs <- reactive({
-      GatingSet(fs())
-      }) |> bindEvent(input$Submit)
-    
-    selected_rows <- reactive(input$individual_FCS_rows_selected)
-    
-    output$datasets <- renderText({
-      #req(input$filename)
-      paste0("Your FCS file contains ", nb_ds(), " dataset(s).")
-    })
-    
-    output$files <- renderTable({
-      req(input$Submit)
-      filename()
-    })
-    
-    output$individual_FCS <- renderDT({flowSet_pData()}, selection = list(target = "row", selected = 1, mode = "single"),
-                                      rownames = FALSE,
-                                      class = "cell-border stripe")
+    # datasets output: text indicating the number of datasets contained inside the fcs file uploaded by the user
+    output$datasets <- renderText({paste0("Your FCS file contains ", nb_ds(), " dataset(s).")})
 
-    # stratégie du petit R: variables to be shared across modules ---------------------
-    
+    # stratégie du petit R: all variables to be shared across modules ---------------------
     observe({
-      r$nb_ds <- nb_ds()
-      r$gs <- gs()
+      r$flowSet_pData <- flowSet_pData()
+      r$gs <- GatingSet(fs())
       r$fs <- fs()
+      r$nb_ds <- nb_ds()
     })
-
-    # overview SSC vs FSC plot to inspect data --------------------------------
-
-    overview_plot <- reactive({
-      req(gs())
-      if (!is_null(selected_rows())) {
-        ggcyto(gs()[[selected_rows()]], aes(x = "SSC.HLin", y = "FSC.HLin"), subset = "root") +
-          geom_hex(bins = 150) +
-          theme_bw()
-      }
-    })
-
-    output$overview_SSC_FSC <- renderPlot({overview_plot()}, res = 120)
-    
-    download_filename <-reactive({
-      if (isTruthy(input$download.filename)) {
-          paste0(input$download.filename, ".svg", sep = "")
-        }
-    })
-    
-    output$download <- downloadHandler(filename = function() download_filename(), content = function(file) {ggsave(file, plot = overview_plot(), device = "svg")})
-    
-    # output$download.all <- downloadHandler(filename = "test.zip",
-    #                                        content = function(file) {
-    #                                          ggsave()
-    #                                        })
   })}
-    
 
 #' @description Count how many datasets are in a FCS file
 #'
