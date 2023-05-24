@@ -23,7 +23,7 @@ mod_import_ui <- function(id){
                  # Submit button to start the import --------------------------------------
                  actionButton(ns("submit"), "Submit", class = "btn-primary"),
                  actionButton(ns("demo_fs"), label = "Import demo data"))),
-             
+
              # Defining the mainPanel
              mainPanel(
                h1(strong("Welcome to FlowFate.")),
@@ -31,10 +31,10 @@ mod_import_ui <- function(id){
                  " button (on the left), then select your file. Confirm your selection by clicking on the ",
                  span("Submit", style = "color:#008cba; font-weight:bold"),
                  " button that appears after file selection. A description of your uploaded file will be displayed. To upload a new FCS file, click ", strong("Browse"), ", select the correct file and confirm again.", br(), br(), "Once the correct file has been uploaded, you have two options:", br(), br(),
-                 "- switch to the ", strong("‘Explore‘"), " tab in the menu bar and explore your data", br(), br(),
-                 "- switch to the ", strong("‘Curate‘"), " tab in the menu bar and start curating your data",
+                 "- switch to the ", strong("'Explore'"), " tab in the menu bar and explore your data", br(), br(),
+                 "- switch to the ", strong("'Curate'"), " tab in the menu bar and start curating your data",
                  style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
-               
+
                # Table output showing the datasets(individual) FCS files -----------------------------------------
                DTOutput(ns("individual_fcs")), br(),
                # Text output indicating the number of datasets ----------------------------------
@@ -58,7 +58,7 @@ mod_import_server <- function(id, r = NULL){
 
   moduleServer(id, function(input, output, session){
     ns <- session$ns
-    
+
     # demo_fcs: wrapped inside a large observer
     observe({
       # file name: a file integrated into the package (needs to be reduced to a few datasets only to reduce size)
@@ -73,19 +73,19 @@ mod_import_server <- function(id, r = NULL){
                                            alter.names = TRUE,
                                            transformation = FALSE))
       demo_flowSet_pData <- pData(demo_fs)
-      
+
       output$datasets <- renderText({
         paste0("Your FCS file contains ", demo_nb_ds, " datasets.")
       })
-      
+
       output$individual_FCS <- renderDT({demo_flowSet_pData}, rownames = FALSE, class = "cell-border stripe")
-      
-      # stratégie du petit r: we need to use demo_fs and GatingSet(demo_fs) in other modules
+
+      # strategie du petit r: we need to use demo_fs and GatingSet(demo_fs) in other modules
       r$fs <- demo_fs
       r$gs <- GatingSet(demo_fs)
       r$flowSet_pData <- pData(demo_fs)
     }) |> bindEvent(input$demo_fs)
-  
+
 # user-submitted file
 
     ## hide the submit button when no file has been uploaded (input$filename only exists when a file is selected by the user)
@@ -93,48 +93,48 @@ mod_import_server <- function(id, r = NULL){
       if (is.null(input$filename)) shinyjs::hide("submit")
       else shinyjs::show("submit")
     })
-    
+
     # make a reactive expression filename() evaluating to the name of the file uploaded by the user
     filename <- reactive({
       req(input$filename)
       input$filename
       }) |> bindEvent(input$submit)
-    
+
     # make a reactive expression nb_ds() [for "number of datadaset"] evaluating the number of datasets in the file uploaded by the user
     nb_ds <- reactive({
       req(input$filename$datapath)
       withProgress(message = "Couting datasets",
       n_datasets(input$filename$datapath))
       }) |> bindEvent(input$submit)
-    
+
     # make a reactive expression individual_fcs(), which writes individual datasets to individual FCS files [see split_1_fcs custom function]
     ## the name of these datasets also contains the WELLID keyword
     individual_fcs <- reactive({
       withProgress(message = "Splitting datasets...",
       split_1_fcs(nb_ds(), input$filename$datapath))
     }) |> bindEvent(input$submit)
-    
+
     # make a reactive expression fs() [for "flowSet"], which reads the individual fcs files into a single flowSet
     fs <- reactive({
       withProgress(message = "Reading datasets...",
       read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE))
     }) |> bindEvent(input$submit)
-    
+
     # make a reactive expression flowSet_pData() [for "flowSet phenotypic data"], which corresponds to the name of the individual datasets
     flowSet_pData <- reactive({pData(fs())}) |> bindEvent(input$submit)
-    ## we need this variable in other modules, so we need to use the stratégie du petit r to share it across modules
+    ## we need this variable in other modules, so we need to use the strategie du petit r to share it across modules
     ## since I need to read a reactive value (flowSet_pData()), I need to wrap it into reactive. Not sure if r$flowSet_pData then needs to be called as a reactive expression too, and if this does not potentially lead to unexpected reactivity that will be hard to debug
-    
+
     # make a reactive expression gs() [for "gatingSet"], which creates a gatingSet from the flowSet
     gs <- reactive({GatingSet(fs())}) |> bindEvent(input$submit)
-    
+
     # individual_fcs output: individual FCS files (datasets) displayed as a table
     output$individual_fcs <- renderDT({flowSet_pData()}, rownames = FALSE)
-    
+
     # datasets output: text indicating the number of datasets contained inside the fcs file uploaded by the user
     output$datasets <- renderText({paste0("Your FCS file contains ", nb_ds(), " dataset(s).")})
 
-    # stratégie du petit R: all variables to be shared across modules ---------------------
+    # strategie du petit R: all variables to be shared across modules ---------------------
     observe({
       r$flowSet_pData <- flowSet_pData()
       r$gs <- GatingSet(fs())

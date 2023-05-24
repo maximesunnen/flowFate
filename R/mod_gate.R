@@ -50,9 +50,9 @@ mod_gate_ui <- function(id){
                ),
                br(),
                div(
-                 p("On the left, click ", strong("'Add GFP bin'"), ", then enter the bin size. The maximum number of bins you can add is three and you need to add at least one. Once bins have been added, click ", span("Confirm", style = "color:#008cba; font-weight:bold"), ". A pop-up window appears indicating that binning was successful and the active tab in the sidebar will automatically be updated from ‘GFP bins‘ to ‘Split peaks‘."),
+                 p("On the left, click ", strong("'Add GFP bin'"), ", then enter the bin size. The maximum number of bins you can add is three and you need to add at least one. Once bins have been added, click ", span("Confirm", style = "color:#008cba; font-weight:bold"), ". A pop-up window appears indicating that binning was successful and the active tab in the sidebar will automatically be updated from 'GFP bins' to 'Split peaks'."),
                  p(strong("Note 1:"), "If you want to change the bin configuration, click ", span("Reset bins", style = "color:#e99003; font-weight:bold"), ", change the bin configuration, then click ", span("Confirm", style = "color:#008cba; font-weight:bold"), " again."),
-                 p(strong("Note 2:"), "The lower limit of the ‘GFP low‘ bin defaults to the intensity threshold calculated during curation. Lowering this value does not change anything as cells with such low GFP intensities have essentially already been removed by gating."),
+                 p(strong("Note 2:"), "The lower limit of the 'GFP low' bin defaults to the intensity threshold calculated during curation. Lowering this value does not change anything as cells with such low GFP intensities have essentially already been removed by gating."),
                  style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"),
                br(),
                hr(),
@@ -63,12 +63,12 @@ mod_gate_ui <- function(id){
                  p("-	Low myosin expression: for C2C12, these are proliferating", strong("progenitors"), style = "text-indent: 25px"),
                  p("-	High myosin expression: for C2C12, these are ", strong("differentiated myocytes"), style = "text-indent: 25px"),
 
-                 p("The exact threshold separating these two peaks can change from sample to sample. Click ", span("Split", style = "color:#008cba; font-weight:bold"), " to apply a data-driven gating function that determines this threshold for each sample individually. You will automatically be redirected from the ‘Information‘ tab to the ‘Plot‘ tab."),
-                 p("On the left, under ‘Select GFP bin‘, select the GFP bin you're interested in. Then select the appropriate dataset in the table. The appearing plot displays the MyHC distribution with the peak-splitting threshold in red. Multiple dataset selections are allowed to facilitate comparisons."),
-                 p(strong("Note:"), " If you want to change the bin configuration, you need to click ", span("Reset gates", style = "color:#e99003; font-weight:bold"), ", switch to the ‘GFP bins‘ tab and start again."),
+                 p("The exact threshold separating these two peaks can change from sample to sample. Click ", span("Split", style = "color:#008cba; font-weight:bold"), " to apply a data-driven gating function that determines this threshold for each sample individually. You will automatically be redirected from the 'Information' tab to the 'Plot' tab."),
+                 p("On the left, under 'Select GFP bin', select the GFP bin you're interested in. Then select the appropriate dataset in the table. The appearing plot displays the MyHC distribution with the peak-splitting threshold in red. Multiple dataset selections are allowed to facilitate comparisons."),
+                 p(strong("Note:"), " If you want to change the bin configuration, you need to click ", span("Reset gates", style = "color:#e99003; font-weight:bold"), ", switch to the 'GFP bins' tab and start again."),
                  style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
                  )),
-               
+
                tabPanel("Plot",
                         br(),
                         plotOutput(ns("myosin_splittedPeaks"))))
