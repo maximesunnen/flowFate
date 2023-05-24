@@ -15,10 +15,12 @@ mod_gate_ui <- function(id){
   tabPanel(title = "Gate",
            # Defining a sidebarLayout in the Gate tab ------------------------------
            sidebarLayout(
+             # Defining the sidebarPanel
              sidebarPanel(
                tabsetPanel(id = ns("tabset"),
                            tabPanel("GFP bins",
                                     br(),
+                                    # Defining the action buttons that
                                     uiOutput(ns("gfp_bin_1")),
                                     uiOutput(ns("gfp_bin_2")),
                                     uiOutput(ns("gfp_bin_3")),
@@ -316,7 +318,7 @@ output$myosin_splittedPeaks <- renderPlot({
   req(r$gs, selected_rows(), gate_myosin_plot(), subset())
   withProgress(message = "Plotting your data...", {
   plot_myosin_splittedPeaks(r = r, gs = r$gs[[selected_rows()]], density_fill = "pink", gate = gate_myosin_plot(), subset = subset())})
-}, res = 120) |> bindEvent(input$split)
+}, res = 120)
 
 observe({
   modal_confirm_bins <- modalDialog(
