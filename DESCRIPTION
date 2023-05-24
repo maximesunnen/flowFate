@@ -16,13 +16,14 @@ Imports:
     bslib,
     colourpicker,
     config (>= 0.3.1),
+    dplyr,
     DT,
     flowCore,
     flowWorkspace,
     fs,
     ggcyto,
-    ggplot2,
     glue,
+    ggplot2,
     golem (>= 0.3.5),
     openCyto,
     purrr,
@@ -30,11 +31,11 @@ Imports:
     shinyjs,
     shinyWidgets,
     stringr,
-    svglite,
     tibble,
     utils,
     waiter
 Suggests: 
+    svglite,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8

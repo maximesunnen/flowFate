@@ -3,8 +3,8 @@
     "Version": "4.2.2",
     "Repositories": [
       {
-        "Name": "REPO_NAME",
-        "URL": "https://packagemanager.posit.co/cran/latest"
+        "Name": "CRAN",
+        "URL": "https://packagemanager.posit.co/cran/2023-04-26"
       }
     ]
   },
