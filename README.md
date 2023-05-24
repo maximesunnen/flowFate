@@ -48,6 +48,10 @@ renv.lock.prod
 
 3.  `scp` the `deploy` folder to the \`shiny-sever\` in the **shinyproxy** `container_apps/` and execute **as root** the commands in the README
 
+Make sure to use the binary versions for Linux from [PPPM](https://packagemanager.posit.co)
+
+`RUN R -e "renv::restore(repos = 'https://packagemanager.posit.co/cran/__linux__/jammy/latest/')"`
+
 ```
 docker build -f Dockerfile_base --progress=plain -t flowfate_base .
 docker build -f Dockerfile --progress=plain -t flowfate:latest .
