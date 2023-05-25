@@ -14,7 +14,7 @@ app_ui <- function() {
     fluidPage(theme = bslib::bs_theme(bootswatch = "yeti"),
               autoWaiter(),
               useShinyjs(),
-              navbarPage(title = "FlowFate",
+              navbarPage(title = paste0("FlowFate ", packageVersion("flowFate")),
                          mod_import_ui("import_1"),
                          mod_explore_ui("explore_1"),
                          mod_curate_ui("curate_1"),
