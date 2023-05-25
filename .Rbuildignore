@@ -10,3 +10,6 @@ $run_dev.*
 ^LICENSE\.md$
 ^deploy$
 ^.renvignore
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

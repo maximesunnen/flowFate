@@ -4,13 +4,13 @@
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @noRd
 #'
-#' @importFrom shiny NS tagList 
+#' @importFrom shiny NS tagList
 mod_export_ui <- function(id){
   ns <- NS(id)
   tabPanel(title = "Export",
-           
+
            # Defining a sidebarLayout in the Curate tab ------------------------------
            sidebarLayout(
              sidebarPanel(
@@ -37,27 +37,27 @@ mod_export_ui <- function(id){
                  p("-  ", strong("Population"), ": indicates the population created after applying a gate i.e /NonDebris contains all the events that are not debris, /NonDebris/GFP+ contains all the events that are not debris and are GFP-positive, etc. The population and gate names are identical.", style = "text-indent: 25px"),
                  p("-  ", strong("Count"), ": indicates the number of events in the respective population", style = "text-indent: 25px"),
                  # p("-  ", strong("ParentCount"), ": indicates the number of events in a parent population i.e. for the Population /NonDebris/GFP+, the ParentCount corresponds to the number of events in the NonDebris population.", style = "text-indent: 25px"),
-                 # p("-  ", strong("Percentage"), ": (Count/ParentCount) x 100", style = "text-indent: 25px"), 
+                 # p("-  ", strong("Percentage"), ": (Count/ParentCount) x 100", style = "text-indent: 25px"),
                  style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"),
                br()),
-               tabPanel("Population statistics", 
+               tabPanel("Population statistics",
                         br(),
                         tableOutput(ns("population_table"))
                         )))))}
-    
+
 #' export Server Functions
 #'
-#' @noRd 
+#' @noRd
 #' @importFrom utils write.csv
 #' @importFrom dplyr mutate lag
 mod_export_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
+
     file_name <- reactive({
       if (isTruthy(input$filename)) {
         if (input$add_date == TRUE) {
-          paste0(Sys.Date(), "-", input$filename,".csv")
+          paste0(Sys.Date(), "_", input$filename,".csv")
         }
         else {
           paste0(input$filename, ".csv", sep = "")
@@ -65,35 +65,37 @@ mod_export_server <- function(id,r){
       }
         else {
           if (input$add_date == TRUE) {
-          paste0(Sys.Date(), "-", "population_statistics.csv")
+          paste0(Sys.Date(), "_", "population_statistics.csv")
           }
           else {
             paste0("population_statistics.csv")
           }
           }
     })
-    
+
     output$population_table <- renderTable({population_table()}) |> bindEvent(input$table)
-    
-    output$download <- downloadHandler(filename = function() file_name(), content = function(file) {write.csv(population_table(), file)})
+
+    output$download <- downloadHandler(filename = function() file_name(),
+                                       content = function(file) {
+                                         write.csv(population_table(), file)
+                                         }
+                                       )
 
     # reactive expression computing the final table we want to obtain
     # old version : population_table <- reactive({ purrr::map_df(r$gs, \(x) as.data.frame(gs_pop_get_count_fast(x)))})
 
     population_table <- reactive({
-      purrr::map_df(r$gs, \(x) as.data.frame(gs_pop_get_stats(x)) 
-                    # |>  mutate("Percentage" = ifelse(is.na(count / lag(count)), (count / count) * 100, (count / lag(count)) * 100))
-                    )
+      purrr::map_df(r$gs, \(x) as.data.frame(gs_pop_get_stats(x)))
     })
-    
+
     observe({
       updateTabsetPanel(inputId = "tabset", selected = "Population statistics")
     }) |> bindEvent(input$table)
-    
+
     })}
 
 ## To be copied in the UI
 # mod_export_ui("export_1")
-    
+
 ## To be copied in the server
 # mod_export_server("export_1")
