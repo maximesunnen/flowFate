@@ -8,7 +8,8 @@ Authors@R: c(
 Description: Shiny app for the analysis of flow cytometry data using the
     flowCore and flowWorkspace framework.
 License: MIT + file LICENSE
-URL: https://github.com/maximesunnen/flowFate
+URL: https://github.com/maximesunnen/flowFate,
+    https://maximesunnen.github.io/flowFate/
 BugReports: https://github.com/maximesunnen/flowFate/issues
 Depends: 
     R (>= 4.1.0)
