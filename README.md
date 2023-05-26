@@ -3,8 +3,8 @@
 FlowFate is a free, interactive [Shiny](https://shiny.rstudio.com/) web application developed to automate the analysis of cell differentiation data obtained by flow cytometry. 
 We developed flowFate by combining existing R packages
 
-- [flowCore](https://www.bioconductor.org/packages/devel/bioc/vignettes/flowCore/inst/doc/HowTo-flowCore.pdf) and [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) for FCS file import
-- data manipulation and gating; [ggcyto](https://www.bioconductor.org/packages/release/bioc/html/ggcyto.html) for visualization
+- [flowCore](https://www.bioconductor.org/packages/devel/bioc/vignettes/flowCore/inst/doc/HowTo-flowCore.pdf) and [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) for FCS file import data manipulation and gating
+- [ggcyto](https://www.bioconductor.org/packages/release/bioc/html/ggcyto.html) for visualization
 
 into a customized workflow tailored to the analysis of differentiation data. We were able to automate a crucial and time-consuming process of data analysis using [openCyto's](https://www.bioconductor.org/packages/release/bioc/html/openCyto.html) data-driven gating functions.
 
@@ -80,22 +80,21 @@ adding something like:
 
 ## Installation
 
-To run the app in R, install R and R Studio [here](https://posit.co/download/rstudio-desktop/), then run the commands below in your R Studio console.
+To run the app in R, install R and R Studio [here](https://posit.co/download/rstudio-desktop/), then run the commands below in your R Studio console, in the defined order.
 
-This package has many dependencies, expect an installation time of roughly 30 minutes if you have none of those dependencies.
-
-The app can be accessed inside the University of Luxembourg network at this URL: https://shiny-server.uni.lu/app/flowfate
+Because of the large amount of dependencies, it can take ~ 15 minutes to install the app. Users having access to the network of the University of Luxembourg can open the app by clicking on the following link: https://shiny-server.uni.lu/app/flowfate. 
 
 ``` r 
-# install the flowFate package
-
+# install the remotes and BiocManager package
 install.packages(c("remotes", "BiocManager"))
 
 # install dependencies from Bioconductor
-BiocManager::install(c("openCyto", "ggcyto", "flowWorkspace", "flowCore"))
+BiocManager::install(c("ggcyto", "flowWorkspace", "flowCore"))
+remotes::install_github("openCyto")
 
-install.packages("flowFate")
+# install the flowFate package
 remotes::install_github("maximesunnen/flowFate")
+
 # open the app
 flowFate::run_app()
 ```
