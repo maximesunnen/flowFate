@@ -13,11 +13,13 @@ Built with [{golem}](https://github.com/ThinkR-open/golem).
 ## Background
 <p align="justify"> FlowFate has been designed for the analysis of cell differentiation data obtained according to [Chippalkatti et al's]() protocol. Briefly, C2C12 cells that can turn into (or "differentiate") into muscle cells at some point in their lifecycle. Until they differentiate, these cells are in an immature state (scientists call them "undifferentiated"). Technically, one could analyze a pool of C2C12 cells under the microscope and visually determine the percentage of differentiated cells in a specific condition (temperature, nutrients, ...). Practically however, this too tedious. Luckily, differentiated muscle cells produce a protein called myosin not (or only in low amounts) produced by undifferentiated cells. Using an antibody attached to a fluorescent molecule (i.e a molecule that can emit light of a certain wavelength when excited by a laser), it is possible to stain myosin and analyze the pool of cells using a flow cytometer. A flow cytometer is a device used in biological research channels cells through a small capillary so that they pass in front of a laser one-by-one. This laser light excites the fluorescent molecule attached to our antibody, the antibody itself being attached to myosin if this protein is present in the cell. The light emitted by the fluorescent molecule in repsonse to this excitation can be captured by a camera. The amount of light captured reflects the amount of myosin present in the cell, allowing us to determine if a cell is differentiated or not. Keep in mind that even undifferentiatde cells can produce small amounts of myosin and therefore the differentiated cells we're interested in are those that produce larger amounts.</p>
 
-## Installation
+## Installation for users outside of the University of Luxembourg
 
-To run the app in R, install R and R Studio [here](https://posit.co/download/rstudio-desktop/), then run the commands below in your R Studio console, in the defined order.
+### Requirements
+R and R Studio need to be installed to run flowFate. If not yet installed, click [here](https://posit.co/download/rstudio-desktop/) for download instructions.
 
-Because of the large amount of dependencies, it can take ~ 15 minutes to install the app. Users having access to the network of the University of Luxembourg can open the app by clicking on the following link: https://shiny-server.uni.lu/app/flowfate. 
+### Installing flowFate
+Once R and R Studio have been installed, run the commands below in the given order in your [R Studio console](https://docs.posit.co/ide/user/ide/guide/ui/ui-panes.html). Because of the large amount of dependencies, installation can take up to 15 minutes. 
 
 ``` r 
 # install the remotes and BiocManager package
@@ -33,6 +35,9 @@ remotes::install_github("maximesunnen/flowFate")
 # open the app
 flowFate::run_app()
 ```
+
+## Installation for users part of the University of Luxembourg
+Users having access to the network of the University of Luxembourg do not need to install R or R Studio. They can open the app by clicking on the following link: https://shiny-server.uni.lu/app/flowfate. 
 
 ## Dockerization
 
