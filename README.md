@@ -16,7 +16,9 @@ Built with [{golem}](https://github.com/ThinkR-open/golem).
 ## Installation for users outside the University of Luxembourg
 
 ### Requirements
-R and R Studio need to be installed to run flowFate. If not yet installed, click [here](https://posit.co/download/rstudio-desktop/) for download instructions.
+You need R and R Studio installed on your computer. If not yet installed, click [here](https://posit.co/download/rstudio-desktop/) for download instructions.
+
+If you have access to an R server, you can skip this step.
 
 ### Installing flowFate
 Once R and R Studio have been installed, run the commands below in the given order in your [R Studio console](https://docs.posit.co/ide/user/ide/guide/ui/ui-panes.html). Because of the large amount of dependencies, installation can take up to 15 minutes. 
