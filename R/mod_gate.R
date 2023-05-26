@@ -24,7 +24,6 @@ mod_gate_ui <- function(id){
                                     uiOutput(ns("gfp_bin_1")),
                                     uiOutput(ns("gfp_bin_2")),
                                     uiOutput(ns("gfp_bin_3")),
-                                    uiOutput(ns("test")),
                                     # Defining the action buttons that allow the user to add a bin, confirm the bins or reset the bins
                                     actionButton(inputId = ns("add_bins"), label = "Add GFP bin", icon("plus")),
                                     actionButton(inputId = ns("confirm_bins"), label = "Confirm", class = "btn-primary"),
@@ -118,9 +117,6 @@ mod_gate_server <- function(id, r){
         shinyjs::show(id = "add_bins")
       }
     })
-    
-
-
 
     # making a reactive expression gate_limits() that captures the user's gate ranges inside a reactive expression
     ## in order for subsequent code to work this has to be a nested list... can't really remember why and unfortunately I did not write this down...
@@ -241,12 +237,6 @@ output$myosin_splittedPeaks <- renderPlot({
   }
 }, res = 120)
 
-# # Making a reactive expression that 
-# flowSet_pData <- reactive({
-#   req(r$fs)
-#   pData(r$fs)
-# })
-
 # Defining the output$individual_FCS table which shows the individual datasets of the uploaded FCS file and let's users select the one they want to display
 ### The data displayed is r$flowSet_pData (shared from import module)
 ### Under the control of input$split because only then the user needs to be able to select it (showing it in the GFP bins tab might lead to confusion)
@@ -279,17 +269,6 @@ observe({
   observer.state.split(FALSE) #to get the correct order of execution again when the user now clicks input$split again
 }) |> bindEvent(input$confirm_bin_reset)
 
-# ### this has to be modified!!!! see issue #13
-# observe({
-#   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-low"))) {gs_pop_remove(r$gs, "GFP-low")} 
-#   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {gs_pop_remove(r$gs, "GFP-medium")}
-#   if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {gs_pop_remove(r$gs, "GFP-high")}
-#   for (i in seq_along(gates())) {
-#     gs_pop_add(r$gs, gates()[[i]], parent = "GFP+")
-#   }
-#   recompute(r$gs)
-#   #plot(r$gs)
-# }) |> bindEvent(input$confirm_gate_reset)
 
 # Defining all the modals needed to inform users on what's happening and guide them through the gating process
 ### help button modal
@@ -309,26 +288,6 @@ modal_confirm_bin_reset <- modalDialog(
     actionButton(ns("cancel_bin_reset"), "Cancel"), 
     actionButton(ns("confirm_bin_reset"), "Delete", class = "btn btn-danger")))
 
-### confirm gates reset modal
-# modal_confirm_gates_reset <- modalDialog(
-#   "Are you sure you want to continue?",
-#   title = "Deleting your gates",
-#   footer = tagList(
-#     actionButton(ns("cancel_gate_reset"), "Cancel"),
-#     actionButton(ns("confirm_gate_reset"), "Delete", class = "btn btn-danger")))
-
-# observers to trigger the respective modals
-
-# observe({
-#   showModal(modal_confirm_bins)
-#   updateTabsetPanel(inputId = "tabset", selected = "Split peaks")
-# }) |> bindEvent(input$confirm_bins)
-
-
-# observe({
-#   updateTabsetPanel(inputId = "tabset-mainPanel", selected = "Plot")
-# }) |> bindEvent(input$split)
-
 ### modal_help_button
 observe({
   showModal(modal_help_button)
@@ -344,16 +303,6 @@ observe({
 observe({
   removeModal()
 }) |> bindEvent(input$cancel_bin_reset)
-
-### modal_confirm_gates_reset
-#### this modal sets up two new buttons: input$cancel_gate_reset and input$confirm_bin_reset
-# observe({
-#   showModal(modal_confirm_gates_reset)
-# }) |> bindEvent(input$reset_gates)
-# 
-# observe({
-#   removeModal()
-# }) |> bindEvent(input$cancel_gate_reset)
 
 # Conditional visibility of buttons
 ### "Add_bins" button
@@ -372,12 +321,15 @@ observe({
   shinyjs::hide(id = "add_bins")
 }) |> bindEvent(input$confirm_bins)
 
+# Observer to remove the gfp_bins
+### ATTENTION: in the UI I added an uiOutput called gfp_bin_1(_2,_3), and in the server function I call renderUI to add a numericInput() called gfp_range_1(_2,_3). When removing an ui, you need to remove the numericInput, NOT the uiOutput id! Pay attention to the selector! If you remove the uiOutput id then on the next try after resetting you cannot add a bin because the uiOutput that you call in output$XXX <- renderUI does not exist!!! XXX in this case does not exist!!!
+
 observe({
-  # removeUI(selector = "div:has(> #gate_1-gfp_bin_1)")
-  # removeUI(selector = "div:has(> #gate_1-gfp_bin_2)")
-  # removeUI(selector = "div:has(> #gate_1-gfp_bin_3)")
+  removeUI(selector = "#gate_1-gfp_range_1")
+  removeUI(selector = "#gate_1-gfp_range_2")
+  removeUI(selector = "#gate_1-gfp_range_3")
   shinyjs::show(id = "confirm_bins")
-  # shinyjs::show(id = "add_bins")
+  shinyjs::show(id = "split")
   removeModal() # the modal_confirm_bin_reset is removed
   showNotification("Bins were successfully reset.")
   clicks$count <- 0 # reset clicks$count to 0;input$add_bins button should become visible again
@@ -389,19 +341,7 @@ observe({
   shinyjs::show(id = "reset_gates")
 }) |> bindEvent(input$split)
 
-
-# observe({
-#   shinyjs::hide(id = "reset_gates")
-#   shinyjs::show(id = "split")
-#   showNotification("Gates were successfully reset.")
-#   removeModal()
-# }) |> bindEvent(input$confirm_gate_reset)
-
   })}
-
-
-
-
 
 # CUSTOM FUNCTIONS --------------------------------------------------------
 render_bin_UI <- function(bin_number, value, ns, label, output , r) {
