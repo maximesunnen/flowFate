@@ -80,14 +80,33 @@
 <p>FlowFate is tailored to analyze cell differentiation data obtained according to <a href="">Chippalkatti et al</a>. Briefly, C2C12 are a type of cell with the ability to turn into (they “differentiate”) into muscle cells. Until they do this, they’re in an immature state and scientists call them “undifferentiated”.Technically, one could analyze a pool of C2C12 cells under the microscope visually determine which cells are differentiated and which are not. Practically this would be way too tedious. Luckily, differentiated muscle cells produce a specific protein called myosin that undifferentiated cells do not produce (or in low amounts). One can stain this protein with an antibody attached to a fluorescent molecule and analyze the pool of cells using a flow cytometer. A flow cytometer is a device that channels cells in a small capillary so that they can pass in front of a laser one-by-one. This laser light excites the fluorescent molecule attached to our antibody (itself attached to myosin), which in response also emits light (of a different color than the laser light) that can ultimately be captured by a camera. Depending on how much of this light is captured, one can determine if a cell is differentiated or not (remember that even undifferentiatde cells can produce a small amount of myosin and we’re only interested in those cells that produce a lot of it).</p>
 </div>
 <div class="section level2">
-<h2 id="dockerized-the-app">Dockerized the app<a class="anchor" aria-label="anchor" href="#dockerized-the-app"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>To run the app in R, install R and R Studio <a href="https://posit.co/download/rstudio-desktop/" class="external-link">here</a>, then run the commands below in your R Studio console, in the defined order.</p>
+<p>Because of the large amount of dependencies, it can take ~ 15 minutes to install the app. Users having access to the network of the University of Luxembourg can open the app by clicking on the following link: <a href="https://shiny-server.uni.lu/app/flowfate" class="external-link uri">https://shiny-server.uni.lu/app/flowfate</a>.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install the remotes and BiocManager package</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"remotes"</span>, <span class="st">"BiocManager"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># install dependencies from Bioconductor</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ggcyto"</span>, <span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"openCyto"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># install the flowFate package</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"maximesunnen/flowFate"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># open the app</span></span>
+<span><span class="fu">flowFate</span><span class="fu">::</span><span class="fu"><a href="reference/run_app.html">run_app</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="dockerization">Dockerization<a class="anchor" aria-label="anchor" href="#dockerization"></a>
 </h2>
 <ol start="0" style="list-style-type: decimal">
 <li><p>Makes sure that no folder <code>deploy</code> exists at the project root.</p></li>
 <li><p>Follow steps in <code>dev/03_deploy.R</code>, namely:</p></li>
 </ol>
-<p>Of note, {dockerfiler} is needed (it uses {pak}).</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<p>Note: {dockerfiler} is needed ( uses {pak}).</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">check</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">build</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">golem</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/golem/man/dockerfiles.html" class="external-link">add_dockerfile_with_renv_shinyproxy</a></span><span class="op">(</span>output_dir <span class="op">=</span> <span class="st">"deploy"</span>, lockfile <span class="op">=</span> <span class="st">"renv.lock"</span><span class="op">)</span></span>
@@ -121,34 +140,15 @@ docker build -f Dockerfile --progress=plain -t flowfate:latest .</code></pre>
 </li>
 </ol>
 <p>adding something like:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">id</span><span class="kw">:</span><span class="at"> mdm200504</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">display-name</span><span class="kw">:</span><span class="at"> MDM200504</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-network</span><span class="kw">:</span><span class="at"> sp-network</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">"Companion app for the MDM project 200504"</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-cmd</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">"R"</span><span class="kw">,</span><span class="at"> </span><span class="st">"-e"</span><span class="kw">,</span><span class="at"> </span><span class="st">"library(mdm200504);options('shiny.port'=3838,shiny.host='0.0.0.0');mdm200504::run_app()"</span><span class="kw">]</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-image</span><span class="kw">:</span><span class="at"> mdm200504</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">id</span><span class="kw">:</span><span class="at"> mdm200504</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">display-name</span><span class="kw">:</span><span class="at"> MDM200504</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-network</span><span class="kw">:</span><span class="at"> sp-network</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">"Companion app for the MDM project 200504"</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-cmd</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">"R"</span><span class="kw">,</span><span class="at"> </span><span class="st">"-e"</span><span class="kw">,</span><span class="at"> </span><span class="st">"library(mdm200504);options('shiny.port'=3838,shiny.host='0.0.0.0');mdm200504::run_app()"</span><span class="kw">]</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-image</span><span class="kw">:</span><span class="at"> mdm200504</span></span></code></pre></div>
 <ol start="5" style="list-style-type: decimal">
 <li>In <code>/home/aurelien.ginolhac/deploiement/</code>, run <code>./relance_machinerie</code> so the new app is linked.</li>
 </ol>
-</div>
-<div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
-<p>To run the app in R, install R and R Studio <a href="https://posit.co/download/rstudio-desktop/" class="external-link">here</a>, then run the commands below in your R Studio console, in the defined order.</p>
-<p>Because of the large amount of dependencies, it can take ~ 15 minutes to install the app. Users having access to the network of the University of Luxembourg can open the app by clicking on the following link: <a href="https://shiny-server.uni.lu/app/flowfate" class="external-link uri">https://shiny-server.uni.lu/app/flowfate</a>.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install the remotes and BiocManager package</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"remotes"</span>, <span class="st">"BiocManager"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># install dependencies from Bioconductor</span></span>
-<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ggcyto"</span>, <span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"openCyto"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># install the flowFate package</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"maximesunnen/flowFate"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># open the app</span></span>
-<span><span class="fu">flowFate</span><span class="fu">::</span><span class="fu"><a href="reference/run_app.html">run_app</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
