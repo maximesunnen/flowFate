@@ -68,8 +68,9 @@
 <p>FlowFate is a free, interactive <a href="https://shiny.rstudio.com/" class="external-link">Shiny</a> web application developed to automate the analysis of cell differentiation data obtained by flow cytometry. We developed flowFate by combining existing R packages</p>
 <ul>
 <li>
-<a href="https://www.bioconductor.org/packages/devel/bioc/vignettes/flowCore/inst/doc/HowTo-flowCore.pdf" class="external-link">flowCore</a> and <a href="https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html" class="external-link">flowWorkspace</a> for FCS file import</li>
-<li>data manipulation and gating; <a href="https://www.bioconductor.org/packages/release/bioc/html/ggcyto.html" class="external-link">ggcyto</a> for visualization</li>
+<a href="https://www.bioconductor.org/packages/devel/bioc/vignettes/flowCore/inst/doc/HowTo-flowCore.pdf" class="external-link">flowCore</a> and <a href="https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html" class="external-link">flowWorkspace</a> for FCS file import data manipulation and gating</li>
+<li>
+<a href="https://www.bioconductor.org/packages/release/bioc/html/ggcyto.html" class="external-link">ggcyto</a> for visualization</li>
 </ul>
 <p>into a customized workflow tailored to the analysis of differentiation data. We were able to automate a crucial and time-consuming process of data analysis using <a href="https://www.bioconductor.org/packages/release/bioc/html/openCyto.html" class="external-link">openCyto’s</a> data-driven gating functions.</p>
 <p>Built with <a href="https://github.com/ThinkR-open/golem" class="external-link">{golem}</a>.</p>
@@ -133,19 +134,19 @@ docker build -f Dockerfile --progress=plain -t flowfate:latest .</code></pre>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>To run the app in R, install R and R Studio <a href="https://posit.co/download/rstudio-desktop/" class="external-link">here</a>, then run the commands below in your R Studio console.</p>
-<p>This package has many dependencies, expect an installation time of roughly 30 minutes if you have none of those dependencies.</p>
-<p>The app can be accessed inside the University of Luxembourg network at this URL: <a href="https://shiny-server.uni.lu/app/flowfate" class="external-link uri">https://shiny-server.uni.lu/app/flowfate</a></p>
+<p>To run the app in R, install R and R Studio <a href="https://posit.co/download/rstudio-desktop/" class="external-link">here</a>, then run the commands below in your R Studio console, in the defined order.</p>
+<p>Because of the large amount of dependencies, it can take ~ 15 minutes to install the app. Users having access to the network of the University of Luxembourg can open the app by clicking on the following link: <a href="https://shiny-server.uni.lu/app/flowfate" class="external-link uri">https://shiny-server.uni.lu/app/flowfate</a>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install the flowFate package</span></span>
-<span></span>
+<code class="sourceCode R"><span><span class="co"># install the remotes and BiocManager package</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"remotes"</span>, <span class="st">"BiocManager"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># install dependencies from Bioconductor</span></span>
-<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"openCyto"</span>, <span class="st">"ggcyto"</span>, <span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ggcyto"</span>, <span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"openCyto"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"flowFate"</span><span class="op">)</span></span>
+<span><span class="co"># install the flowFate package</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"maximesunnen/flowFate"</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># open the app</span></span>
 <span><span class="fu">flowFate</span><span class="fu">::</span><span class="fu"><a href="reference/run_app.html">run_app</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
