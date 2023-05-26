@@ -29,9 +29,7 @@ mod_explore_ui <- function(id){
                  column(4,
                         textInput(ns("download.filename"), label = NULL, placeholder = "Enter filename")),
                  column(3,
-                        downloadButton(ns("download"), label = "Download .svg")),
-                 column(3,
-                        downloadButton(ns("download.all"), label = "Download all .svgs"))),
+                        downloadButton(ns("download"), label = "Download .svg"))),
                plotOutput(ns("explore.plot"))
              )))
 }
