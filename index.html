@@ -82,10 +82,17 @@ FlowFate has been designed for the analysis of cell differentiation data obtaine
 </p>
 </div>
 <div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+<h2 id="installation-for-users-outside-of-the-university-of-luxembourg">Installation for users outside of the University of Luxembourg<a class="anchor" aria-label="anchor" href="#installation-for-users-outside-of-the-university-of-luxembourg"></a>
 </h2>
-<p>To run the app in R, install R and R Studio <a href="https://posit.co/download/rstudio-desktop/" class="external-link">here</a>, then run the commands below in your R Studio console, in the defined order.</p>
-<p>Because of the large amount of dependencies, it can take ~ 15 minutes to install the app. Users having access to the network of the University of Luxembourg can open the app by clicking on the following link: <a href="https://shiny-server.uni.lu/app/flowfate" class="external-link uri">https://shiny-server.uni.lu/app/flowfate</a>.</p>
+<div class="section level3">
+<h3 id="requirements">Requirements<a class="anchor" aria-label="anchor" href="#requirements"></a>
+</h3>
+<p>R and R Studio need to be installed to run flowFate. If not yet installed, click <a href="https://posit.co/download/rstudio-desktop/" class="external-link">here</a> for download instructions.</p>
+</div>
+<div class="section level3">
+<h3 id="installing-flowfate">Installing flowFate<a class="anchor" aria-label="anchor" href="#installing-flowfate"></a>
+</h3>
+<p>Once R and R Studio have been installed, run the commands below in the given order in your <a href="https://docs.posit.co/ide/user/ide/guide/ui/ui-panes.html" class="external-link">R Studio console</a>. Because of the large amount of dependencies, installation can take up to 15 minutes.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install the remotes and BiocManager package</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"remotes"</span>, <span class="st">"BiocManager"</span><span class="op">)</span><span class="op">)</span></span>
@@ -99,6 +106,12 @@ FlowFate has been designed for the analysis of cell differentiation data obtaine
 <span></span>
 <span><span class="co"># open the app</span></span>
 <span><span class="fu">flowFate</span><span class="fu">::</span><span class="fu"><a href="reference/run_app.html">run_app</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="installation-for-users-part-of-the-university-of-luxembourg">Installation for users part of the University of Luxembourg<a class="anchor" aria-label="anchor" href="#installation-for-users-part-of-the-university-of-luxembourg"></a>
+</h2>
+<p>Users having access to the network of the University of Luxembourg do not need to install R or R Studio. They can open the app by clicking on the following link: <a href="https://shiny-server.uni.lu/app/flowfate" class="external-link uri">https://shiny-server.uni.lu/app/flowfate</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="dockerization">Dockerization<a class="anchor" aria-label="anchor" href="#dockerization"></a>
