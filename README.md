@@ -3,24 +3,51 @@
 FlowFate is a free, interactive [Shiny](https://shiny.rstudio.com/) web application developed to automate the analysis of cell differentiation data obtained by flow cytometry. 
 We developed flowFate by combining existing R packages
 
-- [flowCore](https://www.bioconductor.org/packages/devel/bioc/vignettes/flowCore/inst/doc/HowTo-flowCore.pdf) and [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) for FCS file import
-- data manipulation and gating; [ggcyto](https://www.bioconductor.org/packages/release/bioc/html/ggcyto.html) for visualization
+- [flowCore](https://bioconductor.org/packages/release/bioc/html/flowCore.html) and [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) for FCS file import data manipulation and gating
+- [ggcyto](https://www.bioconductor.org/packages/release/bioc/html/ggcyto.html) for visualization
 
 into a customized workflow tailored to the analysis of differentiation data. We were able to automate a crucial and time-consuming process of data analysis using [openCyto's](https://www.bioconductor.org/packages/release/bioc/html/openCyto.html) data-driven gating functions.
 
 Built with [{golem}](https://github.com/ThinkR-open/golem).
 
 ## Background
-FlowFate is tailored to analyze cell differentiation data obtained according to [Chippalkatti et al](). Briefly, C2C12 are a type of cell with the ability to turn into (they "differentiate") into muscle cells. Until they do this, they're in an immature state and scientists call them "undifferentiated".Technically, one could analyze a pool of C2C12 cells under the microscope visually determine which cells are differentiated and which are not. Practically this would be way too tedious. Luckily, differentiated muscle cells produce a specific protein called myosin that undifferentiated cells do not produce (or in low amounts). One can stain this protein with an antibody attached to a fluorescent molecule and analyze the pool of cells using a flow cytometer. A flow cytometer is a device that channels cells in a small capillary so that they can pass in front of a laser one-by-one. This laser light excites the fluorescent molecule attached to our antibody (itself attached to myosin), which in response also emits light (of a different color than the laser light) that can ultimately be captured by a camera. Depending on how much of this light is captured, one can determine if a cell is differentiated or not (remember that even undifferentiatde cells can produce a small amount of myosin and we're only interested in those cells that produce a lot of it). 
+<p align="justify"> FlowFate has been designed for the analysis of cell differentiation data obtained according to [Chippalkatti et al's]() protocol. Briefly, C2C12 cells that can turn into (or "differentiate") into muscle cells at some point in their lifecycle. Until they differentiate, these cells are in an immature state (scientists call them "undifferentiated"). Technically, one could analyze a pool of C2C12 cells under the microscope and visually determine the percentage of differentiated cells in a specific condition (temperature, nutrients, ...). Practically however, this too tedious. Luckily, differentiated muscle cells produce a protein called myosin not (or only in low amounts) produced by undifferentiated cells. Using an antibody attached to a fluorescent molecule (i.e a molecule that can emit light of a certain wavelength when excited by a laser), it is possible to stain myosin and analyze the pool of cells using a flow cytometer. A flow cytometer is a device used in biological research channels cells through a small capillary so that they pass in front of a laser one-by-one. This laser light excites the fluorescent molecule attached to our antibody, the antibody itself being attached to myosin if this protein is present in the cell. The light emitted by the fluorescent molecule in repsonse to this excitation can be captured by a camera. The amount of light captured reflects the amount of myosin present in the cell, allowing us to determine if a cell is differentiated or not. Keep in mind that even undifferentiatde cells can produce small amounts of myosin and therefore the differentiated cells we're interested in are those that produce larger amounts.</p>
 
+## Installation for users outside the University of Luxembourg
 
-## Dockerized the app
+### Requirements
+You need R and R Studio installed on your computer. If not yet installed, click [here](https://posit.co/download/rstudio-desktop/) for download instructions.
+
+<strong> Note: </strong> If you have access to an R server, you can skip this step.
+
+### Installing flowFate
+Once R and R Studio have been installed, run the commands below in the given order in your [R Studio console](https://docs.posit.co/ide/user/ide/guide/ui/ui-panes.html). Because of the large amount of dependencies, installation can take up to 15 minutes. 
+
+``` r 
+# install the remotes and BiocManager package
+install.packages(c("remotes", "BiocManager"))
+
+# install dependencies from Bioconductor
+BiocManager::install(c("ggcyto", "flowWorkspace", "flowCore"))
+remotes::install_github("openCyto")
+
+# install the flowFate package
+remotes::install_github("maximesunnen/flowFate")
+
+# open the app
+flowFate::run_app()
+```
+
+## Installation for users part of the University of Luxembourg
+Users having access to the network of the University of Luxembourg do not need to install R or R Studio. Use the following link instead: https://shiny-server.uni.lu/app/flowfate. 
+
+## Dockerization
 
 0. Makes sure that no folder `deploy` exists at the project root.
 
 1. Follow steps in `dev/03_deploy.R`, namely:
 
-Of note, {dockerfiler} is needed (it uses {pak}).
+Note: {dockerfiler} is needed ( uses {pak}).
 
 ``` r
 devtools::check()
@@ -51,7 +78,6 @@ renv.lock
 renv.lock.prod
 ```
 
-
 3.  `scp` the `deploy` folder to the \`shiny-sever\` in the **shinyproxy** `container_apps/` and execute **as root** the commands in the README
 
 Make sure to use the binary versions for Linux from [PPPM](https://packagemanager.posit.co)
@@ -77,26 +103,3 @@ adding something like:
 ```
 
 5. In `/home/aurelien.ginolhac/deploiement/`, run `./relance_machinerie` so the new app is linked.
-
-## Installation
-
-To run the app in R, install R and R Studio [here](https://posit.co/download/rstudio-desktop/), then run the commands below in your R Studio console.
-
-This package has many dependencies, expect an installation time of roughly 30 minutes if you have none of those dependencies.
-
-The app can be accessed inside the University of Luxembourg network at this URL: https://shiny-server.uni.lu/app/flowfate
-
-``` r 
-# install the flowFate package
-
-install.packages(c("remotes", "BiocManager"))
-
-# install dependencies from Bioconductor
-BiocManager::install(c("openCyto", "ggcyto", "flowWorkspace", "flowCore"))
-
-install.packages("flowFate")
-remotes::install_github("maximesunnen/flowFate")
-# open the app
-flowFate::run_app()
-```
-
