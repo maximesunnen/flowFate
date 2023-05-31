@@ -34,7 +34,8 @@ Imports:
     stringr,
     tibble,
     utils,
-    waiter
+    waiter,
+    shinyFiles
 Suggests: 
     knitr,
     rmarkdown,
