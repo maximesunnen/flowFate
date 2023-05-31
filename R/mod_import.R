@@ -8,6 +8,7 @@
 #'
 #' @importFrom shiny NS tagList
 #' @importFrom DT DTOutput
+#' @import shinyFiles
 mod_import_ui <- function(id){
   ns <- NS(id)
 
@@ -18,11 +19,23 @@ mod_import_ui <- function(id){
              # Defining the sidebarPanel
              sidebarPanel(
                tagList(
-                 # File input container in the sidebar ------------------------------------
-                 fileInput(inputId = ns("filename"), accept = ".fcs", label = "Select FCS file"),
-                 # Submit button to start the import --------------------------------------
-                 actionButton(ns("submit"), "Submit", class = "btn-primary"),
-                 actionButton(ns("demo_fs"), label = "Import demo data"))),
+                 # Radio buttons to define the upload "type"
+                 p("Select the data type you want to upload"),
+                 radioButtons(ns("upload.type"), label = NULL, choiceValues = c("merged", "folder", "demo"), choiceNames = c("Single, merged FCS file", "Folder with individual FCS files", "Demo data"))), hr(),
+               # File input container in the sidebar ------------------------------------
+               div(id = ns("div_merge"),
+                   p("Select merged FCS file"),
+                   fileInput(inputId = ns("filename"), accept = ".fcs", label = NULL),hr()),
+               # Folder input container in the sidebar
+               div(id = ns("div_folder"),
+                   p("Select a folder with FCS files"),
+                   shinyDirButton(ns("directory"), label='Browse...', title = 'Please select a folder'), 
+                   verbatimTextOutput(ns("directorypath"))),
+               # Demo upload container in the sidebar
+               div(id = ns("div_demo"),
+                   actionButton(ns("demo_fs"), label = "Import demo data")),
+               # Submit button to start the import --------------------------------------
+               actionButton(ns("submit"), "Submit", class = "btn-primary"),),
 
              # Defining the mainPanel
              mainPanel(
@@ -34,10 +47,10 @@ mod_import_ui <- function(id){
                  "- switch to the ", strong("'Explore'"), " tab in the menu bar and explore your data", br(), br(),
                  "- switch to the ", strong("'Curate'"), " tab in the menu bar and start curating your data",
                  style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
-
-               # Table output showing the datasets(individual) FCS files -----------------------------------------
+               
+               # Table output showing the datasets(individual) FCS files 
                DTOutput(ns("individual_fcs")), br(),
-               # Text output indicating the number of datasets ----------------------------------
+               # Text output indicating the number of datasets 
                textOutput(ns("datasets"))
            )))}
 
@@ -58,6 +71,18 @@ mod_import_server <- function(id, r = NULL){
 
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    # Defining the roots argument of the shinyDirChoose function below
+    volumes <- c(Home = fs::path_home(), "R Installation" = R.home(), getVolumes()())
+    
+    # Server function to handle shinyFiles input
+    shinyDirChoose(input, "directory", roots = volumes)
+    
+    # Defining the output showing the directory of the selected folder in the sidebar
+    output$directorypath <- renderPrint({
+      if (is.integer(input$directory)) cat("No directory selected")
+          else {parseDirPath(volumes, input$directory)}
+      })
 
     # demo_fcs: wrapped inside a large observer
     observe({
@@ -86,18 +111,24 @@ mod_import_server <- function(id, r = NULL){
       r$flowSet_pData <- pData(demo_fs)
     }) |> bindEvent(input$demo_fs)
 
-# user-submitted file
-
+    # user-submitted file
     ## hide the submit button when no file has been uploaded (input$filename only exists when a file is selected by the user)
     observe({
-      if (is.null(input$filename)) shinyjs::hide("submit")
+      if (input$upload.type == "merged" & is.null(input$filename)) shinyjs::hide("submit")
+      else if (input$upload.type == "folder" & is.integer(input$directory)) shinyjs::hide("submit")
       else shinyjs::show("submit")
     })
 
     # make a reactive expression filename() evaluating to the name of the file uploaded by the user
     filename <- reactive({
-      req(input$filename)
-      input$filename
+      if (input$upload.type == "merged") {
+        req(input$filename)
+        input$filename
+      }
+      else if (input$upload.type == "folder")
+      {
+        parseDirPath(volumes, input$directory)
+      }
       }) |> bindEvent(input$submit)
 
     # make a reactive expression nb_ds() [for "number of datadaset"] evaluating the number of datasets in the file uploaded by the user
@@ -116,8 +147,18 @@ mod_import_server <- function(id, r = NULL){
 
     # make a reactive expression fs() [for "flowSet"], which reads the individual fcs files into a single flowSet
     fs <- reactive({
+      if (input$upload.type == "merged") {
       withProgress(message = "Reading datasets...",
       read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE))
+      }
+      else if (input$upload.type == "folder") {
+        withProgress(message = "Reading datasets...", {
+        a <- as(lapply(dir(filename(), full.names = TRUE),
+                              function(x) {read.FCS(x, truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE)}), "flowSet")
+        pData(a)$name <- paste0("dataset_", seq_len(length(a)))
+        sampleNames(a) <- paste0("dataset_", seq_len(length(a)))})
+        return(a)
+      }
     }) |> bindEvent(input$submit)
 
     # make a reactive expression flowSet_pData() [for "flowSet phenotypic data"], which corresponds to the name of the individual datasets
@@ -129,7 +170,7 @@ mod_import_server <- function(id, r = NULL){
     gs <- reactive({GatingSet(fs())}) |> bindEvent(input$submit)
 
     # individual_fcs output: individual FCS files (datasets) displayed as a table
-    output$individual_fcs <- renderDT({flowSet_pData()}, rownames = FALSE)
+    output$individual_fcs <- renderDT({r$flowSet_pData}, rownames = FALSE)
 
     # datasets output: text indicating the number of datasets contained inside the fcs file uploaded by the user
     output$datasets <- renderText({paste0("Your FCS file contains ", nb_ds(), " dataset(s).")})
@@ -141,6 +182,26 @@ mod_import_server <- function(id, r = NULL){
       r$fs <- fs()
       r$nb_ds <- nb_ds()
     })
+    
+    observe({
+      if(input$upload.type == "merged") {
+        shinyjs::hide("div_folder")
+        shinyjs::hide("div_demo")
+        shinyjs::show("div_merge")
+      }
+      else if (input$upload.type == "folder") {
+        shinyjs::hide("div_merge")
+        shinyjs::hide("div_demo")
+        shinyjs::show("div_folder")
+      }
+      else {
+        shinyjs::hide("div_merge")
+        shinyjs::hide("div_folder")
+        shinyjs::show("div_demo")
+        shinyjs::hide("submit")
+      }
+    })
+    
   })}
 
 #' @description Count how many datasets are in a FCS file
