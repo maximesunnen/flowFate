@@ -3,7 +3,7 @@ Title: Shiny App for Flow Cytometry Data
 Version: 0.1.0
 Authors@R: c(
     person("Maxime", "Sünnen", , "maximesunnen@gmail.com", role = c("cre", "aut")),
-    person("Aurélien", "Ginolhac", , "ginolhac@gmail.com", role = "aut")
+    person("Aurélien", "Ginolhac", , "ginolhac@gmail.com", role = "aut", comment = c(ORCID = "0000-0001-7665-9547"))
   )
 Description: Shiny app for the analysis of flow cytometry data using the
     flowCore and flowWorkspace framework.
@@ -36,9 +36,12 @@ Imports:
     utils,
     waiter
 Suggests: 
+    knitr,
+    rmarkdown,
     svglite,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
+VignetteBuilder: knitr
