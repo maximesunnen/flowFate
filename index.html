@@ -40,6 +40,12 @@
 <li class="nav-item">
   <a class="nav-link" href="reference/index.html">Reference</a>
 </li>
+<li class="nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="articles/app-dockerisation.html">App Dockerisation</a>
+  </div>
+</li>
 <li class="nav-item">
   <a class="nav-link" href="news/index.html">Changelog</a>
 </li>
@@ -65,7 +71,7 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="flowfate">flowFate<a class="anchor" aria-label="anchor" href="#flowfate"></a>
 </h1></div>
-<p>FlowFate is a free, interactive <a href="https://shiny.rstudio.com/" class="external-link">Shiny</a> web application developed to automate the analysis of cell differentiation data obtained by flow cytometry. We developed flowFate by combining existing R packages</p>
+<p><strong>FlowFate</strong> is a free, interactive <a href="https://shiny.posit.co/" class="external-link">Shiny</a> web application developed to automate the analysis of cell differentiation data obtained by flow cytometry. We developed <strong>flowFate</strong> by combining existing R packages</p>
 <ul>
 <li>
 <a href="https://bioconductor.org/packages/release/bioc/html/flowCore.html" class="external-link">flowCore</a> and <a href="https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html" class="external-link">flowWorkspace</a> for FCS file import data manipulation and gating</li>
@@ -78,7 +84,7 @@
 <h2 id="background">Background<a class="anchor" aria-label="anchor" href="#background"></a>
 </h2>
 <p align="justify">
-FlowFate has been designed for the analysis of cell differentiation data obtained according to <a href="">Chippalkatti et al’s</a> protocol. Briefly, C2C12 cells that can turn into (or “differentiate”) into muscle cells at some point in their lifecycle. Until they differentiate, these cells are in an immature state (scientists call them “undifferentiated”). Technically, one could analyze a pool of C2C12 cells under the microscope and visually determine the percentage of differentiated cells in a specific condition (temperature, nutrients, …). Practically however, this too tedious. Luckily, differentiated muscle cells produce a protein called myosin not (or only in low amounts) produced by undifferentiated cells. Using an antibody attached to a fluorescent molecule (i.e a molecule that can emit light of a certain wavelength when excited by a laser), it is possible to stain myosin and analyze the pool of cells using a flow cytometer. A flow cytometer is a device used in biological research channels cells through a small capillary so that they pass in front of a laser one-by-one. This laser light excites the fluorescent molecule attached to our antibody, the antibody itself being attached to myosin if this protein is present in the cell. The light emitted by the fluorescent molecule in repsonse to this excitation can be captured by a camera. The amount of light captured reflects the amount of myosin present in the cell, allowing us to determine if a cell is differentiated or not. Keep in mind that even undifferentiatde cells can produce small amounts of myosin and therefore the differentiated cells we’re interested in are those that produce larger amounts.
+<strong>FlowFate</strong> has been designed for the analysis of cell differentiation data obtained according to <a href="">Chippalkatti et al’s</a> protocol. Briefly, C2C12 cells that can turn into (or “differentiate”) into muscle cells at some point in their life cycle. Until they differentiate, these cells are in an immature state (scientists call them “undifferentiated”). Technically, one could analyze a pool of C2C12 cells under the microscope and visually determine the percentage of differentiated cells in a specific condition (temperature, nutrients, …). Practically however, this too tedious. Luckily, differentiated muscle cells produce a protein called myosin not (or only in low amounts) produced by undifferentiated cells. Using an antibody attached to a fluorescent molecule (i.e a molecule that can emit light of a certain wavelength when excited by a laser), it is possible to stain myosin and analyze the pool of cells using a flow cytometer. A flow cytometer is a device used in biological research channels cells through a small capillary so that they pass in front of a laser one-by-one. This laser light excites the fluorescent molecule attached to our antibody, the antibody itself being attached to myosin if this protein is present in the cell. The light emitted by the fluorescent molecule in response to this excitation can be captured by a camera. The amount of light captured reflects the amount of myosin present in the cell, allowing us to determine if a cell is differentiated or not. Keep in mind that even undifferentiated cells can produce small amounts of myosin and therefore the differentiated cells we’re interested in are those that produce larger amounts.
 </p>
 </div>
 <div class="section level2">
@@ -108,63 +114,15 @@ FlowFate has been designed for the analysis of cell differentiation data obtaine
 <span><span class="co"># open the app</span></span>
 <span><span class="fu">flowFate</span><span class="fu">::</span><span class="fu"><a href="reference/run_app.html">run_app</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
-</div>
-<div class="section level2">
-<h2 id="installation-for-users-part-of-the-university-of-luxembourg">Installation for users part of the University of Luxembourg<a class="anchor" aria-label="anchor" href="#installation-for-users-part-of-the-university-of-luxembourg"></a>
-</h2>
+<div class="section level3">
+<h3 id="usage-for-users-part-of-the-university-of-luxembourg">Usage for users part of the University of Luxembourg<a class="anchor" aria-label="anchor" href="#usage-for-users-part-of-the-university-of-luxembourg"></a>
+</h3>
 <p>Users having access to the network of the University of Luxembourg do not need to install R or R Studio. Use the following link instead: <a href="https://shiny-server.uni.lu/app/flowfate" class="external-link uri">https://shiny-server.uni.lu/app/flowfate</a>.</p>
+<p>The app looks like:</p>
+<p><img src="reference/figures/app_start.png"></p>
+<p>An example of the Non-debris plots after gating:</p>
+<p><img src="reference/figures/app_non-debris.png"></p>
 </div>
-<div class="section level2">
-<h2 id="dockerization">Dockerization<a class="anchor" aria-label="anchor" href="#dockerization"></a>
-</h2>
-<ol start="0" style="list-style-type: decimal">
-<li><p>Makes sure that no folder <code>deploy</code> exists at the project root.</p></li>
-<li><p>Follow steps in <code>dev/03_deploy.R</code>, namely:</p></li>
-</ol>
-<p>Note: {dockerfiler} is needed ( uses {pak}).</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">check</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">build</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu">golem</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/golem/man/dockerfiles.html" class="external-link">add_dockerfile_with_renv_shinyproxy</a></span><span class="op">(</span>output_dir <span class="op">=</span> <span class="st">"deploy"</span>, lockfile <span class="op">=</span> <span class="st">"renv.lock"</span><span class="op">)</span></span>
-<span><span class="co"># if renv.lock.prod is missing</span></span>
-<span><span class="fu">attachment</span><span class="fu">::</span><span class="fu">create_renv_for_prod</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="st">"renv.lock.prod"</span>, <span class="st">"deploy/renv.lock.prod"</span><span class="op">)</span></span></code></pre></div>
-<ol start="2" style="list-style-type: decimal">
-<li>Should obtain a README in <code>deploy</code> that is:</li>
-</ol>
-<pre><code>docker build -f Dockerfile_base --progress=plain -t flowfate_base .
-docker build -f Dockerfile --progress=plain -t flowfate:latest .
-docker run -p 3838:3838 flowfate:latest
-# then go to 127.0.0.1:3838</code></pre>
-<p><code>deploy</code> folder contains:</p>
-<pre><code><span><span class="va">Dockerfile</span></span>
-<span><span class="va">Dockerfile_base</span></span>
-<span><span class="va">flowFate_0.0.0.9000.tar.gz</span></span>
-<span><span class="va">README</span></span>
-<span><span class="va">renv.lock</span></span>
-<span><span class="va">renv.lock.prod</span></span></code></pre>
-<ol start="3" style="list-style-type: decimal">
-<li>
-<code>scp</code> the <code>deploy</code> folder to the `shiny-sever` in the <strong>shinyproxy</strong> <code>container_apps/</code> and execute <strong>as root</strong> the commands in the README</li>
-</ol>
-<p>Make sure to use the binary versions for Linux from <a href="https://packagemanager.posit.co" class="external-link">PPPM</a></p>
-<p><code>RUN R -e "renv::restore(repos = 'https://packagemanager.posit.co/cran/__linux__/jammy/latest/')"</code></p>
-<pre><code>docker build -f Dockerfile_base --progress=plain -t flowfate_base .
-docker build -f Dockerfile --progress=plain -t flowfate:latest .</code></pre>
-<ol start="4" style="list-style-type: decimal">
-<li>edit <code>/home/aurelien.ginolhac/deploiement/container_system/shinyproxy-docker/application.yml</code>
-</li>
-</ol>
-<p>adding something like:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">id</span><span class="kw">:</span><span class="at"> mdm200504</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">display-name</span><span class="kw">:</span><span class="at"> MDM200504</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-network</span><span class="kw">:</span><span class="at"> sp-network</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">"Companion app for the MDM project 200504"</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-cmd</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">"R"</span><span class="kw">,</span><span class="at"> </span><span class="st">"-e"</span><span class="kw">,</span><span class="at"> </span><span class="st">"library(mdm200504);options('shiny.port'=3838,shiny.host='0.0.0.0');mdm200504::run_app()"</span><span class="kw">]</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-image</span><span class="kw">:</span><span class="at"> mdm200504</span></span></code></pre></div>
-<ol start="5" style="list-style-type: decimal">
-<li>In <code>/home/aurelien.ginolhac/deploiement/</code>, run <code>./relance_machinerie</code> so the new app is linked.</li>
-</ol>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -195,7 +153,7 @@ docker build -f Dockerfile --progress=plain -t flowfate:latest .</code></pre>
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Maxime Sünnen <br><small class="roles"> Maintainer, author </small>  </li>
-<li>Aurélien Ginolhac <br><small class="roles"> Author </small>  </li>
+<li>Aurélien Ginolhac <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0001-7665-9547" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 </ul>
 </div>
 
