@@ -41,7 +41,7 @@ flowFate::run_app()
 
 ### Usage for users part of the University of Luxembourg
 
-Users having access to the network of the University of Luxembourg do not need to install R or R Studio. Use the following link instead: https://shiny-server.uni.lu/app/flowfate. 
+Users having access to the network of the University of Luxembourg do not need to install R or R Studio but can use the following link instead: https://shiny-server.uni.lu/app/flowfate. 
 
 The app looks like:
 
