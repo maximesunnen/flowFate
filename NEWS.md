@@ -4,7 +4,7 @@
 
 - added the option to submit single, merged FCS files as well as a folder with individual FCS files
 - Added a `pkgdown` website
-- added a favicon using [hexmake](connect.thinkr.fr/hexmake/)
+- added a favicon using [hexmake](https://connect.thinkr.fr/hexmake/)
 
 # flowFate 0.0.0.9000
 
