@@ -1,6 +1,6 @@
 Package: flowFate
 Title: Shiny App for Flow Cytometry Data
-Version: 0.1.0
+Version: 0.1.0.9000
 Authors@R: c(
     person("Maxime", "Sünnen", , "maximesunnen@gmail.com", role = c("cre", "aut")),
     person("Aurélien", "Ginolhac", , "ginolhac@gmail.com", role = "aut", comment = c(ORCID = "0000-0001-7665-9547"))
