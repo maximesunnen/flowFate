@@ -29,7 +29,7 @@ mod_import_ui <- function(id){
                # Folder input container in the sidebar
                div(id = ns("div_folder"),
                    p("Select a folder with FCS files"),
-                   shinyDirButton(ns("directory"), label='Browse...', title = 'Please select a folder'), 
+                   shinyDirButton(ns("directory"), label='Browse...', title = 'Please select a folder'),
                    verbatimTextOutput(ns("directorypath"))),
                # Demo upload container in the sidebar
                div(id = ns("div_demo"),
@@ -47,10 +47,10 @@ mod_import_ui <- function(id){
                  "- switch to the ", strong("'Explore'"), " tab in the menu bar and explore your data", br(), br(),
                  "- switch to the ", strong("'Curate'"), " tab in the menu bar and start curating your data",
                  style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
-               
-               # Table output showing the datasets(individual) FCS files 
+
+               # Table output showing the datasets(individual) FCS files
                DTOutput(ns("individual_fcs")), br(),
-               # Text output indicating the number of datasets 
+               # Text output indicating the number of datasets
                textOutput(ns("datasets"))
            )))}
 
@@ -62,8 +62,7 @@ mod_import_ui <- function(id){
 #' @importFrom flowCore read.flowSet
 #' @importFrom flowWorkspace GatingSet
 #' @importFrom stringr str_extract
-#' @importFrom tibble as_tibble
-#' @importFrom glue glue
+#' @importFrom methods as
 #'
 mod_import_server <- function(id, r = NULL){
 # increasing the maximum upload size  -------------------------------------
@@ -71,13 +70,13 @@ mod_import_server <- function(id, r = NULL){
 
   moduleServer(id, function(input, output, session){
     ns <- session$ns
-    
+
     # Defining the roots argument of the shinyDirChoose function below
     volumes <- c(Home = fs::path_home(), "R Installation" = R.home(), getVolumes()())
-    
+
     # Server function to handle shinyFiles input
     shinyDirChoose(input, "directory", roots = volumes)
-    
+
     # Defining the output showing the directory of the selected folder in the sidebar
     output$directorypath <- renderPrint({
       if (is.integer(input$directory)) cat("No directory selected")
@@ -182,7 +181,7 @@ mod_import_server <- function(id, r = NULL){
       r$fs <- fs()
       r$nb_ds <- nb_ds()
     })
-    
+
     observe({
       if(input$upload.type == "merged") {
         shinyjs::hide("div_folder")
@@ -201,7 +200,7 @@ mod_import_server <- function(id, r = NULL){
         shinyjs::hide("submit")
       }
     })
-    
+
   })}
 
 #' @description Count how many datasets are in a FCS file
@@ -264,7 +263,7 @@ split_1_fcs <- function(nb, input_file) {
                    emptyValue = FALSE)
     #message(paste("Write file #", x, "well", fr@description$`$WELLID`))
     # write the individual flowframe objects to individual FCS files
-    write.FCS(fr, path(path_dir(input_file), "fcs_input", glue::glue("dataset_{fr@description$`$WELLID`}.fcs")))
+    write.FCS(fr, path(path_dir(input_file), "fcs_input", paste0("dataset_", fr@description$`$WELLID`, ".fcs")))
   })
   path(path_dir(input_file), "fcs_input")
 }
