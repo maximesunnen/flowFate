@@ -93,12 +93,10 @@
 <div class="section level2">
 <h2 id="background">Background<a class="anchor" aria-label="anchor" href="#background"></a>
 </h2>
-<p align="justify">
-<strong>FlowFate</strong> has been designed for the analysis of cell differentiation data obtained according to <a href="">Chippalkatti et al’s</a> protocol. Briefly, C2C12 cells that can turn into (or “differentiate”) into muscle cells at some point in their life cycle. Until they differentiate, these cells are in an immature state (scientists call them “undifferentiated”). Technically, one could analyze a pool of C2C12 cells under the microscope and visually determine the percentage of differentiated cells in a specific condition (temperature, nutrients, …). Practically however, this too tedious. Luckily, differentiated muscle cells produce a protein called myosin not (or only in low amounts) produced by undifferentiated cells. Using an antibody attached to a fluorescent molecule (i.e a molecule that can emit light of a certain wavelength when excited by a laser), it is possible to stain myosin and analyze the pool of cells using a flow cytometer. A flow cytometer is a device used in biological research channels cells through a small capillary so that they pass in front of a laser one-by-one. This laser light excites the fluorescent molecule attached to our antibody, the antibody itself being attached to myosin if this protein is present in the cell. The light emitted by the fluorescent molecule in response to this excitation can be captured by a camera. The amount of light captured reflects the amount of myosin present in the cell, allowing us to determine if a cell is differentiated or not. Keep in mind that even undifferentiated cells can produce small amounts of myosin and therefore the differentiated cells we’re interested in are those that produce larger amounts.
-</p>
+<p><strong>FlowFate</strong> has been designed for the analysis of cell differentiation data obtained according to <a href="">Chippalkatti et al’s</a> protocol. Briefly, C2C12 cells that can turn into (or “differentiate”) into muscle cells at some point in their life cycle. Until they differentiate, these cells are in an immature state (scientists call them “undifferentiated”). Technically, one could analyze a pool of C2C12 cells under the microscope and visually determine the percentage of differentiated cells in a specific condition (temperature, nutrients, …). Practically however, this too tedious. Luckily, differentiated muscle cells produce a protein called myosin not (or only in low amounts) produced by undifferentiated cells. Using an antibody attached to a fluorescent molecule (i.e a molecule that can emit light of a certain wavelength when excited by a laser), it is possible to stain myosin and analyze the pool of cells using a flow cytometer. A flow cytometer is a device used in biological research channels cells through a small capillary so that they pass in front of a laser one-by-one. This laser light excites the fluorescent molecule attached to our antibody, the antibody itself being attached to myosin if this protein is present in the cell. The light emitted by the fluorescent molecule in response to this excitation can be captured by a camera. The amount of light captured reflects the amount of myosin present in the cell, allowing us to determine if a cell is differentiated or not. Keep in mind that even undifferentiated cells can produce small amounts of myosin and therefore the differentiated cells we’re interested in are those that produce larger amounts.</p>
 </div>
 <div class="section level2">
-<h2 id="installation-for-users-outside-the-university-of-luxembourg">Installation for users outside the University of Luxembourg<a class="anchor" aria-label="anchor" href="#installation-for-users-outside-the-university-of-luxembourg"></a>
+<h2 id="installation-users-outside-the-university-of-luxembourg">Installation: users outside the University of Luxembourg<a class="anchor" aria-label="anchor" href="#installation-users-outside-the-university-of-luxembourg"></a>
 </h2>
 <div class="section level3">
 <h3 id="requirements">Requirements<a class="anchor" aria-label="anchor" href="#requirements"></a>
@@ -107,27 +105,31 @@
 <p><strong> Note: </strong> If you have access to an R server, you can skip this step.</p>
 </div>
 <div class="section level3">
-<h3 id="installing-flowfate">Installing flowFate<a class="anchor" aria-label="anchor" href="#installing-flowfate"></a>
+<h3 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h3>
 <p>Once R and R Studio have been installed, run the commands below in the given order in your <a href="https://docs.posit.co/ide/user/ide/guide/ui/ui-panes.html" class="external-link">R Studio console</a>. Because of the large amount of dependencies, installation can take up to 15 minutes.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install the remotes and BiocManager package</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"remotes"</span>, <span class="st">"BiocManager"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># install dependencies from Bioconductor</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"remotes"</span>, <span class="st">"BiocManager"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install dependencies from Bioconductor</span></span>
 <span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ggcyto"</span>, <span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"openCyto"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># install the flowFate package</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"maximesunnen/flowFate"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># open the app</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"openCyto"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install the flowFate package</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"maximesunnen/flowFate"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Launch the app</span></span>
 <span><span class="fu">flowFate</span><span class="fu">::</span><span class="fu"><a href="reference/run_app.html">run_app</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="usage-for-users-part-of-the-university-of-luxembourg">Usage for users part of the University of Luxembourg<a class="anchor" aria-label="anchor" href="#usage-for-users-part-of-the-university-of-luxembourg"></a>
+<h3 id="installation-users-from-the-university-of-luxembourg">Installation: users from the University of Luxembourg<a class="anchor" aria-label="anchor" href="#installation-users-from-the-university-of-luxembourg"></a>
 </h3>
-<p>Users having access to the network of the University of Luxembourg do not need to install R or R Studio but can use the following link instead: <a href="https://shiny-server.uni.lu/app/flowfate" class="external-link uri">https://shiny-server.uni.lu/app/flowfate</a>.</p>
+<p>Users having access to the network of the University of Luxembourg do not need to install R or R Studio but can use the following link instead: <a href="https://shiny-server.uni.lu/app/flowfate" class="external-link uri">https://shiny-server.uni.lu/app/flowfate</a>. Note that this link will only work when connected to the University’s network.</p>
+</div>
+<div class="section level3">
+<h3 id="get-started">Get started<a class="anchor" aria-label="anchor" href="#get-started"></a>
+</h3>
 <p>The app looks like:</p>
 <p><img src="reference/figures/app_start.png"></p>
 <p>An example of the Non-debris plots after gating:</p>
