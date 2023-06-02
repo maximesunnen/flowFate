@@ -1,5 +1,5 @@
 ---
-title: "Data import"
+title: "Data-import"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Data-import}
@@ -22,7 +22,8 @@ After launching the app, users can select which type of data they want to upload
 ### 1) Number of datasets
 We first fetch the number of datasets contained in the merged .fcs file using the function below, which contains code adapted from [RGLab](https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R).
 
-```
+
+```{r, eval = FALSE}
 n_datasets <- function(filename) {
 	con <- file(filename, open = "rb")
 	
@@ -54,7 +55,7 @@ n_datasets <- function(filename) {
 ### 2) Writing individual .fcs files
 Individual datasets from merged .fcs files are then written as individual .fcs files to a temporary folder. The the value of the $WELLID keyword is appended to the filename.
 
-```
+```{r, eval = FALSE}
 split_1_fcs <- function(nb, input_file) {
   # create a folder named fcs_input
   if (!dir_exists(path(path_dir(input_file), "fcs_input"))) dir_create(path(path_dir(input_file), "fcs_input"))
@@ -79,7 +80,7 @@ individual_fcs <- reactive(split_1_fcs(nb_ds(), input$filename$datapath))
 ### 3) Creating a flowSet
 The individual .fcs files stored in the temporary folder are then read as a flowSet (data structure from flowCore). The reactive expression individual_fcs() returns the directory of the folder that contains the individual .fcs files.
 
-```
+```{r, eval = FALSE}
 fs <- reactive(read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE))
 ```
 ## B - Individual file upload
@@ -87,7 +88,7 @@ fs <- reactive(read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"), trunca
 **Note: **Individual files should be stored inside a folder before upload. Steps 1) and 2) from above are not necessary anymore.
 
 ### 1) Creating a flowSet
-```
+```{r, eval = FALSE}
 fs <- reactive({
   # creating the flowSet
   a <- as(lapply(dir(filename(), full.names = TRUE), function(x) {read.FCS(x, truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE)}), "flowSet")
@@ -103,7 +104,7 @@ The flowFrame and flowSet data structures from [flowCore](https://bioconductor.o
 
 ### 1) Creating a gatingSet
 Here we create a gatingSet from the previously created flowSet using the GatingSet() function from [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html).
-```
+```{r, eval = FALSE}
 gs <- reactive({GatingSet(fs())})
 ```
 
@@ -112,7 +113,7 @@ The [{golem}](https://thinkr-open.github.io/golem/) framework promotes the use o
 
 ### 1) Completing the reactive list ```r```to share variables across modules
 We add the gatingSet, flowSet and nb_ds reactive expression to the reactive list. We're now able to use these variables in other modules by calling ```r$gs```, ```r$fs``` or ```r$nb_ds```. 
-```
+```{r, eval = FALSE}
     observe({
       r$gs <- GatingSet(fs())
       r$fs <- fs()
