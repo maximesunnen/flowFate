@@ -111,7 +111,7 @@ gs <- reactive({GatingSet(fs())})
 ## D - Sharing reactive values across modules
 The [{golem}](https://thinkr-open.github.io/golem/) framework promotes the use of modules to split your app into separate parts. Communication between modules is of course essential and {golem} provides a couple of [techniques](https://engineering-shiny.org/common-app-caveats.html?q=sharing%20data%20#a.-sharing-data-across-modules) to achieve this. For flowFate, we opted for the ["stratégie du petit r"](https://engineering-shiny.org/structuring-project.html?q=strat#b.-the-strat%C3%A9gie-du-petit-r). Briefly, a list of reactive values - called ```r``` (hence the name of the technique) - is passed along modules. 
 
-### 1) Completing the reactive list ```r```to share variables across modules
+### 1) Completing the reactive list ```r``` 
 We add the gatingSet, flowSet and nb_ds reactive expression to the reactive list. We're now able to use these variables in other modules by calling ```r$gs```, ```r$fs``` or ```r$nb_ds```. 
 ```{r, eval = FALSE}
     observe({
