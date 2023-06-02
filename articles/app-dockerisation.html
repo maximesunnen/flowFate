@@ -90,14 +90,15 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p><a href="https://shiny.posit.co/" class="external-link">Shiny apps</a> are a great feature
-of using R interactively. However, each app is using a different set of
-packages, and even maybe a different R version.</p>
-<p>to deal with this, one solution is to use <a href="https://www.shinyproxy.io/" class="external-link">ShinyProxy</a> on our own <a href="https://posit.co/products/open-source/shinyserver/" class="external-link">Shiny
-Server</a>.</p>
-<p>Then, each app is a docker image with its own set of packages. Each
-time an user is triggering an app, a container from the image is spawn
-from the appropriate image.</p>
+<p><a href="https://shiny.posit.co/" class="external-link">Shiny apps</a> are great for using
+R interactively. Nevertheless, each app uses different packages and/or
+package versions or even different R versions. To save users from
+constantly installing the required versions for a specific Shiny app,
+developers can opt for <a href="https://www.shinyproxy.io/" class="external-link">ShinyProxy</a> to deploy their
+application on a <a href="https://posit.co/products/open-source/shinyserver/" class="external-link">Shiny
+Server</a>. Each app then becomes a docker image with its own set of
+packages and every time a user launches the app, a container from the
+image is spawn from the appropriate image.</p>
 <p><img src="https://www.shinyproxy.io/img/docker-logo50.png"></p>
 </div>
 <div class="section level2">
