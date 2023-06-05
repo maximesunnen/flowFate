@@ -37,8 +37,8 @@ remotes::install_github("openCyto")
 ```
 
 ``` r
-# install the flowFate package
-remotes::install_github("maximesunnen/flowFate")
+# install the latest release of the flowFate package
+remotes::install_github("maximesunnen/flowFate@*release")
 ```
 
 ``` r
