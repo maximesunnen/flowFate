@@ -88,16 +88,14 @@
 
     
     
-<p>Our analysis workflow starts with the import of your data, saved as
-.fcs files. Many flow cytometry acquisition softwares export data from
-different samples as <strong>separate</strong> .fcs files. Other
-softwares however export a <strong>merged</strong> .fcs file containing
-data from all samples. The $NXTDATA keyword can then be used to retrieve
-data from individual samples. In flowFate, users have the option to
-upload either a merged file or individual .fcs files grouped inside a
-folder.</p>
-<p>After launching the app, users can select which type of data they
-want to upload.</p>
+<p><strong>Note:</strong> Imported files must be FCS3.0.</p>
+<p>Our analysis start with data import. Some flow cytometry acquisition
+software export data from different samples as <strong>separate</strong>
+.fcs files. Others export a <strong>single, merged</strong> .fcs file
+containing data multiple samples. The $NXTDATA keyword can then be used
+to retrieve data from individual samples. In flowFate, users can choose
+if they want to upload a merged file or individual .fcs files. In the
+latter case, these files must be grouped inside a folder.</p>
 <div class="section level2">
 <h2 id="a---merged-file-upload">A - Merged file upload<a class="anchor" aria-label="anchor" href="#a---merged-file-upload"></a>
 </h2>
@@ -105,7 +103,7 @@ want to upload.</p>
 <h3 id="number-of-datasets">1) Number of datasets<a class="anchor" aria-label="anchor" href="#number-of-datasets"></a>
 </h3>
 <p>We first fetch the number of datasets contained in the merged .fcs
-file using the function below, which contains code adapted from <a href="https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R" class="external-link">RGLab</a>.</p>
+file. The function we use contains code adapted from <a href="https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R" class="external-link">RGLab</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n_datasets</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">filename</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">file</a></span><span class="op">(</span><span class="va">filename</span>, open <span class="op">=</span> <span class="st">"rb"</span><span class="op">)</span></span>
@@ -137,9 +135,9 @@ file using the function below, which contains code adapted from <a href="https:/
 <div class="section level3">
 <h3 id="writing-individual--fcs-files">2) Writing individual .fcs files<a class="anchor" aria-label="anchor" href="#writing-individual--fcs-files"></a>
 </h3>
-<p>Individual datasets from merged .fcs files are then written as
-individual .fcs files to a temporary folder. The the value of the
-$WELLID keyword is appended to the filename.</p>
+<p>The datasets from merged .fcs files are then written as individual
+.fcs files to a temporary folder and the value from the $WELLID keyword
+is appended to the filename.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">split_1_fcs</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">nb</span>, <span class="va">input_file</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># create a folder named fcs_input</span></span>
@@ -158,16 +156,16 @@ $WELLID keyword is appended to the filename.</p>
 <span>  <span class="fu">path</span><span class="op">(</span><span class="fu">path_dir</span><span class="op">(</span><span class="va">input_file</span><span class="op">)</span>, <span class="st">"fcs_input"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># create a reactive expression that, when called, executes the split_1_fcs() function. The output of this function is a directory!</span></span>
+<span><span class="co"># create a reactive expression that, when called, executes the split_1_fcs() function and returns a directory</span></span>
 <span><span class="va">individual_fcs</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="fu">split_1_fcs</span><span class="op">(</span><span class="fu">nb_ds</span><span class="op">(</span><span class="op">)</span>, <span class="va">input</span><span class="op">$</span><span class="va">filename</span><span class="op">$</span><span class="va">datapath</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="creating-a-flowset">3) Creating a flowSet<a class="anchor" aria-label="anchor" href="#creating-a-flowset"></a>
 </h3>
-<p>The individual .fcs files stored in the temporary folder are then
-read as a flowSet (data structure from flowCore). The reactive
-expression individual_fcs() returns the directory of the folder that
-contains the individual .fcs files.</p>
+<p>Individual .fcs files stored in the temporary folder are then read
+into a flowSet (data structure from flowCore). The reactive expression
+individual_fcs() returns the directory of the folder uploaded folder
+with individual fcs files.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fs</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="fu">read.flowSet</span><span class="op">(</span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_ls.html" class="external-link">dir_ls</a></span><span class="op">(</span><span class="fu">individual_fcs</span><span class="op">(</span><span class="op">)</span>, glob <span class="op">=</span> <span class="st">"*.fcs"</span><span class="op">)</span>, truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>, alter.names <span class="op">=</span> <span class="cn">TRUE</span>, transformation <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -175,20 +173,15 @@ contains the individual .fcs files.</p>
 <div class="section level2">
 <h2 id="b---individual-file-upload">B - Individual file upload<a class="anchor" aria-label="anchor" href="#b---individual-file-upload"></a>
 </h2>
-<p><strong>Note: </strong>Individual files should be stored inside a
-folder before upload. Steps 1) and 2) from above are not necessary
-anymore.</p>
+<p><strong>Note: </strong>Individual files (all FCS3.0) have to be
+grouped inside a folder. Steps 1) and 2) from above are now dispensable
+and we can immediately create a flowSet.</p>
 <div class="section level3">
 <h3 id="creating-a-flowset-1">1) Creating a flowSet<a class="anchor" aria-label="anchor" href="#creating-a-flowset-1"></a>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fs</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="op">{</span></span>
-<span>  <span class="co"># creating the flowSet</span></span>
-<span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="fu">filename</span><span class="op">(</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span><span class="fu">read.FCS</span><span class="op">(</span><span class="va">x</span>, truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>, alter.names <span class="op">=</span> <span class="cn">TRUE</span>, transformation <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">}</span><span class="op">)</span>, <span class="st">"flowSet"</span><span class="op">)</span></span>
-<span>  <span class="co"># changing flowSet sample names</span></span>
-<span>  <span class="fu">pData</span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">$</span><span class="va">name</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dataset_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="fu">sampleNames</span><span class="op">(</span><span class="va">a</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dataset_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span></span>
+<span>  <span class="fu">read.flowSet</span><span class="op">(</span>path <span class="op">=</span> <span class="fu">filename</span><span class="op">(</span><span class="op">)</span>, truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>, alter.names <span class="op">=</span> <span class="cn">TRUE</span>, transformation <span class="op">=</span> <span class="cn">FALSE</span>, emptyValue <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -196,7 +189,7 @@ anymore.</p>
 <h2 id="c---gatingset">C - GatingSet<a class="anchor" aria-label="anchor" href="#c---gatingset"></a>
 </h2>
 <p>The flowFrame and flowSet data structures from <a href="https://bioconductor.org/packages/release/bioc/html/flowCore.html" class="external-link">flowCore</a>
-are very useful for handling flow cytometry data in R. The gatingSet
+are very useful for handling flow cytometry data in R. The GatingSet
 data structure from <a href="https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html" class="external-link">flowWorkspace</a>
 however is better suited for storing and manipulating gated data.</p>
 <div class="section level3">
@@ -224,8 +217,9 @@ modules.</p>
 </h3>
 <p>We add the gatingSet, flowSet and nb_ds reactive expression to the
 reactive list. We’re now able to use these variables in other modules by
-calling <code>r$gs</code>, <code>r$fs</code> or
-<code>r$nb_ds</code>.</p>
+calling <code>r$gs</code>, <code>r$fs</code> or <code>r$nb_ds</code>.
+These assignments need to be wrapped inside observe() in order to read
+Shiny reactive expressions.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>    <span class="fu">observe</span><span class="op">(</span><span class="op">{</span></span>
 <span>      <span class="va">r</span><span class="op">$</span><span class="va">gs</span> <span class="op">&lt;-</span> <span class="fu">GatingSet</span><span class="op">(</span><span class="fu">fs</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
