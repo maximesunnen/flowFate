@@ -1,10 +1,9 @@
 # flowFate
 
-**FlowFate** is a free, interactive [Shiny](https://shiny.posit.co/) web application developed to automate the analysis of cell differentiation data obtained by flow cytometry. 
-We developed **flowFate** by combining existing R packages
+**FlowFate** is a free, interactive [Shiny](https://shiny.posit.co/) web application developed to automate the analysis of cell differentiation data obtained by flow cytometry. We developed **flowFate** by combining existing R packages
 
-- [flowCore](https://bioconductor.org/packages/release/bioc/html/flowCore.html) and [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) for FCS file import data manipulation and gating
-- [ggcyto](https://www.bioconductor.org/packages/release/bioc/html/ggcyto.html) for visualization
+-   [flowCore](https://bioconductor.org/packages/release/bioc/html/flowCore.html) and [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) for FCS file import data manipulation and gating
+-   [ggcyto](https://www.bioconductor.org/packages/release/bioc/html/ggcyto.html) for visualization
 
 into a customized workflow tailored to the analysis of differentiation data. We were able to automate a crucial and time-consuming process of data analysis using [openCyto's](https://www.bioconductor.org/packages/release/bioc/html/openCyto.html) data-driven gating functions.
 
@@ -16,14 +15,15 @@ Built with [{golem}](https://github.com/ThinkR-open/golem).
 
 ## Installation: users outside the University of Luxembourg
 
-### Requirements
-You need R and R Studio installed on your computer. If not yet installed, click [here](https://posit.co/download/rstudio-desktop/) for download instructions.
+### Install R and R Studio
 
-<strong> Note: </strong> If you have access to an R server, you can skip this step.
+Click [here](https://posit.co/download/rstudio-desktop/) for download instructions.
 
-### Installation
-Once R and R Studio have been installed, run the commands below in the given order in your [R Studio console](https://docs.posit.co/ide/user/ide/guide/ui/ui-panes.html). Because of the large amount of dependencies, installation can take up to 15 minutes. 
+<strong> Note: </strong> Skip this step if you access R via a server.
 
+### Install flowFate
+
+Once R and R Studio have been installed, run the commands below in the given order in your [R Studio console](https://docs.posit.co/ide/user/ide/guide/ui/ui-panes.html). Because of the large amount of dependencies, installation can take up to 15 minutes.
 
 ``` r
 # install the remotes and BiocManager package
@@ -48,10 +48,10 @@ flowFate::run_app()
 
 ### Installation: users from the University of Luxembourg
 
-Users having access to the network of the University of Luxembourg do not need to install R or R Studio but can use the following link instead: https://shiny-server.uni.lu/app/flowfate. 
-Note that this link will only work when connected to the University's network.
+Users having access to the network of the University of Luxembourg do not need to install R or R Studio but can use the following link instead: <https://shiny-server.uni.lu/app/flowfate>. Note that this link will only work when connected to the University's network.
 
 ### Get started
+
 The app looks like:
 
 ![](man/figures/app_start.png)
