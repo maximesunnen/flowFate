@@ -152,12 +152,10 @@ mod_import_server <- function(id, r = NULL){
       }
       else if (input$upload.type == "folder") {
         withProgress(message = "Reading datasets...", {
-        a <- as(lapply(dir(filename(), full.names = TRUE),
-                              function(x) {read.FCS(x, truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE)}), "flowSet")
-        pData(a)$name <- paste0("dataset_", seq_len(length(a)))
-        sampleNames(a) <- paste0("dataset_", seq_len(length(a)))})
-        return(a)
-      }
+          read.flowSet(path = filename(), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE, emptyValue = FALSE)
+        # pData(a)$name <- paste0("dataset_", seq_len(length(a)))
+        # sampleNames(a) <- paste0("dataset_", seq_len(length(a)))})
+      })}
     }) |> bindEvent(input$submit)
 
     # make a reactive expression flowSet_pData() [for "flowSet phenotypic data"], which corresponds to the name of the individual datasets
