@@ -2036,6 +2036,27 @@
       ],
       "Hash": "c2eae3d8c670fa9dfa35a12066f4a1d5"
     },
+    "shinyFiles": {
+      "Package": "shinyFiles",
+      "Version": "0.9.3",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "RemoteType": "standard",
+      "RemotePkgRef": "shinyFiles",
+      "RemoteRef": "shinyFiles",
+      "RemoteRepos": "https://packagemanager.posit.co/cran/2023-04-26",
+      "RemotePkgPlatform": "source",
+      "RemoteSha": "0.9.3",
+      "Requirements": [
+        "fs",
+        "htmltools",
+        "jsonlite",
+        "shiny",
+        "tibble",
+        "tools"
+      ],
+      "Hash": "92c28bcdee44e205a99799f6ea604b82"
+    },
     "shinyWidgets": {
       "Package": "shinyWidgets",
       "Version": "0.7.6",

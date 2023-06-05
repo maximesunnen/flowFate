@@ -24,6 +24,7 @@ Imports:
     fs,
     ggcyto,
     ggplot2,
+    golem (>= 0.3.5),
     methods,
     openCyto,
     purrr,
@@ -35,7 +36,6 @@ Imports:
     utils,
     waiter
 Suggests: 
-    golem (>= 0.3.5),
     knitr,
     rmarkdown,
     svglite,
