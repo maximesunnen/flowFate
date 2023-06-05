@@ -1,9 +1,7 @@
-# flowFate (development version)
-
 # flowFate 0.1.1
 
-- added a new demo dataset
-- improved the reading-in of this demo dataset
+- opted for a less big demo file (< 5MB)
+- changed the read-in of this demo file
 
 # flowFate 0.1.0
 
