@@ -1,4 +1,7 @@
-# flowFate (development version)
+# flowFate 0.1.1
+
+- added a new demo dataset
+- improved the reading-in of this demo dataset
 
 # flowFate 0.1.0
 
