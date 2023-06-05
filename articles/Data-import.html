@@ -48,6 +48,7 @@
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/Curation.html">Data Curation</a>
     <a class="dropdown-item" href="../articles/Data-import.html">Data-import</a>
     <a class="dropdown-item" href="../articles/app-dockerisation.html">App Dockerisation</a>
   </div>
@@ -89,13 +90,14 @@
     
     
 <p><strong>Note:</strong> Imported files must be FCS3.0.</p>
-<p>Our analysis start with data import. Some flow cytometry acquisition
-software export data from different samples as <strong>separate</strong>
-.fcs files. Others export a <strong>single, merged</strong> .fcs file
-containing data multiple samples. The $NXTDATA keyword can then be used
-to retrieve data from individual samples. In flowFate, users can choose
-if they want to upload a merged file or individual .fcs files. In the
-latter case, these files must be grouped inside a folder.</p>
+<p>Our analysis starts with data import. While some flow cytometry
+acquisition software export data from different samples as
+<strong>separate .fcs files</strong>, others export a <strong>single,
+merged .fcs file</strong> containing data multiple samples. The $NXTDATA
+keyword can then be used to retrieve data from individual samples.</p>
+<p>In flowFate, users can choose whether want to upload a merged file or
+individual .fcs files. In the latter case, individual files must be
+grouped inside a folder.</p>
 <div class="section level2">
 <h2 id="a---merged-file-upload">A - Merged file upload<a class="anchor" aria-label="anchor" href="#a---merged-file-upload"></a>
 </h2>
@@ -195,8 +197,8 @@ however is better suited for storing and manipulating gated data.</p>
 <div class="section level3">
 <h3 id="creating-a-gatingset">1) Creating a gatingSet<a class="anchor" aria-label="anchor" href="#creating-a-gatingset"></a>
 </h3>
-<p>Here we create a gatingSet from the previously created flowSet using
-the GatingSet() function from <a href="https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html" class="external-link">flowWorkspace</a>.</p>
+<p>We create a gatingSet from the flowSet using the
+<code>GatingSet()</code> function from <a href="https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html" class="external-link">flowWorkspace</a>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gs</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="op">{</span><span class="fu">GatingSet</span><span class="op">(</span><span class="fu">fs</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -205,10 +207,9 @@ the GatingSet() function from <a href="https://www.bioconductor.org/packages/rel
 <h2 id="d---sharing-reactive-values-across-modules">D - Sharing reactive values across modules<a class="anchor" aria-label="anchor" href="#d---sharing-reactive-values-across-modules"></a>
 </h2>
 <p>The <a href="https://thinkr-open.github.io/golem/" class="external-link">{golem}</a>
-framework promotes the use of modules to split your app into separate
-parts. Communication between modules is of course essential and {golem}
-provides a couple of <a href="https://engineering-shiny.org/common-app-caveats.html?q=sharing%20data%20#a.-sharing-data-across-modules" class="external-link">techniques</a>
-to achieve this. For flowFate, we opted for the <a href="https://engineering-shiny.org/structuring-project.html?q=strat#b.-the-strat%C3%A9gie-du-petit-r" class="external-link">“stratégie
+framework promotes the use of modules to split your app into separate,
+smaller parts. {golem} provides a couple of <a href="https://engineering-shiny.org/common-app-caveats.html?q=sharing%20data%20#a.-sharing-data-across-modules" class="external-link">techniques</a>
+to allow communication between modules. We opted for the <a href="https://engineering-shiny.org/structuring-project.html?q=strat#b.-the-strat%C3%A9gie-du-petit-r" class="external-link">“stratégie
 du petit r”</a>. Briefly, a list of reactive values - called
 <code>r</code> (hence the name of the technique) - is passed along
 modules.</p>
@@ -217,9 +218,9 @@ modules.</p>
 </h3>
 <p>We add the gatingSet, flowSet and nb_ds reactive expression to the
 reactive list. We’re now able to use these variables in other modules by
-calling <code>r$gs</code>, <code>r$fs</code> or <code>r$nb_ds</code>.
-These assignments need to be wrapped inside observe() in order to read
-Shiny reactive expressions.</p>
+calling <code>r$gs</code>, <code>r$fs</code> or <code>r$nb_ds</code>. To
+read reactive expressions in Shiny, they have to be wrapped in inside
+<code>observe( )</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>    <span class="fu">observe</span><span class="op">(</span><span class="op">{</span></span>
 <span>      <span class="va">r</span><span class="op">$</span><span class="va">gs</span> <span class="op">&lt;-</span> <span class="fu">GatingSet</span><span class="op">(</span><span class="fu">fs</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
