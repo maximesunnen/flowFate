@@ -262,7 +262,6 @@ mod_curate_server <- function(id, r = NULL){
 create_quantile_gate <- function(samples, gate_channel) {
   require(flowCore)
   fsApply(samples, function(fr) {
-    print(fr)
     openCyto::gate_quantile(fr, channel = gate_channel, probs = 0.99)
   })
 }
