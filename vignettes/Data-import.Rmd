@@ -16,7 +16,9 @@ knitr::opts_chunk$set(
 
 **Note:** Imported files must be FCS3.0. 
 
-Our analysis start with data import. Some flow cytometry acquisition software export data from different samples as **separate** .fcs files. Others export a **single, merged** .fcs file containing data multiple samples. The $NXTDATA keyword can then be used to retrieve data from individual samples. In flowFate, users can choose if they want to upload a merged file or individual .fcs files. In the latter case, these files must be grouped inside a folder.
+Our analysis starts with data import. While some flow cytometry acquisition software export data from different samples as **separate .fcs files**, others export a **single, merged .fcs file** containing data multiple samples. The $NXTDATA keyword can then be used to retrieve data from individual samples. 
+
+In flowFate, users can choose whether want to upload a merged file or individual .fcs files. In the latter case, individual files must be grouped inside a folder.
 
 ## A - Merged file upload
 ### 1) Number of datasets
@@ -52,6 +54,7 @@ n_datasets <- function(filename) {
 }
 ```
 
+
 ### 2) Writing individual .fcs files
 The datasets from merged .fcs files are then written as individual .fcs files to a temporary folder and the value from the $WELLID keyword is appended to the filename.
 
@@ -77,12 +80,14 @@ write.FCS(fr, fs::path("fcs_input", paste0("dataset_", fr@description$`$WELLID`,
 individual_fcs <- reactive(split_1_fcs(nb_ds(), input$filename$datapath))
 ```
 
+
 ### 3) Creating a flowSet
 Individual .fcs files stored in the temporary folder are then read into a flowSet (data structure from flowCore). The reactive expression individual_fcs() returns the directory of the folder uploaded folder with individual fcs files.
 
 ```{r, eval = FALSE}
 fs <- reactive(read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE))
 ```
+
 ## B - Individual file upload
 
 **Note: **Individual files (all FCS3.0) have to be grouped inside a folder. Steps 1) and 2) from above are now dispensable and we can immediately create a flowSet.
@@ -94,20 +99,23 @@ fs <- reactive({
 })
 ```
 
+
 ## C - GatingSet
 The flowFrame and flowSet data structures from [flowCore](https://bioconductor.org/packages/release/bioc/html/flowCore.html) are very useful for handling flow cytometry data in R. The GatingSet data structure from [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) however is better suited for storing and manipulating gated data.
 
 ### 1) Creating a gatingSet
-Here we create a gatingSet from the previously created flowSet using the GatingSet() function from [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html).
+We create a gatingSet from the flowSet using the `GatingSet()` function from [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html).
 ```{r, eval = FALSE}
 gs <- reactive({GatingSet(fs())})
 ```
 
+
 ## D - Sharing reactive values across modules
-The [{golem}](https://thinkr-open.github.io/golem/) framework promotes the use of modules to split your app into separate parts. Communication between modules is of course essential and {golem} provides a couple of [techniques](https://engineering-shiny.org/common-app-caveats.html?q=sharing%20data%20#a.-sharing-data-across-modules) to achieve this. For flowFate, we opted for the ["stratégie du petit r"](https://engineering-shiny.org/structuring-project.html?q=strat#b.-the-strat%C3%A9gie-du-petit-r). Briefly, a list of reactive values - called ```r``` (hence the name of the technique) - is passed along modules. 
+The [{golem}](https://thinkr-open.github.io/golem/) framework promotes the use of modules to split your app into separate, smaller parts. {golem} provides a couple of [techniques](https://engineering-shiny.org/common-app-caveats.html?q=sharing%20data%20#a.-sharing-data-across-modules) to allow communication between modules. 
+We opted for the ["stratégie du petit r"](https://engineering-shiny.org/structuring-project.html?q=strat#b.-the-strat%C3%A9gie-du-petit-r). Briefly, a list of reactive values - called ```r``` (hence the name of the technique) - is passed along modules. 
 
 ### 1) Completing the reactive list ```r``` 
-We add the gatingSet, flowSet and nb_ds reactive expression to the reactive list. We're now able to use these variables in other modules by calling ```r$gs```, ```r$fs``` or ```r$nb_ds```. These assignments need to be wrapped inside observe() in order to read Shiny reactive expressions.
+We add the gatingSet, flowSet and nb_ds reactive expression to the reactive list. We're now able to use these variables in other modules by calling ```r$gs```, ```r$fs``` or ```r$nb_ds```. To read reactive expressions in Shiny, they have to be wrapped in inside `observe( )`. 
 
 ```{r, eval = FALSE}
     observe({

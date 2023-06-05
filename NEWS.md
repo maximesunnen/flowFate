@@ -1,4 +1,6 @@
 # flowFate (development version)
+- renamed the demo data
+- `golem` added to DESCRIPTION imports
 
 # flowFate 0.1.1
 

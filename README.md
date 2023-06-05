@@ -1,4 +1,5 @@
 # flowFate
+**Note:** documentation of flowFate is still ongoing
 
 **FlowFate** is a free, interactive [Shiny](https://shiny.posit.co/) web application developed to automate the analysis of cell differentiation data obtained by flow cytometry. We developed **flowFate** by combining existing R packages
 

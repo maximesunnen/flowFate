@@ -1,0 +1,72 @@
+---
+title: "Data Curation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Data Curation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Gating live cells
+Preparing samples for flow cytometry inevitably lead to the formation of damaged or dead cells (also called "debris") that need to be excluded from the analysis. Conveniently, we can distinguish such cells in a SSC vs FSC plot and remove them with appropriate gates.
+
+In flowFate, we remove debris with a "hard" gate (FIGURE!!!). This means that the gate boundaries are **predefined** and users are not able to manually change them. This needs to be considered during acquisition to ensure that intact cells accumulate in this pre-defined window. 
+
+**Note:** Advanced R users could nevertheless manually adjust these gate boundaries by changing the respective gating matrix in the source code.
+
+### 1) Setting up the gate matrix
+We first need to set up a m x n gate matrix:
+
+* **n**, the number of columns, corresponds to the gating dimensions (here n = 2 since cells are gated based on their location in a 2D SSC vs FSC plot)
+
+* **m**, the number of rows, corresponds to the number of individual points that make up the rectangle gate. 
+
+Each row should then contain the X and Y coordinates (in the first and second column of the matrix, respectively) of the latter points. We then rename the columns to match the gating dimensions. Since the FSC and SSC channels change depending on the flow cytometer, the user can select the appropriate channel names and the columns of the gate matrix are adapted based on this selection.
+
+```{r}
+# creating the gate matrix
+pgn_cut <- matrix(c(12500, 99000, 99000,0,0,6250, 6250, 99000, 99000,12500), ncol = 2, nrow = 5)
+# renaming the columns to match the gating dimensions
+colnames(pgn_cut) <- c("Side scatter", "Forward scatter")
+```
+
+```{r, echo=FALSE}
+pgn_cut
+```
+
+### 2) Create the gate
+We create the gate using flowCore's `polygonGate( )` function. The filterId argument uniquely identifies the generated gate. 
+
+```{r, eval = FALSE}
+gate_non_debris <- reactive(polygonGate(filterId = "NonDebris", .gate = pgn_cut))
+```
+
+### 3) Apply the gate to the GatingSet
+Up to now, we have only created a gate from a gate matrix. To **add** this gate to the GatingSet (`r$gs`, created during data import (reference to import vignette and section)), we use `gs_pop_add( )`. Recomputing `r$gs` with `recompute( )`, we **apply** the gate to our data.
+
+```{r, eval = FALSE}
+gs_pop_add(r$gs, gate_non_debris(), parent = "root")
+recompute(r$gs)
+```
+
+## Gating GFP+ cells
+flowFate was mainly developed to study the effect transfection of GFP-labeled KRas constructs has on C2C12 differentiation. Our analyis should therefore be focused on transfected cells only. Untransfected cells however, due to background noise and autofluorescence, can also emit fluorescence captured in the green channel of our flow cytometer. To distinguish transfected from untransfected cells, we apply a GFP-threshold to our data so that cells below a certain threshold intensity are removed from further analysis.
+
+To determine the value of this threshold, we use:
+
+* a **double-negative control** sample: untransfected, unlabelled C2C12
+
+* a **MyHC-only control** sample: untransfected C2C12, labelled with an antibody against myosin heavy-chain (MyHC)
+
+For both control samples, the observed GFP-signal (green channel of the flow cytometer) is unspecific and looks like this:
+
+SCREENSHOT
+
+
