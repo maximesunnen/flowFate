@@ -86,7 +86,7 @@ mod_import_server <- function(id, r = NULL){
     # demo_fcs: wrapped inside a large observer
     observe({
       # file name: a file integrated into the package (needs to be reduced to a few datasets only to reduce size)
-      demo_filename <- system.file("demo_data_3.0", package = "flowFate")
+      demo_filename <- system.file("demo_data_FCS3.0", package = "flowFate")
       withProgress(message = "Reading flowSet...",
                    demo_fs <- read.flowSet(path = demo_filename,
                                            truncate_max_range = FALSE,
