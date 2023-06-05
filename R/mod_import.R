@@ -86,23 +86,15 @@ mod_import_server <- function(id, r = NULL){
     # demo_fcs: wrapped inside a large observer
     observe({
       # file name: a file integrated into the package (needs to be reduced to a few datasets only to reduce size)
-      demo_filename <- system.file("demo_fcs_file/demo.fcs", package = "flowFate")
-      withProgress(message = "Counting number of datasets...",
-                   demo_nb_ds <- n_datasets(demo_filename))
-      withProgress(message = "Splitting .fcs file...",
-                   individual_demo_fcs <- split_1_fcs(demo_nb_ds, input_file = demo_filename))
+      demo_filename <- system.file("demo_data_3.0", package = "flowFate")
       withProgress(message = "Reading flowSet...",
-                   demo_fs <- read.flowSet(fs::dir_ls(individual_demo_fcs, glob = "*.fcs"),
+                   demo_fs <- read.flowSet(path = demo_filename,
                                            truncate_max_range = FALSE,
                                            alter.names = TRUE,
-                                           transformation = FALSE))
-      demo_flowSet_pData <- pData(demo_fs)
-
-      output$datasets <- renderText({
-        paste0("Your FCS file contains ", demo_nb_ds, " datasets.")
-      })
-
-      output$individual_FCS <- renderDT({demo_flowSet_pData}, rownames = FALSE, class = "cell-border stripe")
+                                           transformation = FALSE,
+                                           emptyValue = FALSE))
+      
+      output$individual_FCS <- renderDT({pData(demo_fs)}, rownames = FALSE, class = "cell-border stripe")
 
       # strategie du petit r: we need to use demo_fs and GatingSet(demo_fs) in other modules
       r$fs <- demo_fs
