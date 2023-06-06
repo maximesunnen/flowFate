@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">flowFate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,7 +136,7 @@ are adapted based on this selection.</p>
 <div class="section level3">
 <h3 id="create-the-gate">2) Create the gate<a class="anchor" aria-label="anchor" href="#create-the-gate"></a>
 </h3>
-<p>We create the gate using flowCore’s <code>polygonGate( )</code>
+<p>We create the gate using flowCore’s <code><a href="https://rdrr.io/pkg/flowCore/man/polygonGate-class.html" class="external-link">polygonGate( )</a></code>
 function. The filterId argument uniquely identifies the generated
 gate.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -164,9 +164,9 @@ GFP-labeled KRas constructs has on C2C12 differentiation. Our analyis
 should therefore be focused on transfected cells only. Untransfected
 cells however, due to background noise and autofluorescence, can also
 emit fluorescence captured in the green channel of our flow cytometer.
-To distinguish transfected from untransfected cells, we apply a
-GFP-threshold to our data so that cells below a certain threshold
-intensity are removed from further analysis.</p>
+To distinguish transfected from untransfected cells, we apply a GFP
+threshold to our data so that cells below a certain threshold intensity
+are removed from further analysis.</p>
 <p>To determine the value of this threshold, we use:</p>
 <ul>
 <li><p>a <strong>double-negative control</strong> sample: untransfected,
@@ -174,9 +174,46 @@ unlabelled C2C12</p></li>
 <li><p>a <strong>MyHC-only control</strong> sample: untransfected C2C12,
 labelled with an antibody against myosin heavy-chain (MyHC)</p></li>
 </ul>
-<p>For both control samples, the observed GFP-signal (green channel of
-the flow cytometer) is unspecific and looks like this:</p>
+<p>For both control samples, the observed GFP signal (green channel of
+the flow cytometer) is unspecific and is illustrated below.</p>
 <p>SCREENSHOT</p>
+<p>The key idea here is to determine a GFP threshold for which most of
+the cells in these two controls samples would be below this threshold.
+We then use this threshold to create a gate that only keeps cells if
+they are <strong>above</strong> this threshold, i.e the GFP signal is
+specific.</p>
+<div class="section level3">
+<h3 id="determine-a-gfp-threshold-intensity">1) Determine a GFP threshold intensity<a class="anchor" aria-label="anchor" href="#determine-a-gfp-threshold-intensity"></a>
+</h3>
+<p>Most of the work here is wrapped into a custom function
+<code>get_lowerLimit( )</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">get_lowerLimit</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">gs</span>, <span class="va">datasets</span>, <span class="va">node</span>, <span class="va">ch_gate</span>, <span class="va">r</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va">flowCore</span><span class="op">)</span></span>
+<span>  <span class="co"># extract the data from the two control samples as a flowSet</span></span>
+<span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">gs_pop_get_data</span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">gs</span><span class="op">[[</span><span class="va">datasets</span><span class="op">]</span><span class="op">]</span>, <span class="va">node</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">cytoset_to_flowSet</span><span class="op">(</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># for each dataset of the extracted flowSet, create a quantile gate using the correct channel name (in our case this will be the name of the GFP channel selected by the user)</span></span>
+<span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/fsApply.html" class="external-link">fsApply</a></span><span class="op">(</span><span class="va">x</span>, <span class="kw">function</span><span class="op">(</span><span class="va">fr</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu">openCyto</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/openCyto/man/gate_quantile.html" class="external-link">gate_quantile</a></span><span class="op">(</span><span class="va">fr</span>, channel <span class="op">=</span> <span class="va">ch_gate</span>, probs <span class="op">=</span> <span class="fl">0.99</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># return the average of two quantile gate's lower limit</span></span>
+<span>  <span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">y</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">@</span><span class="va">min</span>, <span class="va">y</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">@</span><span class="va">min</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lower_limit_gfp_gate</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="op">{</span></span>
+<span>  <span class="fu">get_lowerLimit</span><span class="op">(</span>gs <span class="op">=</span> <span class="va">r</span><span class="op">$</span><span class="va">gs</span>, datasets <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">input</span><span class="op">$</span><span class="va">negative_control</span>, <span class="va">input</span><span class="op">$</span><span class="va">positive_control_myhc</span><span class="op">)</span>, node <span class="op">=</span> <span class="st">"NonDebris"</span>, ch_gate <span class="op">=</span> <span class="va">input</span><span class="op">$</span><span class="va">kras_channel</span>, r <span class="op">=</span> <span class="va">r</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">bindEvent</span><span class="op">(</span><span class="va">input</span><span class="op">$</span><span class="va">Curate</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">create_quantile_gate</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">samples</span>, <span class="va">gate_channel</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va">flowCore</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/fsApply.html" class="external-link">fsApply</a></span><span class="op">(</span><span class="va">samples</span>, <span class="kw">function</span><span class="op">(</span><span class="va">fr</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fr</span><span class="op">)</span></span>
+<span>    <span class="fu">openCyto</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/openCyto/man/gate_quantile.html" class="external-link">gate_quantile</a></span><span class="op">(</span><span class="va">fr</span>, channel <span class="op">=</span> <span class="va">gate_channel</span>, probs <span class="op">=</span> <span class="fl">0.99</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

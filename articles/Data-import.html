@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">flowFate</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -116,7 +116,7 @@ file. The function we use contains code adapted from <a href="https://github.com
 <span>    </span>
 <span>    <span class="va">addOff</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span>    </span>
-<span>    <span class="kw">if</span> <span class="op">(</span><span class="st">"$NEXTDATA"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">txt</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw">if</span> <span class="op">(</span><span class="st">"$NEXTDATA"</span> <span class="op"><a href="https://rdrr.io/pkg/flowCore/man/filter-in-methods.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">txt</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>        <span class="va">nd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">txt</span><span class="op">[[</span><span class="st">"$NEXTDATA"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span>    <span class="op">}</span> <span class="kw">else</span></span>
 <span>        <span class="va">nd</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
@@ -147,11 +147,11 @@ is appended to the filename.</p>
 <span></span>
 <span>  <span class="co"># walk along every dataset and read it in as a flowFrame (data structure from flowCore)</span></span>
 <span>  <span class="fu">walk</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nb_ds</span><span class="op">)</span>, \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">fr</span> <span class="op">&lt;-</span> <span class="fu">read.FCS</span><span class="op">(</span><span class="va">filename</span>, dataset <span class="op">=</span> <span class="va">x</span>, transformation <span class="op">=</span> <span class="cn">FALSE</span>, truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>, alter.names <span class="op">=</span> <span class="cn">TRUE</span>, emptyValue <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="va">fr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/read.FCS.html" class="external-link">read.FCS</a></span><span class="op">(</span><span class="va">filename</span>, dataset <span class="op">=</span> <span class="va">x</span>, transformation <span class="op">=</span> <span class="cn">FALSE</span>, truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>, alter.names <span class="op">=</span> <span class="cn">TRUE</span>, emptyValue <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Write file #"</span>, <span class="va">x</span>, <span class="st">"well"</span>, <span class="va">fr</span><span class="op">@</span><span class="va">description</span><span class="op">$</span><span class="va">`$WELLID`</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="co"># write the flowframes to individual FCS files inside the fcs_input folder</span></span>
-<span><span class="fu">write.FCS</span><span class="op">(</span><span class="va">fr</span>, <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/path.html" class="external-link">path</a></span><span class="op">(</span><span class="st">"fcs_input"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dataset_"</span>, <span class="va">fr</span><span class="op">@</span><span class="va">description</span><span class="op">$</span><span class="va">`$WELLID`</span>, <span class="st">".fcs"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/write.FCS.html" class="external-link">write.FCS</a></span><span class="op">(</span><span class="va">fr</span>, <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/path.html" class="external-link">path</a></span><span class="op">(</span><span class="st">"fcs_input"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dataset_"</span>, <span class="va">fr</span><span class="op">@</span><span class="va">description</span><span class="op">$</span><span class="va">`$WELLID`</span>, <span class="st">".fcs"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="co"># return the complete path of the fcs_input folder</span></span>
@@ -169,7 +169,7 @@ into a flowSet (data structure from flowCore). The reactive expression
 individual_fcs() returns the directory of the folder uploaded folder
 with individual fcs files.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fs</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="fu">read.flowSet</span><span class="op">(</span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_ls.html" class="external-link">dir_ls</a></span><span class="op">(</span><span class="fu">individual_fcs</span><span class="op">(</span><span class="op">)</span>, glob <span class="op">=</span> <span class="st">"*.fcs"</span><span class="op">)</span>, truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>, alter.names <span class="op">=</span> <span class="cn">TRUE</span>, transformation <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fs</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/read.flowSet.html" class="external-link">read.flowSet</a></span><span class="op">(</span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_ls.html" class="external-link">dir_ls</a></span><span class="op">(</span><span class="fu">individual_fcs</span><span class="op">(</span><span class="op">)</span>, glob <span class="op">=</span> <span class="st">"*.fcs"</span><span class="op">)</span>, truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>, alter.names <span class="op">=</span> <span class="cn">TRUE</span>, transformation <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -183,7 +183,7 @@ and we can immediately create a flowSet.</p>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fs</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="op">{</span></span>
-<span>  <span class="fu">read.flowSet</span><span class="op">(</span>path <span class="op">=</span> <span class="fu">filename</span><span class="op">(</span><span class="op">)</span>, truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>, alter.names <span class="op">=</span> <span class="cn">TRUE</span>, transformation <span class="op">=</span> <span class="cn">FALSE</span>, emptyValue <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/read.flowSet.html" class="external-link">read.flowSet</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu">filename</span><span class="op">(</span><span class="op">)</span>, truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>, alter.names <span class="op">=</span> <span class="cn">TRUE</span>, transformation <span class="op">=</span> <span class="cn">FALSE</span>, emptyValue <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
