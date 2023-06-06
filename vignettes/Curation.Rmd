@@ -41,12 +41,14 @@ colnames(pgn_cut) <- c("Side scatter", "Forward scatter")
 pgn_cut
 ```
 
+
 ### 2) Create the gate
 We create the gate using flowCore's `polygonGate( )` function. The filterId argument uniquely identifies the generated gate. 
 
 ```{r, eval = FALSE}
 gate_non_debris <- reactive(polygonGate(filterId = "NonDebris", .gate = pgn_cut))
 ```
+
 
 ### 3) Apply the gate to the GatingSet
 Up to now, we have only created a gate from a gate matrix. To **add** this gate to the GatingSet (`r$gs`, created during data import (reference to import vignette and section)), we use `gs_pop_add( )`. Recomputing `r$gs` with `recompute( )`, we **apply** the gate to our data.
@@ -56,8 +58,9 @@ gs_pop_add(r$gs, gate_non_debris(), parent = "root")
 recompute(r$gs)
 ```
 
+
 ## Gating GFP+ cells
-flowFate was mainly developed to study the effect transfection of GFP-labeled KRas constructs has on C2C12 differentiation. Our analyis should therefore be focused on transfected cells only. Untransfected cells however, due to background noise and autofluorescence, can also emit fluorescence captured in the green channel of our flow cytometer. To distinguish transfected from untransfected cells, we apply a GFP-threshold to our data so that cells below a certain threshold intensity are removed from further analysis.
+flowFate was mainly developed to study the effect transfection of GFP-labeled KRas constructs has on C2C12 differentiation. Our analyis should therefore be focused on transfected cells only. Untransfected cells however, due to background noise and autofluorescence, can also emit fluorescence captured in the green channel of our flow cytometer. To distinguish transfected from untransfected cells, we apply a GFP threshold to our data so that cells below a certain threshold intensity are removed from further analysis.
 
 To determine the value of this threshold, we use:
 
@@ -65,8 +68,45 @@ To determine the value of this threshold, we use:
 
 * a **MyHC-only control** sample: untransfected C2C12, labelled with an antibody against myosin heavy-chain (MyHC)
 
-For both control samples, the observed GFP-signal (green channel of the flow cytometer) is unspecific and looks like this:
+For both control samples, the observed GFP signal (green channel of the flow cytometer) is unspecific and is illustrated below.
 
 SCREENSHOT
 
+The key idea here is to determine a GFP threshold for which most of the cells in these two controls samples would be below this threshold. We then use this threshold to create a gate that only keeps cells if they are **above** this threshold, i.e the GFP signal is specific.
+
+### 1) Determine a GFP threshold intensity
+Most of the work here is wrapped into a custom function `get_lowerLimit( )`.
+
+```{r, eval=FALSE}
+get_lowerLimit <- function(gs, datasets, node, ch_gate, r) {
+  require(flowCore)
+  # extract the data from the two control samples as a flowSet
+  x <- gs_pop_get_data(r$gs[[datasets]], node) |> cytoset_to_flowSet()
+  
+  # for each dataset of the extracted flowSet, create a quantile gate using the correct channel name (in our case this will be the name of the GFP channel selected by the user)
+  y <- fsApply(x, function(fr) {
+    openCyto::gate_quantile(fr, channel = ch_gate, probs = 0.99)
+  })
+  
+  # return the average of two quantile gate's lower limit
+  z <- mean(c(y[[1]]@min, y[[2]]@min))
+}
+```
+
+```{r, eval=FALSE}
+lower_limit_gfp_gate <- reactive({
+  get_lowerLimit(gs = r$gs, datasets = c(input$negative_control, input$positive_control_myhc), node = "NonDebris", ch_gate = input$kras_channel, r = r)
+}) |> bindEvent(input$Curate)
+```
+
+
+```{r, eval=FALSE}
+create_quantile_gate <- function(samples, gate_channel) {
+  require(flowCore)
+  fsApply(samples, function(fr) {
+    print(fr)
+    openCyto::gate_quantile(fr, channel = gate_channel, probs = 0.99)
+  })
+}
+```
 
