@@ -1,3 +1,5 @@
+# flowFate (development version)
+
 # flowFate 0.1.2
 - renamed the demo data
 - replaced 3 of the 5 demo data samples
