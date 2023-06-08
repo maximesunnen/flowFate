@@ -92,65 +92,65 @@
 <div class="section level2">
 <h2 id="gating-live-cells">Gating live cells<a class="anchor" aria-label="anchor" href="#gating-live-cells"></a>
 </h2>
-<p>Preparing samples for flow cytometry inevitably lead to the formation
-of damaged or dead cells (also called “debris”) that need to be excluded
-from the analysis. Conveniently, we can distinguish such cells in a SSC
-vs FSC plot and remove them with appropriate gates.</p>
-<p>In flowFate, we remove debris with a “hard” gate (FIGURE!!!). This
-means that the gate boundaries are <strong>predefined</strong> and users
-are not able to manually change them. This needs to be considered during
-acquisition to ensure that intact cells accumulate in this pre-defined
-window.</p>
-<p><strong>Note:</strong> Advanced R users could nevertheless manually
-adjust these gate boundaries by changing the respective gating matrix in
-the source code.</p>
+<p>Preparing samples for flow cytometry inevitably damages or kills some
+cells. Such “debris” should ideally be excluded from the following
+analysis. Conveniently, debris is easily distinguished in SSC vs FSC
+plots and can therefore be remove using appropriate gates.</p>
+<p><img src="../reference/figures/ssc_fsc_ungated.png" width="55%" style="display: block; margin: auto;"></p>
+<p>In flowFate, we remove debris with a “hard” gate: gate boundaries are
+<strong>predefined</strong> and users are unable to change them. This
+requires the user’s consideration during acquisition to ensure that
+intact cells accumulate in this pre-defined window (see below for
+details).</p>
 <div class="section level3">
 <h3 id="setting-up-the-gate-matrix">1) Setting up the gate matrix<a class="anchor" aria-label="anchor" href="#setting-up-the-gate-matrix"></a>
 </h3>
 <p>We first need to set up a m x n gate matrix:</p>
 <ul>
 <li><p><strong>n</strong>, the number of columns, corresponds to the
-gating dimensions (here n = 2 since cells are gated based on their
-location in a 2D SSC vs FSC plot)</p></li>
+gating dimensions. Here n = 2 (SSC + FSC)</p></li>
 <li><p><strong>m</strong>, the number of rows, corresponds to the number
-of individual points that make up the rectangle gate.</p></li>
+of individual points that make up the rectangle gate. Here m =
+5.</p></li>
 </ul>
-<p>Each row should then contain the X and Y coordinates (in the first
-and second column of the matrix, respectively) of the latter points. We
-then rename the columns to match the gating dimensions. Since the FSC
-and SSC channels change depending on the flow cytometer, the user can
-select the appropriate channel names and the columns of the gate matrix
-are adapted based on this selection.</p>
+<p>Each row contains the X and Y coordinates of the gate corners. The
+columns are renamed to match the name of the channels on which to gate
+the data.</p>
+<p><strong>Note:</strong> The exact name of the forward and side scatter
+channels depend on the flow cytometer that is used. Here we call them
+“SSC.HLin” and “FSC.HLin” because they match the channel names of our
+machine. In flowFate, the corresponding channels can be selected by the
+user.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># creating the gate matrix</span></span>
 <span><span class="va">pgn_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12500</span>, <span class="fl">99000</span>, <span class="fl">99000</span>,<span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">6250</span>, <span class="fl">6250</span>, <span class="fl">99000</span>, <span class="fl">99000</span>,<span class="fl">12500</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">2</span>, nrow <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co"># renaming the columns to match the gating dimensions</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">pgn_cut</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Side scatter"</span>, <span class="st">"Forward scatter"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt;      Side scatter Forward scatter</span></span>
-<span><span class="co">#&gt; [1,]        12500            6250</span></span>
-<span><span class="co">#&gt; [2,]        99000            6250</span></span>
-<span><span class="co">#&gt; [3,]        99000           99000</span></span>
-<span><span class="co">#&gt; [4,]            0           99000</span></span>
-<span><span class="co">#&gt; [5,]            0           12500</span></span></code></pre>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">pgn_cut</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SSC.HLin"</span>, <span class="st">"FSC.HLin"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt;      SSC.HLin FSC.HLin</span></span>
+<span><span class="co">#&gt; [1,]    12500     6250</span></span>
+<span><span class="co">#&gt; [2,]    99000     6250</span></span>
+<span><span class="co">#&gt; [3,]    99000    99000</span></span>
+<span><span class="co">#&gt; [4,]        0    99000</span></span>
+<span><span class="co">#&gt; [5,]        0    12500</span></span></code></pre>
+<p><img src="../reference/figures/ssc_fsc_gated.png" width="55%" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
-<h3 id="create-the-gate">2) Create the gate<a class="anchor" aria-label="anchor" href="#create-the-gate"></a>
+<h3 id="create-the-nondebris-gate">2) Create the NonDebris gate<a class="anchor" aria-label="anchor" href="#create-the-nondebris-gate"></a>
 </h3>
-<p>We create the gate using flowCore’s <code><a href="https://rdrr.io/pkg/flowCore/man/polygonGate-class.html" class="external-link">polygonGate( )</a></code>
-function. The filterId argument uniquely identifies the generated
-gate.</p>
+<p>We create the NonDebris gate using <a href="https://bioconductor.org/packages/release/bioc/html/flowCore.html" class="external-link">flowCore’s</a>
+<code><a href="https://rdrr.io/pkg/flowCore/man/polygonGate-class.html" class="external-link">polygonGate( )</a></code> function. The <code>filterId</code> argument
+uniquely identifies the gate.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gate_non_debris</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="fu">polygonGate</span><span class="op">(</span>filterId <span class="op">=</span> <span class="st">"NonDebris"</span>, .gate <span class="op">=</span> <span class="va">pgn_cut</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="apply-the-gate-to-the-gatingset">3) Apply the gate to the GatingSet<a class="anchor" aria-label="anchor" href="#apply-the-gate-to-the-gatingset"></a>
+<h3 id="gate-the-data">3) Gate the data<a class="anchor" aria-label="anchor" href="#gate-the-data"></a>
 </h3>
-<p>Up to now, we have only created a gate from a gate matrix. To
-<strong>add</strong> this gate to the GatingSet (<code>r$gs</code>,
-created during data import (reference to import vignette and section)),
-we use <code>gs_pop_add( )</code>. Recomputing <code>r$gs</code> with
-<code>recompute( )</code>, we <strong>apply</strong> the gate to our
-data.</p>
+<p>To <strong>add</strong> the NonDebris gate to the GatingSet
+<code>r$gs</code> (created during data import (reference to import
+vignette and section)), we use <code>gs_pop_add( )</code>. We recompute
+<code>r$gs</code> with <code>recompute( )</code> to
+<strong>gate</strong> our data.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">gs_pop_add</span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">gs</span>, <span class="fu">gate_non_debris</span><span class="op">(</span><span class="op">)</span>, parent <span class="op">=</span> <span class="st">"root"</span><span class="op">)</span></span>
 <span><span class="fu">recompute</span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">gs</span><span class="op">)</span></span></code></pre></div>
@@ -159,41 +159,54 @@ data.</p>
 <div class="section level2">
 <h2 id="gating-gfp-cells">Gating GFP+ cells<a class="anchor" aria-label="anchor" href="#gating-gfp-cells"></a>
 </h2>
-<p>flowFate was mainly developed to study the effect transfection of
-GFP-labeled KRas constructs has on C2C12 differentiation. Our analyis
-should therefore be focused on transfected cells only. Untransfected
-cells however, due to background noise and autofluorescence, can also
-emit fluorescence captured in the green channel of our flow cytometer.
-To distinguish transfected from untransfected cells, we apply a GFP
-threshold to our data so that cells below a certain threshold intensity
-are removed from further analysis.</p>
-<p>To determine the value of this threshold, we use:</p>
+<p>flowFate was developed to study the effect of GFP-labeled KRas on
+C2C12 differentiation. Our analysis should hence be focused on
+successfully transfected cells. Background noise and autofluorescence
+however leads to unspecific fluorescent emission from untransfected
+cells, simultaneously captured with the emission from GFP in transfected
+cells. To remove untransfected cells from our analysis, we apply a GFP
+threshold to our data, eliminating cells with emissions below a specific
+threshold.</p>
+<p>We determine the value of this threshold with our controls:</p>
 <ul>
 <li><p>a <strong>double-negative control</strong> sample: untransfected,
 unlabelled C2C12</p></li>
 <li><p>a <strong>MyHC-only control</strong> sample: untransfected C2C12,
 labelled with an antibody against myosin heavy-chain (MyHC)</p></li>
 </ul>
-<p>For both control samples, the observed GFP signal (green channel of
-the flow cytometer) is unspecific and is illustrated below.</p>
-<p>SCREENSHOT</p>
-<p>The key idea here is to determine a GFP threshold for which most of
-the cells in these two controls samples would be below this threshold.
-We then use this threshold to create a gate that only keeps cells if
-they are <strong>above</strong> this threshold, i.e the GFP signal is
-specific.</p>
+<p>For both control samples, the observed GFP signals (captured in the
+green channel “GRN.B.HLin”) are unspecific and most likely due to
+cellular autofluorescence. Based on the signal distribution in the green
+channel in these samples, we can define a threshold excluding most
+events. This threshold then serves as measure to discriminate
+untransfected cells (below this treshold) from transfected cells (above
+this threshold). We can then gate transfected cells by applying this
+threshold to all our datasets i.e remove all the cells
+<strong>below</strong> this threshold.</p>
+<p><img src="../reference/figures/gfp_threshold.png" width="55%" style="display: block; margin: auto;"></p>
 <div class="section level3">
 <h3 id="determine-a-gfp-threshold-intensity">1) Determine a GFP threshold intensity<a class="anchor" aria-label="anchor" href="#determine-a-gfp-threshold-intensity"></a>
 </h3>
-<p>Most of the work here is wrapped into a custom function
-<code>get_lowerLimit( )</code>.</p>
+<p>Most of the computation is wrapped inside a custom function
+<code>get_lowerLimit( )</code> with several arguments:</p>
+<ul>
+<li>gs: GatingSet to operate on</li>
+<li>datasets: datasets based on which the threshold is determined
+(control samples)</li>
+<li>node: existing gate from which the data should be extracted (the GFP
+threshold is based on the intensity distribution in intact cells so we
+need to extract the data from which debris has been excluded)</li>
+<li>ch_gate: the channel based on which the gate is determined (here the
+GPF channel “GRN.B.HLin”)</li>
+<li>r: required to use the <a href="https://github.com/ThinkR-open/golem" class="external-link">golem</a> framework</li>
+</ul>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">get_lowerLimit</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">gs</span>, <span class="va">datasets</span>, <span class="va">node</span>, <span class="va">ch_gate</span>, <span class="va">r</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va">flowCore</span><span class="op">)</span></span>
-<span>  <span class="co"># extract the data from the two control samples as a flowSet</span></span>
+<span>  <span class="co"># extract control sample data as a flowSet</span></span>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">gs_pop_get_data</span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">gs</span><span class="op">[[</span><span class="va">datasets</span><span class="op">]</span><span class="op">]</span>, <span class="va">node</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">cytoset_to_flowSet</span><span class="op">(</span><span class="op">)</span></span>
 <span>  </span>
-<span>  <span class="co"># for each dataset of the extracted flowSet, create a quantile gate using the correct channel name (in our case this will be the name of the GFP channel selected by the user)</span></span>
+<span>  <span class="co"># for each of the two flowFrames in the extracted flowSet, create a quantile gate using the correct channel name (in our case this will be the name of the GFP channel selected by the user)</span></span>
 <span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/fsApply.html" class="external-link">fsApply</a></span><span class="op">(</span><span class="va">x</span>, <span class="kw">function</span><span class="op">(</span><span class="va">fr</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu">openCyto</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/openCyto/man/gate_quantile.html" class="external-link">gate_quantile</a></span><span class="op">(</span><span class="va">fr</span>, channel <span class="op">=</span> <span class="va">ch_gate</span>, probs <span class="op">=</span> <span class="fl">0.99</span><span class="op">)</span></span>
 <span>  <span class="op">}</span><span class="op">)</span></span>
@@ -201,18 +214,58 @@ specific.</p>
 <span>  <span class="co"># return the average of two quantile gate's lower limit</span></span>
 <span>  <span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">y</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">@</span><span class="va">min</span>, <span class="va">y</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">@</span><span class="va">min</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
+<p><a href="https://bioconductor.org/packages/release/bioc/html/openCyto.html" class="external-link">openCyto’s</a>
+<code>gate_quantile( )</code> function detects a threshold based on the
+<code>probs</code> (probabilities) argument. The value from
+<code>probs</code> is used to determine sample quantiles and create a
+rectangle gate excluding events outside this quantile. In other words,
+when <code>probs = 0.25</code> or <code>probs = 0.5</code>,
+<code>gate_quantile( )</code> determines the first or second quartile of
+the data, respectively. The final gate interval then ranges from the
+determines quantile to infinity.</p>
+<p>We set the <code>probs</code> argument to 0.99 to exclude 99% of the
+events in our control samples. The rationale here is that the signals
+observed in the green channel for our control samples are unspecific and
+should be removed from the analysis. We did not use
+<code>probs = 1</code> to avoid unreasonably high thresholds due to
+outliers which could lead to the loss of transfected cells in other
+samples. In addition, we average the threshold obtained from both
+controls.</p>
+<p>The <code>lower_limit_gfp_gate</code> stores this averaged
+threshold.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lower_limit_gfp_gate</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="op">{</span></span>
 <span>  <span class="fu">get_lowerLimit</span><span class="op">(</span>gs <span class="op">=</span> <span class="va">r</span><span class="op">$</span><span class="va">gs</span>, datasets <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">input</span><span class="op">$</span><span class="va">negative_control</span>, <span class="va">input</span><span class="op">$</span><span class="va">positive_control_myhc</span><span class="op">)</span>, node <span class="op">=</span> <span class="st">"NonDebris"</span>, ch_gate <span class="op">=</span> <span class="va">input</span><span class="op">$</span><span class="va">kras_channel</span>, r <span class="op">=</span> <span class="va">r</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">bindEvent</span><span class="op">(</span><span class="va">input</span><span class="op">$</span><span class="va">Curate</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="create-a-gfp-gate">2) Create a GFP gate<a class="anchor" aria-label="anchor" href="#create-a-gfp-gate"></a>
+</h3>
+<p>We use the GFP threshold to create the rectangle gate
+<code>gfp_gate</code>. The computations are wrapped in the custom
+function <code>make_gate( )</code>. The logic behind gate creation has
+already been described above.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">create_quantile_gate</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">samples</span>, <span class="va">gate_channel</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va">flowCore</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/fsApply.html" class="external-link">fsApply</a></span><span class="op">(</span><span class="va">samples</span>, <span class="kw">function</span><span class="op">(</span><span class="va">fr</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fr</span><span class="op">)</span></span>
-<span>    <span class="fu">openCyto</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/openCyto/man/gate_quantile.html" class="external-link">gate_quantile</a></span><span class="op">(</span><span class="va">fr</span>, channel <span class="op">=</span> <span class="va">gate_channel</span>, probs <span class="op">=</span> <span class="fl">0.99</span><span class="op">)</span></span>
-<span>  <span class="op">}</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">make_gate</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">lower_limit</span>, <span class="va">col_name</span>, <span class="va">filterId</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">lower_limit</span>, <span class="cn">Inf</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">col_name</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/rectangleGate-class.html" class="external-link">rectangleGate</a></span><span class="op">(</span>filterId <span class="op">=</span> <span class="va">filterId</span>, .gate <span class="op">=</span> <span class="va">mat</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">gfp_gate</span> <span class="op">&lt;-</span> <span class="fu">reactive</span><span class="op">(</span><span class="op">{</span><span class="fu">make_gate</span><span class="op">(</span><span class="fu">lower_limit_gfp_gate</span><span class="op">(</span><span class="op">)</span>, <span class="va">input</span><span class="op">$</span><span class="va">kras_channel</span>, filterId <span class="op">=</span> <span class="st">"GFP+"</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="apply-the-gfp-gate">3) Apply the GFP gate<a class="anchor" aria-label="anchor" href="#apply-the-gfp-gate"></a>
+</h3>
+<p>We apply the GFP gate to <strong>all</strong> the datasets by adding
+<code>gfp_gate</code> to the GatingSet and recomputing the
+GatingSet.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># add the gfp_gate to the GatingSet</span></span>
+<span><span class="fu">gs_pop_add</span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">gs</span>, <span class="fu">gfp_gate</span><span class="op">(</span><span class="op">)</span>, parent <span class="op">=</span> <span class="st">"NonDebris"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#recompute the GatingSet</span></span>
+<span><span class="fu">recompute</span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">gs</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
