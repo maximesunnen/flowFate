@@ -259,12 +259,12 @@ mod_curate_server <- function(id, r = NULL){
 #' @rawNamespace import(flowCore, except = show)
 
 ### create_quantile_gate:
-create_quantile_gate <- function(samples, gate_channel) {
-  require(flowCore)
-  fsApply(samples, function(fr) {
-    openCyto::gate_quantile(fr, channel = gate_channel, probs = 0.99)
-  })
-}
+# create_quantile_gate <- function(samples, gate_channel) {
+#   require(flowCore)
+#   fsApply(samples, function(fr) {
+#     openCyto::gate_quantile(fr, channel = gate_channel, probs = 0.99)
+#   })
+# }
 
 ### get_lowerLimit:
 # - gs: the gatingSet you want to extract data from
@@ -272,10 +272,14 @@ create_quantile_gate <- function(samples, gate_channel) {
 # - node: the node/gate inside the gatingSet you want to extract data from
 # - ch_gate: the name of the channel you want to perform a quantileGate on
 get_lowerLimit <- function(gs, datasets, node, ch_gate, r) {
+  require(flowCore)
   # extract the data as a flowSet
   x <- gs_pop_get_data(r$gs[[datasets]], node) |> cytoset_to_flowSet()
   # create a quantile gate using extracted data and the respective channel name
-  y <- create_quantile_gate(x, gate_channel = ch_gate)
+  y <- fsApply(x, function(fr) {
+    openCyto::gate_quantile(fr, channel = ch_gate, probs = 0.99)
+  })
+  # y <- create_quantile_gate(x, gate_channel = ch_gate)
   # average the minimum values from the respective quantile gateS(!)
   z <- mean(c(y[[1]]@min, y[[2]]@min))
 }
