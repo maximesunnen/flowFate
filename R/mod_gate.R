@@ -233,7 +233,7 @@ output$myosin_splittedPeaks <- renderPlot({
   req(r$gs, selected_rows(), gate_myosin_plot(), input$controller)
   if (observer.state.split() == TRUE) {
     withProgress(message = "Plotting your data...", 
-                 plot_myosin_splittedPeaks(r = r, gs = r$gs[[selected_rows()]], density_fill = "pink", gate = gate_myosin_plot(), subset = input$controller))
+                 plot_myosin_splittedPeaks(r = r, gs = r$gs[[selected_rows()]], density_fill = "pink", gate = gate_myosin_plot(), subset = input$controller, channel = r$ch_myhc()))
   }
 }, res = 120)
 
@@ -348,12 +348,6 @@ render_bin_UI <- function(bin_number, value, ns, label, output , r) {
   output[[paste0("gfp_bin_", bin_number)]] <- renderUI(numericRangeInput(ns(paste0("gfp_range_", bin_number)), label = paste0("GFP ", label), value = value))
 }
 
-# here we might need to provide a filterId, not sure if it works if we provide it in the "higher-order" function in which this function is called because of environments
-test_function <- function(fr) {
-  return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density"),
-                  error = function(e) NULL))
-}
-
 remove_null_from_list <- function(data) {
   ## capture the indices of the the elements that are NULL, assign indices to test variable
   test <- which(sapply(data, is.null))
@@ -367,8 +361,8 @@ remove_null_from_list <- function(data) {
   }
 }
 
-plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, gate) {
-    ggcyto(gs, aes(x = "RED.R.HLin"), subset) +
+plot_myosin_splittedPeaks <- function(r, gs, subset, density_fill, gate, channel) {
+    ggcyto(gs, aes(x = .data[[channel]]), subset) +
       geom_histogram(bins = 50, fill = density_fill, color = "black") +
       scale_x_flowjo_biexp() +
       theme_bw() +
@@ -380,7 +374,7 @@ getData_splitPeak <- function(r, gs, bin, filter_name) {
   x <- gs_pop_get_data(gs, bin) |> cytoset_to_flowSet()
   ## x is a flowSet. To each flowFrame, we apply the function tryCatch(). If no error, returns a gate that cuts between myosin peaks. If error, the respective gate evaluates to NULL
   x <- fsApply(x, function(fr, filterId = filter_name) {
-    return(tryCatch(gate_flowclust_1d(fr,params = "RED.R.HLin",K = 2, cutpoint_method = "min_density", filterId = filterId), error = function(e) NULL))
+    return(tryCatch(gate_flowclust_1d(fr, params = r$ch_myhc(), K = 2, cutpoint_method = "min_density", filterId = filterId), error = function(e) NULL))
   })
   ## we don't want the gates that evaluate to NULL, so we remove them. remove_null_from_list() is a custom function.
   return(remove_null_from_list(x))
