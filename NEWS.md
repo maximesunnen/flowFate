@@ -1,4 +1,6 @@
 # flowFate (development version)
+- added channel parameter to the `plot_myosin_splittedPeaks( )` function so that the user's (!) channel name is taken as the x argument of aes(). This unfortunately still defaulted to our own machine's channel name...
+- the `getData_splitPeaks()` function `params` argument now also takes into account the user's (!) MyHC channel name
 
 # flowFate 0.1.2
 - replaced the demo data
