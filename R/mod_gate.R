@@ -148,6 +148,20 @@ mod_gate_server <- function(id, r){
     # making a reactive value observer.state.bins to capture whether or not the GFP-low/medium/high bins have been added to the gatingSet
     observer.state.bins <- reactiveVal(FALSE)
     
+    observe({
+      if(observer.state.bins() == TRUE){
+        if (!is.null(input$gfp_range_1)){
+          r$low_bin <- paste0(input$gfp_range_1[1], "-", input$gfp_range_1[2])
+        }
+        if (!is.null(input$gfp_range_2)){
+          r$medium_bin <- paste0(input$gfp_range_2[1], "-", input$gfp_range_2[2])
+        }
+        if (!is.null(input$gfp_range_3)){
+          r$high_bin <- paste0(input$gfp_range_3[1], "-", input$gfp_range_3[2])
+        }
+      }
+    })
+    
     # making an observer that adds the GFP-low/medium/high bins to the gatingSet; update the observer.state.bins to TRUE at the end
     ### under the control of input$confirm_bins so it is not executed every time any of the inputs, reactive expressions/values changes
     observe({
