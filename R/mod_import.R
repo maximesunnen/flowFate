@@ -93,7 +93,7 @@ mod_import_server <- function(id, r = NULL){
                                            alter.names = TRUE,
                                            transformation = FALSE,
                                            emptyValue = FALSE))
-      
+
       output$individual_FCS <- renderDT({pData(demo_fs)}, rownames = FALSE, class = "cell-border stripe")
 
       # strategie du petit r: we need to use demo_fs and GatingSet(demo_fs) in other modules
@@ -173,7 +173,7 @@ mod_import_server <- function(id, r = NULL){
     })
 
     observe({
-      if(input$upload.type == "merged") {
+      if (input$upload.type == "merged") {
         shinyjs::hide("div_folder")
         shinyjs::hide("div_demo")
         shinyjs::show("div_merge")
@@ -202,33 +202,21 @@ mod_import_server <- function(id, r = NULL){
 #' @return integer
 n_datasets <- function(filename) {
   # Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
-  con <- file(filename, open = "rb")
 
-  offsets <- flowCore:::readFCSheader(con)
-  offsets <- matrix(offsets, nrow = 1, dimnames = list(NULL, names(offsets)))
-  txt <- flowCore:::readFCStext(con, offsets[1, ],emptyValue = FALSE)
-
-  addOff <- 0
-
-  if ("$NEXTDATA" %in% names(txt)) {
-    nd <- as.numeric(txt[["$NEXTDATA"]])
-  } else
-    nd <- 0
-
-  txt.list <- list(txt)
-  i <- 1
-  while (nd != 0) {
-    i <- i + 1
-    addOff <- addOff + nd
-    offsets <- rbind(offsets, flowCore:::readFCSheader(con, addOff))
-    this.txt <- flowCore:::readFCStext(con, offsets[nrow(offsets),], emptyValue = FALSE)
-    nd <- as.numeric(this.txt[["$NEXTDATA"]])
-    txt.list[[i]] <- this.txt
+  # the keyword $NEXTDATA contains either a zero when there are no next data
+  # or a positive integer for the next dataset
+  counter <- 0
+  nextdata <- 1
+  while (nextdata != 0) {
+    counter <- counter + 1
+    nextdata <- read.FCSheader(filename, keyword = "$NEXTDATA", emptyValue = FALSE, dataset = counter)
+    nextdata <- as.integer(nextdata[[1]]["$NEXTDATA"])
   }
-  close(con)
-  #message("found", length(txt.list), "nb datasets")
-  length(txt.list)
+  counter
 }
+
+
+
 
 #' @description Split multiple FCS datasets into individual fcs files
 #'
