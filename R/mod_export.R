@@ -46,7 +46,7 @@ mod_export_ui <- function(id){
 #' export Server Functions
 #'
 #' @noRd
-#' @importFrom utils write.csv
+#' @importFrom utils write.table
 mod_export_server <- function(id,r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -74,23 +74,23 @@ mod_export_server <- function(id,r){
 
     # Defining the output$population_table. Bind this output to input$table to not constantly recompute this table during previous analysis steps
     output$population_table <- renderTable({population_table()}) |> bindEvent(input$table)
-    
+
     # Defining the csv comments
     text <- reactive({
-      if(!is.null(r$low_bin) && is.null(r$medium_bin)){
+      if (!is.null(r$low_bin) && is.null(r$medium_bin)) {
         c(paste0("#flowFate-Version: ", packageVersion("flowFate")),
           paste0("#Red channel: ", r$ch_myhc(),";"),
           paste0("#Green channel: ", r$ch_kras(),";"),
           paste0("#low bin: ", r$low_bin,";"))
       }
-      else if(!is.null(r$medium_bin) && is.null(r$high_bin)){
+      else if (!is.null(r$medium_bin) && is.null(r$high_bin)) {
         c(paste0("#flowFate-Version: ", packageVersion("flowFate")),
           paste0("#Red channel: ", r$ch_myhc(),";"),
           paste0("#Green channel: ", r$ch_kras(),";"),
           paste0("#low bin: ", r$low_bin,";"),
           paste0("#medium bin: ", r$medium_bin,";"))
       }
-      else if(!is.null(r$high_bin)){
+      else if (!is.null(r$high_bin)) {
         c(paste0("#flowFate-Version: ", packageVersion("flowFate")),
           paste0("#Red channel: ", r$ch_myhc(),";"),
           paste0("#Green channel: ", r$ch_kras(),";"),
@@ -103,7 +103,7 @@ mod_export_server <- function(id,r){
     # Defining the output$download download handler that allows the user to download the table as a csv file
     output$download <- downloadHandler(filename = function() file_name(),
                                        content = function(file){
-                                         writeLines(file, 
+                                         writeLines(file,
                                                     text = text())
                                          write.table(population_table(), file = file, sep = ",", append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE)})
 
