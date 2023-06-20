@@ -255,15 +255,66 @@ mod_curate_server <- function(id, r = NULL){
 
   })}
 
-#' @importFrom openCyto gate_quantile
-#' @rawNamespace import(flowCore, except = show)
 
 ### create_quantile_gate:
 create_quantile_gate <- function(samples, gate_channel) {
-  require(flowCore)
   fsApply(samples, function(fr) {
-    openCyto::gate_quantile(fr, channel = gate_channel, probs = 0.99)
+    gate_quantile(fr, channel = gate_channel, probs = 0.99)
   })
+}
+
+#' @description
+#' function copied over openCyto (MIT Licence Copyright (c) 2018 Fred Hutch)
+#' https://github.com/RGLab/openCyto/blob/b4daebf7a57ad3786864fcffa51695223325045f/R/gating-functions.R#LL685C1-L712C2
+#' @noRd
+#' @importFrom flowCore exprs
+#' @importFrom stats density quantile
+gate_quantile <- function(fr, channel, probs = 0.999, plot = FALSE,
+                          filterId = "", min = NULL, max = NULL, ...) {
+  if (missing(channel) || length(channel) != 1) {
+    stop("A single channel must be specified.")
+  }
+
+  # Filter out values less than the minimum and above the maximum, if they are
+  # given.
+  if (!(is.null(min) && is.null(max))) {
+    fr <- .truncate_flowframe(fr, channels = channel, min = min,
+                              max = max)
+  }
+  x <- exprs(fr)[, channel]
+  cutpoint <- quantile(x, probs = probs, ...)
+
+  gate_coordinates <- list(c(cutpoint, Inf))
+  names(gate_coordinates) <- channel
+  rectangleGate(gate_coordinates, filterId = filterId)
+}
+#' copied over https://github.com/RGLab/openCyto/blob/b4daebf7a57ad3786864fcffa51695223325045f/R/functions.R#LL236C1-L261C2
+#' opneCyto (MIT Licence Copyright (c) 2018 Fred Hutch)
+#' @noRd
+.truncate_flowframe <- function(flow_frame, channels, min = NULL, max = NULL) {
+  channels <- as.character(channels)
+  num_channels <- length(channels)
+
+  # For comparison purposes, we update the min and max values to -Inf and Inf,
+  # respectively, if NULL.
+  if (is.null(min)) {
+    min <- rep(-Inf, num_channels)
+  }
+  if (is.null(max)) {
+    max <- rep(Inf, num_channels)
+  }
+
+  if (!(num_channels == length(min) && num_channels == length(max))) {
+    stop("The lengths of 'min' and 'max' must match the number of 'channels' given.")
+  }
+
+  gate_coordinates <- lapply(seq_len(num_channels), function(i) {
+    c(min[i], max[i])
+  })
+  names(gate_coordinates) <- channels
+
+  truncate_filter <- rectangleGate(gate_coordinates)
+  Subset(flow_frame, truncate_filter)
 }
 
 ### get_lowerLimit:
