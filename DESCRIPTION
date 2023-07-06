@@ -13,13 +13,13 @@ URL: https://github.com/maximesunnen/flowFate,
     https://maximesunnen.github.io/flowFate/
 BugReports: https://github.com/maximesunnen/flowFate/issues
 Depends: 
-    R (>= 4.1.0)
+    R (>= 4.1.0),
+    flowCore
 Imports: 
     bslib,
     colourpicker,
     config (>= 0.3.1),
     DT,
-    flowCore,
     flowWorkspace,
     fs,
     ggcyto,
