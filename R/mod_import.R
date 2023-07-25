@@ -40,11 +40,11 @@ mod_import_ui <- function(id){
              # Defining the mainPanel
              mainPanel(
                h1(strong("Welcome to FlowFate.")),
-               p("To start your analysis, import your FCS file by clicking on the ", strong("Browse"),
-                 " button (on the left), then select your file. Confirm your selection by clicking on the ",
+               p("Select the data type your want to upload in the sidebar menu. To browse your files, click on the ", strong("Browse"),
+                 " button, then select your file. Confirm your selection by clicking on the ",
                  span("Submit", style = "color:#008cba; font-weight:bold"),
-                 " button that appears after file selection. A description of your uploaded file will be displayed. To upload a new FCS file, click ", strong("Browse"), ", select the correct file and confirm again.", br(), br(), "Once the correct file has been uploaded, you have two options:", br(), br(),
-                 "- switch to the ", strong("'Explore'"), " tab in the menu bar and explore your data", br(), br(),
+                 " button that appears after your selected a file. A description of your uploaded file will appear. To upload a new FCS file, click ", strong("Browse,"), " select the new file and confirm again.", br(), br(), "Once the correct file has been uploaded, you have two options:", br(), br(),
+                 "- switch to the ", strong("'Explore'"), " tab in the menu bar and start exploring your data", br(), br(),
                  "- switch to the ", strong("'Curate'"), " tab in the menu bar and start curating your data",
                  style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px"), br(),
 

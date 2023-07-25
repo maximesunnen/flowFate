@@ -27,17 +27,17 @@ mod_export_ui <- function(id){
                                     h1(strong("How export works.")),
                                     br(),
                                     div(
-                                      p("First, click on the ", span("Show population statistics", style = "color:#008cba; font-weight:bold"), " button to display a table containing statistics on the different populations seperated during this workflow."),
-                                      p("To export this table, enter your filename on the left. By ticking the small checkbox below the entry field, the system date (today's data, if  set correctly on your computer) will be added automatically to your file name."),
-                                      p(strong("Note:"), "The file extension will automatically be set to .csv, so you don't have to (and should not) add it manually."),
+                                      p("Click ", span("Show population statistics", style = "color:#008cba; font-weight:bold"), " to generate the population statistics table."),
+                                      p("Export this table by entering a filename in the sidebar menu. Tick the small checkbox below the filename to append the system date (i.e today's data if set correctly on your PC) to your file name."),
+                                      p(strong("Note:"), "The file extension defaults to .csv. Don't add a file extension to your filename."),
 
                                       p("Click on the ", span("Download", style = "color:#008cba; font-weight:bold"), "button to download this table as a csv file."), style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"
                                     ), br(),
                                     div(
-                                      p("The exported population statistics table contains 3 columns:"),
-                                      p("-  ", strong("sample"), ": the dataset, defaults to 'dataset' + well number", style = "text-indent: 25px"),
-                                      p("-  ", strong("pop"), ":the population created after applying a gate i.e /NonDebris contains all the events that are not debris, /NonDebris/GFP+ contains all the events that are not debris and are GFP-positive, etc.", style = "text-indent: 25px"),
-                                      p("-  ", strong("count"), ": indicates the number of events in the respective population", style = "text-indent: 25px"), style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"), br()),
+                                      p("The population statistics table has 3 columns:"),
+                                      p("-  ", strong("sample:"), " dataset (defaults to 'dataset' + well number)", style = "text-indent: 25px"),
+                                      p("-  ", strong("pop:"), " the population (for example /NonDebris/GFP+ comprises cells that are not debris and GFP-positive", style = "text-indent: 25px"),
+                                      p("-  ", strong("count"), ": population size (cell count)", style = "text-indent: 25px"), style = "text-align:justify;color:ck;background-color:#f8f8f8;padding:15px;border-radius:10px"), br()),
                            tabPanel("Population statistics",
                                     br(),
                                     tableOutput(ns("population_table"))

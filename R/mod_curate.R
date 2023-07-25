@@ -35,15 +35,15 @@ mod_curate_ui <- function(id){
                           h1(strong("How curation works.")),
 
                           div(
-                            p("By curation we understand ", strong("two essential steps:")),
-                            p("- Exclusion of cellular debris using a pre-defined gate", style = "text-indent: 25px"),
-                            p("- Removal of background noise and signals from cellular autofluorescence in the GFP channel by applying an intensity threshold based on the underlying data.", style = "text-indent: 25px"),
-                            p("On the left, select the correct channels and control samples. Click the ", span("Start curation", style = "color:#008cba; font-weight:bold"), " button to start the curation.", br(), strong("Note:"), " In case you started curation with the wrong channel/sample selections, click", span("Restart curation", style = "color:#e99003; font-weight:bold"), " select the correct channels/samples, then click", span("Start curation", style = "color:#008cba; font-weight:bold"), " again."),
-                            p("After curation is done, you can navigate between the two tabs at the top:"),
-                            p("1) `NonDebris gate` displays the SSC vs FSC plot of your unlabeled control. The gate used to exclude debris is colored in red.", style = "text-indent: 25px"),
-                            p("2) `GFP gate` displays a histogram of GFP intensities of your unlabeled control. The red line indicates the threshold used to remove unspecific GFP intensity values.", style = "text-indent: 25px"),
+                            p("Curation comprises two essential steps:"),
+                            p("- Exclusion of cellular debris", style = "text-indent: 25px"),
+                            p("- Removal of background fluorescence", style = "text-indent: 25px"),
+                            p("In the sidebar menu, select the adequate channels and control samples and click ", span("Start curation", style = "color:#008cba; font-weight:bold"), br(), br(), strong("Note:"), " If you started curation with the wrong channel(s)/sample(s) selected, click", span("Restart curation.", style = "color:#e99003; font-weight:bold"), " Then select the correct channels/samples and click", span("Start curation", style = "color:#008cba; font-weight:bold"), " again."),
+                            p("Once curation is finished, you can navigate between the two tabs at the top of this panel:"),
+                            p("1) `NonDebris gate` displays the NonDebris gate (red rectangle) in the SSC vs FSC plot of your control samples.", style = "text-indent: 25px"),
+                            p("2) `GFP gate` displays the GFP intensity distribution of your control samples. The red line corresponds to the threshold defining the GFP+ population.", style = "text-indent: 25px"),
 
-                            p("You can now switch to ", strong("'Gate'"), " in the menu bar."),
+                            p("Switch to the", strong("'Gate'"), " tab in the menu bar at the top of this panel."),
                             style = "text-align:justify;color:black;background-color:#f8f8f8;padding:15px;border-radius:10px")),
 
                  tabPanel("NonDebris gate",
