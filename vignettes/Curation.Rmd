@@ -59,7 +59,7 @@ knitr::include_graphics(path = "../man/figures/ssc_fsc_gated.png")
 
 Until now we have only create the gating matrix. We use this matrix to create a NonDebris gate with [flowCore's](https://bioconductor.org/packages/release/bioc/html/flowCore.html) `polygonGate( )` function. The `filterId` argument uniquely identifies the gate.
 
-```{r, eval = FALSE}
+```{r, eval=FALSE}
 gate_non_debris <- reactive(polygonGate(filterId = "NonDebris", .gate = pgn_cut))
 ```
 
@@ -67,7 +67,7 @@ gate_non_debris <- reactive(polygonGate(filterId = "NonDebris", .gate = pgn_cut)
 
 We apply the gate to our data by **adding** the NonDebris gate to the GatingSet `r$gs` (see data import vignette) using `gs_pop_add( )`. We then need to `recompute( )` `r$gs`. 
 
-```{r, eval = FALSE}
+```{r, eval=FALSE}
 gs_pop_add(r$gs, gate_non_debris(), parent = "root")
 recompute(r$gs)
 ```
