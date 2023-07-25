@@ -70,7 +70,7 @@ colnames(a) <- "x"
 colnames(b) <- "x"
 c <- rbind(a,b)
 
-ggplot(c, aes(x = x)) +
+ggplot2(c, aes(x = x)) +
   geom_histogram(bins = 200, fill = "red") +
   annotate(geom = "rect", xmin = 1, xmax = 1000, ymin = 0, ymax = 270, fill = "lightblue", alpha = 0.5) +
   annotate(geom = "rect", xmin = 1000, xmax = 200000, ymin = 0, ymax = 150, fill = "palegreen", alpha = 0.25) +
