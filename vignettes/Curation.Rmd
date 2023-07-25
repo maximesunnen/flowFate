@@ -16,25 +16,25 @@ knitr::opts_chunk$set(
 
 ## Gating live cells
 
-Preparing samples for flow cytometry inevitably damages or kills some cells. Such "debris" should ideally be excluded from the following analysis. Conveniently, debris is easily distinguished in SSC vs FSC plots and can therefore be remove using appropriate gates.
+Preparing samples for flow cytometry inevitably damages or kills some cells. These "debris" need to be excluded from subsequent analysis. Cellular debris can be identified in SSC vs FSC plots, enabling their easy removal using gates.
 
 ```{r, fig.align='center', out.width="55%", fig.asp=0.618, echo=FALSE}
 knitr::include_graphics(path = "../man/figures/ssc_fsc_ungated.png")
 ```
 
-In flowFate, we remove debris with a "hard" gate: gate boundaries are **predefined** and users are unable to change them. This requires the user's consideration during acquisition to ensure that intact cells accumulate in this pre-defined window (see below for details).
+In FlowFate, debris removal is accomplished using a hard-coded rectangle gate, meaning that the gate boundaries are **predefined** and cannot be modified by users. It is essential for users to consider this aspect during acquisition to ensure that intact cells accumulate within the specified window (for more information, see below).
 
-### 1) Setting up the gate matrix
+### 1) Set up the gate matrix
 
-We first need to set up a m x n gate matrix:
+We first need to set up an **m x n** gate matrix:
 
--   **n**, the number of columns, corresponds to the gating dimensions. Here n = 2 (SSC + FSC)
+-   **n** (number of columns) corresponds to the gating dimensions. Here n = 2 (SSC + FSC).
 
--   **m**, the number of rows, corresponds to the number of individual points that make up the rectangle gate. Here m = 5.
+-   **m** (number of rows) corresponds to the number of individual points that make up the rectangle gate. Here m = 5.
 
-Each row contains the X and Y coordinates of the gate corners. The columns are renamed to match the name of the channels on which to gate the data. 
+Each *row* comprises the X and Y coordinates of a gate edge. Here we use a polygon with 5 edges, thus the gating matrix has 5 rows. The column names have to be renamed becuase they need to match the channel names used to gate the data (here SSC.HLin and FSC.HLin).
 
-**Note:** The exact name of the forward and side scatter channels depend on the flow cytometer that is used. Here we call them "SSC.HLin" and "FSC.HLin" because they match the channel names of our machine. In flowFate, the corresponding channels can be selected by the user.
+**Note:** Forward- and side-scatter channel names vary depending on the flow cytometer used. Below, for illustration purposes, we name them "SSC.HLin" and "FSC.HLin" because this matches the channel names from our machine. In FlowFate, the corresponding channels can be selected by the user.
 
 ```{r}
 # creating the gate matrix
@@ -43,18 +43,21 @@ pgn_cut <- matrix(c(12500, 99000, 99000,0,0,6250, 6250, 99000, 99000,12500), nco
 colnames(pgn_cut) <- c("SSC.HLin", "FSC.HLin")
 ```
 
+The gating matrix now looks like this
+
 ```{r, echo=FALSE}
 pgn_cut
 ```
 
+and the created gate like this (red rectagnle)
 
-```{r, fig.align='center', out.width="55%", fig.asp=0.618, echo=FALSE}
+```{r, fig.align='center', out.width="70%", echo=FALSE}
 knitr::include_graphics(path = "../man/figures/ssc_fsc_gated.png")
 ```
 
 ### 2) Create the NonDebris gate
 
-We create the NonDebris gate using [flowCore's](https://bioconductor.org/packages/release/bioc/html/flowCore.html) `polygonGate( )` function. The `filterId` argument uniquely identifies the gate.
+Until now we have only create the gating matrix. We use this matrix to create a NonDebris gate with [flowCore's](https://bioconductor.org/packages/release/bioc/html/flowCore.html) `polygonGate( )` function. The `filterId` argument uniquely identifies the gate.
 
 ```{r, eval = FALSE}
 gate_non_debris <- reactive(polygonGate(filterId = "NonDebris", .gate = pgn_cut))
@@ -62,7 +65,7 @@ gate_non_debris <- reactive(polygonGate(filterId = "NonDebris", .gate = pgn_cut)
 
 ### 3) Gate the data
 
-To **add** the NonDebris gate to the GatingSet `r$gs` (created during data import (reference to import vignette and section)), we use `gs_pop_add( )`. We recompute `r$gs` with `recompute( )` to **gate** our data.
+We apply the gate to our data by **adding** the NonDebris gate to the GatingSet `r$gs` (see data import vignette) using `gs_pop_add( )`. We then need to `recompute( )` `r$gs`. 
 
 ```{r, eval = FALSE}
 gs_pop_add(r$gs, gate_non_debris(), parent = "root")
@@ -71,64 +74,62 @@ recompute(r$gs)
 
 ## Gating GFP+ cells
 
-flowFate was developed to study the effect of GFP-labeled KRas on C2C12 differentiation. Our analysis should hence be focused on successfully transfected cells. Background noise and autofluorescence however leads to unspecific fluorescent emission from untransfected cells, simultaneously captured with the emission from GFP in transfected cells. To remove untransfected cells from our analysis, we apply a GFP threshold to our data, eliminating cells with emissions below a specific threshold.
+FlowFate was designed to study the effect of GFP-labeled KRAS on C2C12 differentiation. Consequently, our analysis must concentrate on successfully transfected cells. Nonetheless, background noise and autofluorescence introduce unspecific fluorescent signals from untransfected cells. To address this, we use a GFP-threshold in our data analysis to effectively exclude untransfected cells with emissions below a specified threshold. This approach ensures that our analysis focuses on relevant, transfected cells while excluding undesired noise.
 
-We determine the value of this threshold with our controls:
+The GFP threshold is determined using our two control samples:
 
 -   a **double-negative control** sample: untransfected, unlabelled C2C12
 
--   a **MyHC-only control** sample: untransfected C2C12, labelled with an antibody against myosin heavy-chain (MyHC)
+-   a **MyHC-only control** sample: untransfected C2C12, labelled with an eFluor660-labeled antibody targeting the heavy-chain of the myosin protein (MyHC).
 
-For both control samples, the observed GFP signals (captured in the green channel "GRN.B.HLin") are unspecific and most likely due to cellular autofluorescence. Based on the signal distribution in the green channel in these samples, we can define a threshold excluding most events. This threshold then serves as measure to discriminate untransfected cells (below this treshold) from transfected cells (above this threshold). We can then gate transfected cells by applying this threshold to all our datasets i.e remove all the cells **below** this threshold.
+In the control samples, the fluorescence signals observed in the green channel "GRN.B.HLin" are a result of cellular autofluorescence and thus unspecific. Thus, by analyzing the intensity distribution, we can establish a threshold that effectively excludes a majority of the events. This threshold (red line in the figure below) becomes a reference point to distinguish between untransfected cells (falling below this treshold) and transfected cells (above this threshold). 
 
-```{r, fig.align='center', out.width="55%", fig.asp=0.618, echo=FALSE}
+To gate the transfected cells in all our datasets, we apply this established threshold and remove cells falling below it.
+
+```{r, fig.align='center', out.width="70%", echo=FALSE}
 knitr::include_graphics(path = "../man/figures/gfp_threshold.png")
 ```
 
-### 1) Determine a GFP threshold intensity
+### 1) Determine a GFP threshold
 
-Most of the computation is wrapped inside a custom function `get_lowerLimit( )` with several arguments:
+Most of the computation is wrapped inside a custom function `get_lowerLimit( )`. This function has several arguments:
 
--   gs: GatingSet to operate on
--   datasets: datasets based on which the threshold is determined (control samples)
--   node: existing gate from which the data should be extracted (the GFP threshold is based on the intensity distribution in intact cells so we need to extract the data from which debris has been excluded)
--   ch_gate: the channel based on which the gate is determined (here the GPF channel "GRN.B.HLin")
--   r: required to use the `{golem}` framework
+-   **gs**: GatingSet to use
+-   **datasets**: Datasets used to establish the threshold (i.e. control samples)
+-   **node**: Existing gate to extract data from. For example, we establish the GFP threshold based on the intensity distribution in the green channel of **intact** cells. Thus, we need to use the data from the NonDebris gate.
+-   **ch_gate**: the channel based on which the gate is determined (here the GPF channel "GRN.B.HLin")
+-   **r**: required to use the `{golem}` framework
 
 ```{r, eval=FALSE}
 get_lowerLimit <- function(gs, datasets, node, ch_gate, r) {
-  require(flowCore)
-  # extract control sample data as a flowSet
+  # extract the data as a flowSet
   x <- gs_pop_get_data(r$gs[[datasets]], node) |> cytoset_to_flowSet()
-  
-  # for each of the two flowFrames in the extracted flowSet, create a quantile gate using the correct channel name (in our case this will be the name of the GFP channel selected by the user)
-  y <- fsApply(x, function(fr) {
-    openCyto::gate_quantile(fr, channel = ch_gate, probs = 0.99)
-  })
-  
-  # return the average of two quantile gate's lower limit
+  # create a quantile gate using extracted data and the respective channel name
+  y <- create_quantile_gate(x, gate_channel = ch_gate)
+  # average the minimum values from the respective quantile gateS(!)
   z <- mean(c(y[[1]]@min, y[[2]]@min))
 }
 ```
 
 
-[openCyto's](https://bioconductor.org/packages/release/bioc/html/openCyto.html) `gate_quantile( )` function detects a threshold based on the `probs` (probabilities) argument. The value from `probs` is used to determine sample quantiles and create a rectangle gate excluding events outside this quantile. 
-In other words, when `probs = 0.25` or `probs = 0.5`, `gate_quantile( )` determines the first or second quartile of the data, respectively. The final gate interval then ranges from the determines quantile to infinity. 
+We use [openCyto's](https://bioconductor.org/packages/release/bioc/html/openCyto.html) `gate_quantile( )` function to algorithmically establish the GFP threshold. Based on the `probs` (probabilities) argument, this function determines sample quantiles and create a rectangle gate excluding events outside this quantile. For example, if `probs = 0.25` or `probs = 0.5`, `gate_quantile( )` establishes the threshold at the first or second quartile, respectively. The created interval gate then ranges from the established threshold to infinity. 
 
-We set the `probs` argument to 0.99 to exclude 99% of the events in our control samples. The rationale here is that the signals observed in the green channel for our control samples are unspecific and should be removed from the analysis. We did not use `probs = 1` to avoid unreasonably high thresholds due to outliers which could lead to the loss of transfected cells in other samples. In addition, we average the threshold obtained from both controls.
-
-The `lower_limit_gfp_gate` stores this averaged threshold.
+In our case, we used `probs = 0.99` to exclude 99% of the events in our control samples. To avoid unreasonably high thresholds due to outliers we did not use `probs = 1` which may have lead to a loss of transfected cells. In addition, we averaged the threshold obtained from both control samples and store this value in the `lower_limit_gfp_gate` variable.
 
 ```{r, eval=FALSE}
 lower_limit_gfp_gate <- reactive({
-  get_lowerLimit(gs = r$gs, datasets = c(input$negative_control, input$positive_control_myhc), node = "NonDebris", ch_gate = input$kras_channel, r = r)
+  get_lowerLimit(gs = r$gs,
+                 datasets = c(input$negative_control, input$positive_control_myhc),
+                 node = "NonDebris",
+                 ch_gate = input$kras_channel,
+                 r = r)
 }) |> bindEvent(input$Curate)
 ```
 
 
 ### 2) Create a GFP gate
 
-We use the GFP threshold to create the rectangle gate `gfp_gate`. The computations are wrapped in the custom function `make_gate( )`. The logic behind gate creation has already been described above.
+Until now we have only established an adequate GFP threshold. We now use it to create a `gfp_gate`. The computations are wrapped in the custom function `make_gate( )`. The logic behind this gate was described above.
 
 ```{r, eval=FALSE}
 make_gate <- function(lower_limit, col_name, filterId) {
@@ -137,12 +138,15 @@ make_gate <- function(lower_limit, col_name, filterId) {
   return(rectangleGate(filterId = filterId, .gate = mat))
 }
 
-gfp_gate <- reactive({make_gate(lower_limit_gfp_gate(), input$kras_channel, filterId = "GFP+")})
+gfp_gate <- reactive({
+  make_gate(lower_limit_gfp_gate(),
+            input$kras_channel,
+            filterId = "GFP+")})
 ```
 
 ### 3) Apply the GFP gate
 
-We apply the GFP gate to **all** the datasets by adding `gfp_gate` to the GatingSet and recomputing the GatingSet.
+To gate the transfected cells in all our datasets, we add the `gfp_gate` to the GatingSet and recomputing the GatingSet.
 
 ```{r, eval=FALSE}
 # add the gfp_gate to the GatingSet

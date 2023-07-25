@@ -14,64 +14,56 @@ knitr::opts_chunk$set(
 )
 ```
 
+Our analysis starts with data import. While some flow cytometry acquisition software export data from different samples as **separate .fcs files**, others export a **single, merged .fcs file** containing data from multiple samples. The $NXTDATA keyword can be used to retrieve data from individual samples. 
+
+In flowFate, users can upload a merged file or individual files. If individual files are uploaded, they must be grouped inside a folder.
+
 **Note:** Imported files must be FCS3.0. 
 
-Our analysis starts with data import. While some flow cytometry acquisition software export data from different samples as **separate .fcs files**, others export a **single, merged .fcs file** containing data multiple samples. The $NXTDATA keyword can then be used to retrieve data from individual samples. 
-
-In flowFate, users can choose whether want to upload a merged file or individual .fcs files. In the latter case, individual files must be grouped inside a folder.
-
 ## A - Merged file upload
-### 1) Number of datasets
-We first fetch the number of datasets contained in the merged .fcs file. The function we use contains code adapted from [RGLab](https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R).
+### 1) Fetch the number of datasets
+We first fetch the number of datasets contained in the merged .fcs file (code adapted from [RGLab](https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R)).
 
 
 ```{r, eval = FALSE}
 n_datasets <- function(filename) {
-	con <- file(filename, open = "rb")
-	
-	offsets <- flowCore:::readFCSheader(con)
-	offsets <- matrix(offsets, nrow = 1, dimnames = list(NULL, names(offsets)))
-	txt <- flowCore:::readFCStext(con, offsets[1, ],emptyValue = FALSE)
-	
-	addOff <- 0
-	
-	if ("$NEXTDATA" %in% names(txt)) {
-		nd <- as.numeric(txt[["$NEXTDATA"]])
-	} else
-		nd <- 0
-	
-	txt.list <- list(txt)
-	i <- 1
-	while (nd != 0) {
-		i <- i + 1
-		addOff <- addOff + nd
-		offsets <- rbind(offsets, flowCore:::readFCSheader(con, addOff))
-		this.txt <- flowCore:::readFCStext(con, offsets[nrow(offsets),], emptyValue = FALSE)
-		nd <- as.numeric(this.txt[["$NEXTDATA"]])
-		txt.list[[i]] <- this.txt
-	}
-	length(txt.list)
+  # Adapted code from https://github.com/RGLab/flowCore/blob/ba3b6ffed5310c1c0618487ab163c0142d8cab8f/R/IO.R
+
+  # the keyword $NEXTDATA contains either a zero when there are no next data
+  # or a positive integer for the next dataset
+  counter <- 0
+  nextdata <- 1
+  while (nextdata != 0) {
+    counter <- counter + 1
+    nextdata <- read.FCSheader(filename, keyword = "$NEXTDATA", emptyValue = FALSE, dataset = counter)
+    nextdata <- as.integer(nextdata[[1]]["$NEXTDATA"])
+  }
+  counter
 }
 ```
 
 
-### 2) Writing individual .fcs files
-The datasets from merged .fcs files are then written as individual .fcs files to a temporary folder and the value from the $WELLID keyword is appended to the filename.
+### 2) Write individual .fcs files
+We write the individual datasets inside the merged .fcs file as individual .fcs files to a temporary folder using the custom `split_1_fcs( )` function. We append the $WELLID keyword to the filename.
 
 ```{r, eval = FALSE}
 split_1_fcs <- function(nb, input_file) {
-  # create a folder named fcs_input
+  # create a folder named fcs_input in a temporary location
   if (!dir_exists(path(path_dir(input_file), "fcs_input"))) dir_create(path(path_dir(input_file), "fcs_input"))
-
-  # walk along every dataset and read it in as a flowFrame (data structure from flowCore)
+  
+  # walk along every dataset and read it as a flowFrame (data structure from flowCore)
   walk(seq_len(nb_ds), \(x) {
-  fr <- read.FCS(filename, dataset = x, transformation = FALSE, truncate_max_range = FALSE, alter.names = TRUE, emptyValue = FALSE)
-message(paste("Write file #", x, "well", fr@description$`$WELLID`))
-
-  # write the flowframes to individual FCS files inside the fcs_input folder
-write.FCS(fr, fs::path("fcs_input", paste0("dataset_", fr@description$`$WELLID`, ".fcs")))
-})
-
+    fr <- read.FCS(filename, dataset = x,
+                   transformation = FALSE,
+                   truncate_max_range = FALSE,
+                   alter.names = TRUE,
+                   emptyValue = FALSE)
+    message(paste("Write file #", x, "well", fr@description$`$WELLID`))
+    
+    # write flowframes to individual FCS files inside the fcs_input folder
+    write.FCS(fr, fs::path("fcs_input", paste0("dataset_", fr@description$`$WELLID`, ".fcs")))
+  })
+  
   # return the complete path of the fcs_input folder
   path(path_dir(input_file), "fcs_input")
 }
@@ -80,42 +72,50 @@ write.FCS(fr, fs::path("fcs_input", paste0("dataset_", fr@description$`$WELLID`,
 individual_fcs <- reactive(split_1_fcs(nb_ds(), input$filename$datapath))
 ```
 
-
-### 3) Creating a flowSet
-Individual .fcs files stored in the temporary folder are then read into a flowSet (data structure from flowCore). The reactive expression individual_fcs() returns the directory of the folder uploaded folder with individual fcs files.
+### 3) Create a flowSet
+We read the individual .fcs files (stored in the fcs_input temporary folder) into a flowSet, a data structure from the flowCore package). The reactive expression `individual_fcs()` returns the directory of fcs_input temporary folder.
 
 ```{r, eval = FALSE}
-fs <- reactive(read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE))
+fs <- reactive(read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"), 
+                            truncate_max_range = FALSE,
+                            alter.names = TRUE,
+                            transformation = FALSE))
 ```
 
 ## B - Individual file upload
 
-**Note: **Individual files (all FCS3.0) have to be grouped inside a folder. Steps 1) and 2) from above are now dispensable and we can immediately create a flowSet.
+**Note: **Individual files (all FCS3.0) have to be grouped inside a folder. Steps 1) and 2) from above are now dispensable and we can start by creating a flowSet.
 
-### 1) Creating a flowSet
+### 1) Create a flowSet
 ```{r, eval = FALSE}
 fs <- reactive({
-  read.flowSet(path = filename(), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE, emptyValue = FALSE)
+  read.flowSet(path = filename(),
+               truncate_max_range = FALSE,
+               alter.names = TRUE,
+               transformation = FALSE,
+               emptyValue = FALSE)
 })
 ```
 
+**Note:** `filename()` is a reactive expression capturing the patch of the folder a user uploads.
 
-## C - GatingSet
-The flowFrame and flowSet data structures from [flowCore](https://bioconductor.org/packages/release/bioc/html/flowCore.html) are very useful for handling flow cytometry data in R. The GatingSet data structure from [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) however is better suited for storing and manipulating gated data.
+## C - Create a GatingSet
+The flowFrame and flowSet data structures from [flowCore](https://bioconductor.org/packages/release/bioc/html/flowCore.html) are very useful for handling flow cytometry data in R. The GatingSet data structure from [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) is, however, better suited for storing and manipulating gated data.
 
-### 1) Creating a gatingSet
-We create a gatingSet from the flowSet using the `GatingSet()` function from [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html).
+### 1) Create a GatingSet from a flowSet
+We use the `GatingSet()` function from [flowWorkspace](https://www.bioconductor.org/packages/release/bioc/html/flowWorkspace.html) to create a GatingSet from the previous flowSet.
+
 ```{r, eval = FALSE}
 gs <- reactive({GatingSet(fs())})
 ```
 
 
 ## D - Sharing reactive values across modules
-The [{golem}](https://thinkr-open.github.io/golem/) framework promotes the use of modules to split your app into separate, smaller parts. {golem} provides a couple of [techniques](https://engineering-shiny.org/common-app-caveats.html?q=sharing%20data%20#a.-sharing-data-across-modules) to allow communication between modules. 
-We opted for the ["stratégie du petit r"](https://engineering-shiny.org/structuring-project.html?q=strat#b.-the-strat%C3%A9gie-du-petit-r). Briefly, a list of reactive values - called ```r``` (hence the name of the technique) - is passed along modules. 
+The [{golem}](https://thinkr-open.github.io/golem/) framework promotes the use of modules to split a Shiny app into separate, smaller parts. Different [techniques](https://engineering-shiny.org/common-app-caveats.html?q=sharing%20data%20#a.-sharing-data-across-modules) are available in {golem} to allow communication between modules. 
+We opted for the ["stratégie du petit r"](https://engineering-shiny.org/structuring-project.html?q=strat#b.-the-strat%C3%A9gie-du-petit-r). Briefly, a list of reactive values - called ```r``` - is passed along modules. 
 
 ### 1) Completing the reactive list ```r``` 
-We add the gatingSet, flowSet and nb_ds reactive expression to the reactive list. We're now able to use these variables in other modules by calling ```r$gs```, ```r$fs``` or ```r$nb_ds```. To read reactive expressions in Shiny, they have to be wrapped in inside `observe( )`. 
+We add the GatingSet, flowSet and nb_ds (number of datasets) reactive expression to the reactive list. These variables can now be used in other modules by calling ```r$gs```, ```r$fs``` or ```r$nb_ds```. To read reactive expressions in Shiny, they have to be wrapped in inside `observe( )`.
 
 ```{r, eval = FALSE}
     observe({
