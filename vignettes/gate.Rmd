@@ -63,6 +63,7 @@ observe({
 In our differentiation assay, the MyHC protein is targeted using an eFluor660-labled antibody. This antibody emits fluorescence captured in the red channel of our flow cytometer. Moreover, expression of this protein correlated with cell differentiation. Thus, if cells differentiate, they express more MyHC and consequently higher fluorescence intensities are captured on our flow cytometer. A typical distribution of red fluorescence observed for our differentiation assay is illustrated below. The left peak (light blue) comprises cells that do not express high amounts of MyHC and are considered undifferentiated. We name this population MyHC-. The right peak (pale green) corresponds to cells expressing high amounts of MyHC and are considered differentiated. We name this population MyHC+.
 
 ```{r}
+library(tidyverse)
 set.seed(2345)
 a <- data.frame(rnorm(10000, 10, 50))
 b <- data.frame(rnorm(2500, 35000, 35000))
@@ -114,7 +115,7 @@ remove_null_from_list <- function(data) {
 
 Note that everything `getData_splitPeak( )` is supposed to do is to (1) look at the fluorescent intensity distribution in the red channel of every dataset and (2) find a threshold between the MyHC- and MyHC+ peaks for for each dataset and create a gate from it. Remember that we have previously split the GFP+ population into one, two or three subpopulations, depending on the user's choices. Thus, for each dataset we also need to establish one, two or three MyHC+ gates. This is why we set the `bin` argument `getData_splitPeak( )` to either `GFP-low`, `GFP-medium` or `GFP-high`. Below, we save the MyHC+ gates for each of these subpopulations (or bins) and for all the samples in three different variables.
 
-```{r}
+```{r, eval=FALSE}
     gfp_low_myo_high <- reactive({
       req(r$gs)
       withProgress(message = "Retrieving data from GFP-low bin...", {
