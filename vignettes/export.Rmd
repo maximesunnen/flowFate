@@ -1,0 +1,55 @@
+---
+title: "04 Export"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exporting}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Our data analysis process generated different populations: 
+
+-   the NonDebris population
+-   the GFP+ population
+-   the GFP-low, GFP-medium, GFP-high population
+-   the MyHC+
+
+Each population is characterized by its size i.e the number of cells that met the gating criteria for this population. This information is saved as a population table which can be retrieved using the `gs_pop_get_stats( )` function. We wrap this function into a `map_df( )` call to extract and combine the population tables from each dataset in the GatingSet to a large and unique population table.
+
+```{r, eval=FALSE}
+reactive({
+  purrr::map_df(r$gs, \(x) as.data.frame(gs_pop_get_stats(x)))
+})
+```
+
+Users are able to download the population table. We implemented this using Shiny's `downloadHandler( )` function as well as the `write.table( )` function.
+
+```{r}
+downloadHandler(filename = function() file_name(), # custom filename
+                content = function(file){
+                  writeLines(file,
+                             text = text()) # metadata
+                  write.table(population_table(), # population table
+                              file = file,
+                              sep = ",",
+                              append = TRUE,
+                              row.names = FALSE,
+                              col.names = FALSE,
+                              quote = FALSE)})
+```
+
+Users can customize the name of the downloaded file.
+
+```{r}
+file_name <- reactive({
+  if (isTruthy(input$filename)) {
+    if (input$add_date == TRUE) {paste0(Sys.Date(), "_", input$filename,".csv")}
+    else {paste0(input$filename, ".csv", sep = "")}
+  }
+  else {
+    if (input$add_date == TRUE) {paste0(Sys.Date(), "_", "population_statistics.csv")}
+    else {paste0("population_statistics.csv")}
+  }
+})
+```
+

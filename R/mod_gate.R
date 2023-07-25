@@ -408,16 +408,6 @@ add_gate <- function(r, gs, gate, parent) {
   recompute(r$gs)
 }
 
-
-# # illustration how conditionalPanel works
-# conditionalPanel(
-#   # still a JS expression
-#   condition = "input.add_bins == 1",
-#   #make sure that input.<input> reacts to (and only to) to input from this module
-#   ns = ns,
-#   #what should happen if condition is met
-#   checkboxInput(ns("headsonly"), "This text should...."))
-
 ## To be copied in the UI
 # mod_gate_ui("gate_1")
 

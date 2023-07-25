@@ -1,5 +1,5 @@
 ---
-title: "App Dockerisation"
+title: "00 Dockerisation"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{App Dockerisation}

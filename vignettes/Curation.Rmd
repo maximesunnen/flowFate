@@ -1,5 +1,5 @@
 ---
-title: "Data Curation"
+title: "02 Curation"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Data Curation}
@@ -49,7 +49,7 @@ The gating matrix now looks like this
 pgn_cut
 ```
 
-and the created gate like this (red rectagnle)
+and the created gate like this (red rectangle)
 
 ```{r, fig.align='center', out.width="70%", echo=FALSE}
 knitr::include_graphics(path = "../man/figures/ssc_fsc_gated.png")
