@@ -62,7 +62,7 @@ observe({
 
 In our differentiation assay, the MyHC protein is targeted using an eFluor660-labled antibody. This antibody emits fluorescence captured in the red channel of our flow cytometer. Moreover, expression of this protein correlated with cell differentiation. Thus, if cells differentiate, they express more MyHC and consequently higher fluorescence intensities are captured on our flow cytometer. A typical distribution of red fluorescence observed for our differentiation assay is illustrated below. The left peak (light blue) comprises cells that do not express high amounts of MyHC and are considered undifferentiated. We name this population MyHC-. The right peak (pale green) corresponds to cells expressing high amounts of MyHC and are considered differentiated. We name this population MyHC+.
 
-```{r}
+```{r, eval = FALSE}
 library(tidyverse)
 set.seed(2345)
 a <- data.frame(rnorm(10000, 10, 50))
@@ -98,7 +98,7 @@ getData_splitPeak <- function(r, gs, bin, filter_name) {
 }
 ```
 
-```{r,eval=FALSE}
+```{r, eval=FALSE}
 remove_null_from_list <- function(data) {
   ## capture the indices of the the elements that are NULL, assign indices to test variable
   test <- which(sapply(data, is.null))
@@ -116,36 +116,36 @@ remove_null_from_list <- function(data) {
 Note that everything `getData_splitPeak( )` is supposed to do is to (1) look at the fluorescent intensity distribution in the red channel of every dataset and (2) find a threshold between the MyHC- and MyHC+ peaks for for each dataset and create a gate from it. Remember that we have previously split the GFP+ population into one, two or three subpopulations, depending on the user's choices. Thus, for each dataset we also need to establish one, two or three MyHC+ gates. This is why we set the `bin` argument `getData_splitPeak( )` to either `GFP-low`, `GFP-medium` or `GFP-high`. Below, we save the MyHC+ gates for each of these subpopulations (or bins) and for all the samples in three different variables.
 
 ```{r, eval=FALSE}
-    gfp_low_myo_high <- reactive({
-      req(r$gs)
-      withProgress(message = "Retrieving data from GFP-low bin...", {
-        if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-low"))) {   #make sure GFP-low exists!
-          getData_splitPeak(r = r, gs = r$gs, bin = "GFP-low", filter_name = "MyHC+")
-        }})
-    })
-    gfp_medium_myo_high <- reactive({
-      req(r$gs)
-      withProgress(message = "Retrieving data from GFP-low bin...", {
-        if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {   #make sure GFP-medium exists!
-          getData_splitPeak(r = r, gs = r$gs, bin = "GFP-medium", filter_name = "MyHC+")
-        }})
-    })
-    gfp_high_myo_high <- reactive({
-      req(r$gs)
-      withProgress(message = "Retrieving data from GFP-high bin...", {
-        if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {   #make sure GFP-high exists!
-          getData_splitPeak(r = r, gs = r$gs, bin = "GFP-high", filter_name = "MyHC+")
-        }})
-    })
+gfp_low_myo_high <- reactive({
+  req(r$gs)
+  withProgress(message = "Retrieving data from GFP-low bin...", {
+    if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-low"))) {   #make sure GFP-low exists!
+      getData_splitPeak(r = r, gs = r$gs, bin = "GFP-low", filter_name = "MyHC+")
+    }})
+})
+gfp_medium_myo_high <- reactive({
+  req(r$gs)
+  withProgress(message = "Retrieving data from GFP-low bin...", {
+    if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-medium"))) {   #make sure GFP-medium exists!
+      getData_splitPeak(r = r, gs = r$gs, bin = "GFP-medium", filter_name = "MyHC+")
+    }})
+})
+gfp_high_myo_high <- reactive({
+  req(r$gs)
+  withProgress(message = "Retrieving data from GFP-high bin...", {
+    if (any(str_detect(gs_get_pop_paths(r$gs), "GFP-high"))) {   #make sure GFP-high exists!
+      getData_splitPeak(r = r, gs = r$gs, bin = "GFP-high", filter_name = "MyHC+")
+    }})
+})
 ```
 
 Once all these cutoffs have been determined and MyHC+ gates created, the actual gating is achieved by adding the gates to the GatingSet and recomputing the GatingSet. The function below first checks if one of the gate lists (`gfp_low_myo_high`, `gfp_medium_myo_high`, `gfp_high_myo_high`) is NULL. If not, the gate is added using the custom `add_gate( )` function. 
 
 ```{r, eval=FALSE}
 observe({
-    if (!is.null(gfp_low_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_low_myo_high(), parent = "GFP-low")}
-    if (!is.null(gfp_medium_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_medium_myo_high(), parent = "GFP-medium")}
-    if (!is.null(gfp_high_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_high_myo_high(), parent = "GFP-high")}
+  if (!is.null(gfp_low_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_low_myo_high(), parent = "GFP-low")}
+  if (!is.null(gfp_medium_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_medium_myo_high(), parent = "GFP-medium")}
+  if (!is.null(gfp_high_myo_high())) {add_gate(r = r, gs = r$gs, gate = gfp_high_myo_high(), parent = "GFP-high")}
   observer.state.split(TRUE)
   updateTabsetPanel(inputId = "tabset-mainPanel", selected = "Plot")
 }) |> bindEvent(input$split)
