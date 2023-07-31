@@ -16,6 +16,14 @@ testServer(
     file.name <- system.file("extdata", "0877408774.B08",
                              package = "flowCore")
     expect_true(n_datasets(file.name) == 1L)
+    funtreated <- system.file("demo_data_FCS3.0", "02_G12C_Untreated.fcs",
+                              package = "flowFate")
+    expect_true(n_datasets(funtreated) == 1L)
+    # test reading one FCS file
+    fs_untreated <- read.flowSet(files = funtreated, emptyValue = FALSE,
+                                 truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE)
+    expect_true(pData(fs_untreated)[["name"]] == "02_G12C_Untreated.fcs")
+    expect_true(sampleNames(fs_untreated) == "02_G12C_Untreated.fcs")
     # Here are some examples of tests you can
     # run on your module
     # - Testing the setting of inputs

@@ -125,7 +125,7 @@ mod_import_server <- function(id, r = NULL){
     # make a reactive expression nb_ds() [for "number of datadaset"] evaluating the number of datasets in the file uploaded by the user
     nb_ds <- reactive({
       req(input$filename$datapath)
-      withProgress(message = "Couting datasets",
+      withProgress(message = "Counting datasets",
       n_datasets(input$filename$datapath))
       }) |> bindEvent(input$submit)
 

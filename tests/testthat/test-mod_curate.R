@@ -13,17 +13,25 @@ testServer(
     expect_true(
       grepl("test", ns("test"))
     )
-    # Here are some examples of tests you can
-    # run on your module
-    # - Testing the setting of inputs
-    # session$setInputs(x = 1)
-    # expect_true(input$x == 1)
-    # - If ever your input updates a reactiveValues
-    # - Note that this reactiveValues must be passed
-    # - to the testServer function via args = list()
-    # expect_true(r$x == 1)
-    # - Testing output
-    # expect_true(inherits(output$tbl$html, "html"))
+    # loading from the demo folder
+    demo_files <- system.file("demo_data_FCS3.0",
+                              package = "flowFate")
+    demo_fs <- read.flowSet(path = demo_files,
+                            truncate_max_range = FALSE,
+                            alter.names = TRUE,
+                            transformation = FALSE,
+                            emptyValue = FALSE)
+    expect_true(nrow(pData(demo_fs)) == 5L)
+    gs <- GatingSet(demo_fs)
+    r <- list(gs = gs)
+    pgn_cut <- matrix(c(12500, 99000, 99000,0,0,6250, 6250, 99000, 99000,12500), ncol = 2, nrow = 5)
+    colnames(pgn_cut) <- c("SSC.HLin", "FSC.HLin")
+    gate_non_debris <- polygonGate(filterId = "NonDebris", .gate = pgn_cut)
+    # lower_limit_gfp_gate <- get_lowerLimit(gs = gs,
+    #                                        datasets = c("00_Double-negative.fcs",
+    #                                                     "02_G12C_Untreated.fcs"),
+    #                node = "NonDebris", ch_gate = "RED.R.HLin", r = r)
+
 })
 
 test_that("module ui works", {
