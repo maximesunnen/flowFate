@@ -103,99 +103,94 @@ open-access protocol journal.</p>
 <h2 id="running-the-differentiation-analysis-using-flowfate">Running the differentiation analysis using FlowFate<a class="anchor" aria-label="anchor" href="#running-the-differentiation-analysis-using-flowfate"></a>
 </h2>
 <p><strong>Images will follow soon</strong></p>
-<p>Within R-studio, launch the FlowFate software app with this command
-(Figure S2E):</p>
+<p>Within R-studio, launch the FlowFate software app with this
+command:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">flowFate</span><span class="fu">::</span><span class="fu"><a href="../reference/run_app.html">run_app</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>A new window will open within RStudio which will launch FlowFate.
-Click ‘Open in Browser’ to launch the software on the web browser
-(Figure S3A). While the display is enabled by the web browser, all
-processing happens on your local computer.</p>
+Click ‘Open in Browser’ to launch the software on the web browser. While
+the display is enabled by the web browser, all processing happens on
+your local computer.</p>
 <ol style="list-style-type: decimal">
 <li><p>Select the data format in which the .fcs files are stored. To
 upload a merged file containing all controls and target sample data,
-select ‘Single, merged FCS file’. Click ‘Browse’ to select the file
-(Figure S3A). For uploading individual .fcs files containing control and
-target sample data separately within one folder, select ‘Folder with
-individual FCS files’. Click ‘Browse’ and select the folder containing
-all the files that were acquired within the same experiment (Figure
-S3B). For first time users, it is recommended to study the analysis
-pipeline, using a demo dataset by clicking ‘Import demo data’ (Figure
-S3C). All the samples in the demo dataset are described in Table
-S1.</p></li>
+select ‘Single, merged FCS file’. Click ‘Browse’ to select the file. For
+uploading individual .fcs files containing control and target sample
+data separately within one folder, select ‘Folder with individual FCS
+files’. Click ‘Browse’ and select the folder containing all the files
+that were acquired within the same experiment. For first time users, it
+is recommended to study the analysis pipeline, using a demo dataset by
+clicking ‘Import demo data’.</p></li>
 <li><p>Using your own .fcs files, click ‘Submit’ to confirm your
-selection and to view your uploaded data (Figure S3D).</p></li>
+selection and to view your uploaded data.</p></li>
 <li><p>Continuing with either your own or demo data. At the top in the
-menu bar, click ‘Explore’ (Figure S3E). On the left, select the plot
-type, the scale (linear or biexponential) and channels to display on the
-X- and Y-axes. For example, select ‘linear’ scale to plot FSC on the
-X-axis and SSC on the Y-axis (Figure S3F). Since the fluorescent markers
-are visualized on a logarithmic scale, select ‘biexponential’ for
-instance for the EGFP-channel (here ‘GRN.B.HLin’) to plot the EGFP+
-cells on the X-axis and the MyHC-channel (here ‘RED.R.HLin’) to plot
-MyHC+ cells on the Y-axis (Figure S3G). Note that the plotted data is
-raw and uncurated, hence it also contains debris.</p></li>
-<li><p>On the menu bar, click ‘Curate’ (Figure S4A). Select the channel
-names from your instrument used for EGFP- and MyHC-detection. Select
-here in the demo dataset for ‘GFP channel’ ‘GRN.B.HLin’ and for the
-‘MyHC channel’ ‘RED.R.HLin’. Importantly, select your control samples
-corresponding to ‘double-negative control’ and ‘MyHC+ control’ as
-described in step 6.</p></li>
+menu bar, click ‘Explore’. On the left, select the plot type, the scale
+(linear or biexponential) and channels to display on the X- and Y-axes.
+For example, select ‘linear’ scale to plot FSC on the X-axis and SSC on
+the Y-axis. Since the fluorescent markers are visualized on a
+logarithmic scale, select ‘biexponential’ for instance for the
+EGFP-channel (here ‘GRN.B.HLin’) to plot the EGFP+ cells on the X-axis
+and the MyHC-channel (here ‘RED.R.HLin’) to plot MyHC+ cells on the
+Y-axis. Note that the plotted data is raw and uncurated, hence it also
+contains debris.</p></li>
+<li><p>On the menu bar, click ‘Curate’. Select the channel names from
+your instrument used for EGFP- and MyHC-detection. Select here in the
+demo dataset for ‘GFP channel’ ‘GRN.B.HLin’ and for the ‘MyHC channel’
+‘RED.R.HLin’. Importantly, select your control samples corresponding to
+‘double-negative control’ and ‘MyHC+ control’ as described in step
+6.</p></li>
 <li><p>‘Start curation’ automatically sets up threshold values for
 debris, based on the double-negative- and MyHC+ -control samples.
 Thresholding involves the addition of a pre-defined gate to remove
-cellular debris. Make sure you have a nice single-cell suspension
-(Figure 2B), as doublet-discrimination is not implemented here. Navigate
-through the ‘NonDebris gate’ tab to display results from this part of
-the curation process (Figure S4B).</p></li>
+cellular debris. Make sure you have a nice single-cell suspension, as
+doublet-discrimination is not implemented here. Navigate through the
+‘NonDebris gate’ tab to display results from this part of the curation
+process.</p></li>
 <li><p>Curation in addition sets a GFP-threshold. Cells above this
 threshold are EGFP+ and cells below this threshold are EGFP-. This
 function permits the exclusion of untransfected or autofluorescent cells
 from the analysis. Click the ‘GFP gate’ tab to display results from that
-part of the curation process (Figure S4C).</p></li>
+part of the curation process.</p></li>
 <li><p>Next, GFP-expression level bins are set up. On the menu bar,
-click ‘Gate’ and then select ‘Add GFP bin’ to add at least a GFP-low bin
-(Figure S5A). Then specifying the desired intensity range of that bin
-(Figure S5B). Click ‘Confirm’ (Figure S5A). Note that the first value
-displayed in the GFP-low bin corresponds to the GFP-threshold value and
-it should remain unaltered.</p></li>
+click ‘Gate’ and then select ‘Add GFP bin’ to add at least a GFP-low
+bin. Then specifying the desired intensity range of that bin. Click
+‘Confirm’. Note that the first value displayed in the GFP-low bin
+corresponds to the GFP-threshold value and it should remain
+unaltered.</p></li>
 <li><p>Optionally, if a gene-dose dependency is intended to be analyzed,
 you can set two additional bins, GFP-medium and -high. Click on ‘Add GFP
-bin’ and specify the desired intensity range (Figure S5A). For the demo
-data, specify three GFP bins: GFP-low = GFP channel intensities from
-24.1 to 100 RFU; GFP-medium = GFP channel intensities from 101 to 1000
-RFU; GFP-high= GFP channel intensities from 1001 to 10000 RFU. Click
-‘Confirm’ to set each range (Figure S5A). You can reset the GFP-bin
-assignment by clicking the ‘Reset bins’ button (Figure S5B).</p></li>
+bin’ and specify the desired intensity range. For the demo data, specify
+three GFP bins: GFP-low = GFP channel intensities from 24.1 to 100 RFU;
+GFP-medium = GFP channel intensities from 101 to 1000 RFU; GFP-high= GFP
+channel intensities from 1001 to 10000 RFU. Click ‘Confirm’ to set each
+range. You can reset the GFP-bin assignment by clicking the ‘Reset bins’
+button.</p></li>
 <li><p>After FlowFate has switched to the ‘Split peaks’ tab, click
-‘Split’ (Figure S5C). This important step automatically identifies the
-MyHC- and MyHC+ subpopulations within the defined GFP-bins.</p></li>
+‘Split’. This important step automatically identifies the MyHC- and
+MyHC+ subpopulations within the defined GFP-bins.</p></li>
 <li><p>After clicking ‘Split’, the app automatically opens the ‘Plot’
-panel (Figure S5D). You can browse data in the window. Target samples
-‘03_G12C_DMSO’ to ‘04_G12C_AMG510’ within the demo dataset were
-considered for the subsequent steps. ‘03_G12C_DMSO’ comprises cells
-transfected with K-RasG12C treated with 0.2 % DMSO and ‘04_G12C_AMG510’
-represents cells transfected with K-RasG12C treated with 3 mM AMG 510
-(Table S1).</p></li>
+panel. You can browse data in the window. Target samples ‘03_G12C_DMSO’
+to ‘04_G12C_AMG510’ within the demo dataset were considered for the
+subsequent steps. ‘03_G12C_DMSO’ comprises cells transfected with
+K-RasG12C treated with 0.2 % DMSO and ‘04_G12C_AMG510’ represents cells
+transfected with K-RasG12C treated with 3 mM AMG 510.</p></li>
 <li><p>In the ‘Split peaks’ panel, individual datasets can be selected
 to display MyHC intensity distribution. Multiple selections are possible
-by clicking on them to facilitate sample comparisons (Figure
-S5E).</p></li>
+by clicking on them to facilitate sample comparisons.</p></li>
 <li><p>To store your analysis for processing, click ‘Export’ on the menu
-bar (Figure S5F). Click ‘Show population statistics’ to get a table with
-population data necessary for statistical analysis outside of FlowFate.
-This table contains three columns, (1) sample name (sample), (2)
-population name (pop), (3) population count (count). ‘Count’ corresponds
-to the number of events in the respective population. The nomenclature
-used to unambiguously identify the different populations is explained in
+bar. Click ‘Show population statistics’ to get a table with population
+data necessary for statistical analysis outside of FlowFate. This table
+contains three columns, (1) sample name (sample), (2) population name
+(pop), (3) population count (count). ‘Count’ corresponds to the number
+of events in the respective population. The nomenclature used to
+unambiguously identify the different populations is explained in
 <strong>Table 1</strong>.</p></li>
 <li><p>Specify your filename and click ‘Download’ to export the data as
-a .csv file (Figure S5F). In order to calculate the fraction of
-differentiated cells in the GFP-low bin, employ data from
-/NonDebris/GFP+/GFP-low/MyHC+ count (MyHC+ cells in GFP-low bin) divided
-by /NonDebris/GFP+/GFP-low count, which represents the total number of
-GFP+ cells in the GFP-low bin. Apply this processing rationale to all of
-your target samples.</p></li>
+a .csv file. In order to calculate the fraction of differentiated cells
+in the GFP-low bin, employ data from /NonDebris/GFP+/GFP-low/MyHC+ count
+(MyHC+ cells in GFP-low bin) divided by /NonDebris/GFP+/GFP-low count,
+which represents the total number of GFP+ cells in the GFP-low bin.
+Apply this processing rationale to all of your target samples.</p></li>
 </ol>
 <table class="table">
 <caption>
