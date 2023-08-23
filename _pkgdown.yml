@@ -2,9 +2,9 @@ url: https://maximesunnen.github.io/flowFate/
 template:
   bootstrap: 5
 
-
 articles:
-  title: Articles
+- title: Articles
+  navbar: ~
   contents:
   - app-dockerisation
   - get-started
