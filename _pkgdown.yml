@@ -5,11 +5,11 @@ template:
 
 articles:
   title: Articles
-    contents: 
-    - app-dockerisation
-    - get-started
-    - Data-import
-    - Curation
-    - gate
-    - export
+  contents:
+  - app-dockerisation
+  - get-started
+  - Data-import
+  - Curation
+  - gate
+  - export
 
