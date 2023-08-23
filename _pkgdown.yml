@@ -2,3 +2,14 @@ url: https://maximesunnen.github.io/flowFate/
 template:
   bootstrap: 5
 
+navbar:
+  components:
+    articles:
+      menu:
+      - text: app-dockerisation.Rmd
+      - text: get-started.Rmd
+      - text: Data-import.Rmd
+      - text: Curation.Rmd
+      - text: gate.Rmd
+      - text: export.Rmd
+
