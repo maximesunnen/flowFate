@@ -1,15 +1,14 @@
-pandoc: 2.19.2
-pkgdown: 2.0.7
+pandoc: 3.1.11
+pkgdown: 2.1.2
 pkgdown_sha: ~
 articles:
+  app-dockerisation: app-dockerisation.html
   Curation: Curation.html
   Data-import: Data-import.html
-  app-dockerisation: app-dockerisation.html
   export: export.html
   gate: gate.html
   get-started: get-started.html
-last_built: 2024-01-03T08:43Z
+last_built: 2025-05-19T07:57Z
 urls:
   reference: https://maximesunnen.github.io/flowFate/reference
   article: https://maximesunnen.github.io/flowFate/articles
-

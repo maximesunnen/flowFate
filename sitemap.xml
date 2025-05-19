@@ -1,48 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/404.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/articles/Curation.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/articles/Data-import.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/articles/app-dockerisation.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/articles/export.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/articles/gate.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/articles/get-started.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/index.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/news/index.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://maximesunnen.github.io/flowFate/reference/run_app.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://maximesunnen.github.io/flowFate/404.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/LICENSE-text.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/LICENSE.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/articles/Curation.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/articles/Data-import.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/articles/app-dockerisation.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/articles/export.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/articles/gate.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/articles/get-started.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/articles/index.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/authors.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/index.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/news/index.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/reference/index.html</loc></url>
+<url><loc>https://maximesunnen.github.io/flowFate/reference/run_app.html</loc></url>
 </urlset>
+
