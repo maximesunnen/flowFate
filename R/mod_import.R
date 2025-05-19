@@ -66,7 +66,7 @@ mod_import_ui <- function(id){
 #'
 mod_import_server <- function(id, r = NULL){
 # increasing the maximum upload size  -------------------------------------
-  options(shiny.maxRequestSize = 60 * 1024^2)
+  options(shiny.maxRequestSize = 120 * 1024^2)
 
   moduleServer(id, function(input, output, session){
     ns <- session$ns
