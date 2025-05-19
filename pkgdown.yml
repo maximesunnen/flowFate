@@ -8,7 +8,7 @@ articles:
   export: export.html
   gate: gate.html
   get-started: get-started.html
-last_built: 2025-05-19T07:57Z
+last_built: 2025-05-19T07:59Z
 urls:
   reference: https://maximesunnen.github.io/flowFate/reference
   article: https://maximesunnen.github.io/flowFate/articles
