@@ -95,14 +95,14 @@ mod_gate_server <- function(id, r){
     # to not get into a reactive loop, let's use a reactive value
 
     # add_bins_clicks <- reactive({input$add_bins})
-    
+
     # making a reactiveValues (clicks) with 2 elements, count and x. Update clicks$count every time input$add_bins is clicked to capture the number of times it is clicked.
     clicks <- reactiveValues(count = 0)
-    
+
     observe({
       clicks$count <- clicks$count + 1
     }) |> bindEvent(input$add_bins)
-    
+
     # Depending on the value of clicks$count (i.e how many times input$add_bins is clicked), add GFP bins to the UI.
     ### Remove the input$add_bins button once clicks$count is equal to 3.
     observe({
@@ -147,7 +147,7 @@ mod_gate_server <- function(id, r){
 
     # making a reactive value observer.state.bins to capture whether or not the GFP-low/medium/high bins have been added to the gatingSet
     observer.state.bins <- reactiveVal(FALSE)
-    
+
     observe({
       if(observer.state.bins() == TRUE){
         if (!is.null(input$gfp_range_1)){
@@ -161,7 +161,7 @@ mod_gate_server <- function(id, r){
         }
       }
     })
-    
+
     # making an observer that adds the GFP-low/medium/high bins to the gatingSet; update the observer.state.bins to TRUE at the end
     ### under the control of input$confirm_bins so it is not executed every time any of the inputs, reactive expressions/values changes
     observe({
@@ -173,7 +173,7 @@ mod_gate_server <- function(id, r){
       showModal(modal_confirm_bins)
       updateTabsetPanel(inputId = "tabset", selected = "Split peaks")
     }) |> bindEvent(input$confirm_bins)
-    
+
 #' @importFrom stringr str_detect
 #' @importFrom flowWorkspace gs_get_pop_paths
 
@@ -246,7 +246,7 @@ observe({
 output$myosin_splittedPeaks <- renderPlot({
   req(r$gs, selected_rows(), gate_myosin_plot(), input$controller)
   if (observer.state.split() == TRUE) {
-    withProgress(message = "Plotting your data...", 
+    withProgress(message = "Plotting your data...",
                  plot_myosin_splittedPeaks(r = r, gs = r$gs[[selected_rows()]], density_fill = "pink", gate = gate_myosin_plot(), subset = input$controller, channel = r$ch_myhc()))
   }
 }, res = 120)
@@ -257,9 +257,9 @@ output$myosin_splittedPeaks <- renderPlot({
 output$individual_FCS <- renderDT({
   req(r$flowSet_pData)
   r$flowSet_pData
-  }, 
-  selection = list(target = "row", selected = 1, mode = "multiple"), 
-  rownames = FALSE, class = "cell-border stripe", 
+  },
+  selection = list(target = "row", selected = 1, mode = "multiple"),
+  rownames = FALSE, class = "cell-border stripe",
   options = list(paging = FALSE, scrollY = "200px")) |> bindEvent(input$split)
 
 # Making a reactive expression selected_rows() to capture the selected dataset in the table output$individual_FCS
@@ -299,7 +299,7 @@ modal_confirm_bin_reset <- modalDialog(
   "Are you sure you want to continue?",
   title = "Deleting your GFP bins",
   footer = tagList(
-    actionButton(ns("cancel_bin_reset"), "Cancel"), 
+    actionButton(ns("cancel_bin_reset"), "Cancel"),
     actionButton(ns("confirm_bin_reset"), "Delete", class = "btn btn-danger")))
 
 ### modal_help_button
