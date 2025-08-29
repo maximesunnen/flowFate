@@ -21,15 +21,16 @@ mod_import_ui <- function(id){
                tagList(
                  # Radio buttons to define the upload "type"
                  p("Select the data type you want to upload"),
-                 radioButtons(ns("upload.type"), label = NULL, choiceValues = c("merged", "folder", "demo"), choiceNames = c("Single, merged FCS file", "Folder with individual FCS files", "Demo data"))), hr(),
+                 radioButtons(ns("upload.type"), label = NULL, choiceValues = c("merged", "folder", "demo"), choiceNames = c("Single, merged FCS file", "Multiple individual FCS files", "Demo data"))), hr(),
                # File input container in the sidebar ------------------------------------
                div(id = ns("div_merge"),
                    p("Select merged FCS file"),
                    fileInput(inputId = ns("filename"), accept = ".fcs", label = NULL),hr()),
                # Folder input container in the sidebar
                div(id = ns("div_folder"),
-                   p("Select a folder with FCS files"),
-                   shinyDirButton(ns("directory"), label='Browse...', title = 'Please select a folder'),
+                   p("Select multiple FCS files"),
+                   # FIXME ! it shows the container files not user. Better off using fileInput = MULTIPLE true
+                   fileInput(inputId = ns("fcsfiles"), accept = ".fcs", multiple = TRUE, buttonLabel = "Select several fcs files ...", label = NULL),
                    verbatimTextOutput(ns("directorypath"))),
                # Demo upload container in the sidebar
                div(id = ns("div_demo"),
@@ -65,23 +66,24 @@ mod_import_ui <- function(id){
 #' @importFrom methods as
 #'
 mod_import_server <- function(id, r = NULL){
-# increasing the maximum upload size  -------------------------------------
+  # increasing the maximum upload size  -------------------------------------
+  # must fit the /etc/nginx/nginx.conf line client_max_body_size XXXM;
   options(shiny.maxRequestSize = 380 * 1024^2)
 
   moduleServer(id, function(input, output, session){
     ns <- session$ns
 
     # Defining the roots argument of the shinyDirChoose function below
-    volumes <- c(Home = fs::path_home(), "R Installation" = R.home(), getVolumes()())
+    #volumes <- c(Home = fs::path_home(), "R Installation" = R.home(), getVolumes()())
 
     # Server function to handle shinyFiles input
-    shinyDirChoose(input, "directory", roots = volumes)
+    #shinyDirChoose(input, "directory", roots = volumes)
 
     # Defining the output showing the directory of the selected folder in the sidebar
     output$directorypath <- renderPrint({
-      if (is.integer(input$directory)) cat("No directory selected")
-          else {parseDirPath(volumes, input$directory)}
-      })
+      if (is.null(input$fcsfiles)) cat("No files selected")
+      else {input$fcsfiles}
+    })
 
     # demo_fcs: wrapped inside a large observer
     observe({
@@ -106,7 +108,7 @@ mod_import_server <- function(id, r = NULL){
     ## hide the submit button when no file has been uploaded (input$filename only exists when a file is selected by the user)
     observe({
       if (input$upload.type == "merged" & is.null(input$filename)) shinyjs::hide("submit")
-      else if (input$upload.type == "folder" & is.integer(input$directory)) shinyjs::hide("submit")
+      else if (input$upload.type == "folder" & is.null(input$fcsfiles)) shinyjs::hide("submit")
       else shinyjs::show("submit")
     })
 
@@ -118,7 +120,8 @@ mod_import_server <- function(id, r = NULL){
       }
       else if (input$upload.type == "folder")
       {
-        parseDirPath(volumes, input$directory)
+        req(input$fcsfiles)
+        input$fcsfiles
       }
       }) |> bindEvent(input$submit)
 
@@ -139,14 +142,13 @@ mod_import_server <- function(id, r = NULL){
     # make a reactive expression fs() [for "flowSet"], which reads the individual fcs files into a single flowSet
     fs <- reactive({
       if (input$upload.type == "merged") {
-      withProgress(message = "Reading datasets...",
+      withProgress(message = "Reading merged datasets...",
       read.flowSet(fs::dir_ls(individual_fcs(), glob = "*.fcs"), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE))
       }
       else if (input$upload.type == "folder") {
-        withProgress(message = "Reading datasets...", {
-          read.flowSet(path = filename(), truncate_max_range = FALSE, alter.names = TRUE, transformation = FALSE, emptyValue = FALSE)
-        # pData(a)$name <- paste0("dataset_", seq_len(length(a)))
-        # sampleNames(a) <- paste0("dataset_", seq_len(length(a)))})
+        withProgress(message = "Reading individual datasets...", {
+          #print(paste("file folder",  filename()$datapath, file.exists(filename()$name)))
+          read.flowSet(files = filename()$datapath, truncate_max_range = FALSE, alter.names = TRUE, name.keyword = filename()$name, transformation = FALSE)
       })}
     }) |> bindEvent(input$submit)
 
